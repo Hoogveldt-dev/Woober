@@ -1,0 +1,236 @@
+/** Positie op de demokaart. 1 eenheid is 1 meter. Later: breedte- en lengtegraad. */
+export interface Punt {
+  x: number;
+  y: number;
+}
+
+export type Rol = 'eigenaar' | 'uitlater';
+
+export type Duur = 30 | 45 | 60;
+
+export type Grootte = 'klein' | 'middel' | 'groot';
+export type Energie = 'rustig' | 'gemiddeld' | 'energiek';
+export type Aanlijnen = 'altijd' | 'losloop-ok';
+export type MetHonden = 'goed' | 'soms' | 'liever-niet';
+
+export interface Hond {
+  id: string;
+  naam: string;
+  /** Ras of "Kruising" */
+  ras: string;
+  /** ISO-datum, bijv. 2022-04-15 */
+  geboortedatum: string;
+  grootte: Grootte;
+  energie: Energie;
+  aanlijnen: Aanlijnen;
+  metHonden: MetHonden;
+  /** Karakter in eigen woorden */
+  karakter: string;
+  /** Medicatie, allergieën, angsten, trekken aan de lijn */
+  bijzonderheden: string;
+  dierenarts: string;
+  /** Twee kleuren voor de avatar, tot er echte foto's zijn */
+  kleur: [string, string];
+}
+
+export type Dag = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = maandag
+export type Dagdeel = 'ochtend' | 'middag' | 'avond';
+export type Beschikbaarheid = Record<Dag, Dagdeel[]>;
+
+export type Vervoer = 'lopend' | 'fiets' | 'auto';
+
+export interface Review {
+  id: string;
+  van: string;
+  sterren: number;
+  tekst: string;
+  /** Unix-tijd in ms */
+  datum: number;
+}
+
+export interface Verificatie {
+  identiteit: boolean;
+  verzekering: boolean;
+  uitbetaling: boolean;
+  /** Verklaring Omtrent het Gedrag: open punt of dit gevraagd mag worden */
+  vog: boolean;
+}
+
+export interface Uitlater {
+  id: string;
+  voornaam: string;
+  leeftijd: number;
+  /** Wijk of plaats, nooit het adres */
+  wijk: string;
+  bio: string;
+  ervaring: string;
+  /** Professionele uitlaatservice met KvK-nummer, of particulier */
+  professioneel: boolean;
+  bedrijfsnaam?: string;
+  /** Eigen tarief van de uitlater in centen, per wandelduur */
+  tarieven: Record<Duur, number>;
+  /** Toeslag per extra hond van hetzelfde huishouden, in centen */
+  toeslagExtraHond: number;
+  maxHonden: number;
+  werkgebiedKm: number;
+  vervoer: Vervoer;
+  beschikbaarheid: Beschikbaarheid;
+  verificatie: Verificatie;
+  beoordeling: number;
+  aantalBeoordelingen: number;
+  aantalWandelingen: number;
+  reageertBinnen: string;
+  reviews: Review[];
+  positie: Punt;
+  online: boolean;
+  kleur: [string, string];
+}
+
+/** Hondeneigenaar zoals een uitlater die ziet (demo-klanten in uitlatermodus) */
+export interface Klant {
+  id: string;
+  voornaam: string;
+  wijk: string;
+  adres: string;
+  positie: Punt;
+  honden: Hond[];
+  beoordeling: number;
+}
+
+export type Moment =
+  | { type: 'nu' }
+  | { type: 'later'; tijdstip: number }
+  | { type: 'wekelijks'; dagen: Dag[]; tijd: string };
+
+export type Betaalmethode = 'ideal' | 'applepay' | 'kaart';
+export type Sleutel = 'thuis' | 'kastje' | 'overhandigd';
+
+export interface PrijsOpbouw {
+  /** Alle bedragen in centen */
+  tarief: number;
+  toeslag: number;
+  servicekosten: number;
+  /** Wat de eigenaar betaalt, zonder fooi */
+  totaal: number;
+  commissie: number;
+  /** Wat de uitlater ontvangt, zonder fooi */
+  uitbetaling: number;
+}
+
+export type BoekingStatus =
+  | 'aangevraagd'
+  | 'gepland'
+  | 'onderweg'
+  | 'aangekomen'
+  | 'bezig'
+  | 'afgerond'
+  | 'geannuleerd'
+  | 'geweigerd';
+
+export type GebeurtenisSoort = 'start' | 'foto' | 'plas' | 'poep' | 'water' | 'notitie' | 'einde' | 'incident';
+
+export interface WandelGebeurtenis {
+  id: string;
+  soort: GebeurtenisSoort;
+  tijd: number;
+  /** Plek op de wandelroute, van 0 tot 1 */
+  voortgang: number;
+  tekst?: string;
+  /** Plaatsvervanger voor een foto */
+  kleur?: [string, string];
+}
+
+export interface Beoordeling {
+  sterren: number;
+  tags: string[];
+  tekst: string;
+}
+
+export interface Boeking {
+  id: string;
+  soort: 'wandeling' | 'kennismaking';
+  /** Vanuit welke rol de gebruiker deze boeking ziet */
+  mijnRol: Rol;
+  uitlaterId: string;
+  /** Alleen in uitlatermodus: de eigenaar die boekt */
+  klantId?: string;
+  hondIds: string[];
+  duur: Duur;
+  moment: Moment;
+  serieId?: string;
+  ophaalPunt: Punt;
+  adres: string;
+  sleutel: Sleutel;
+  notitie: string;
+  betaalmethode: Betaalmethode;
+  prijs: PrijsOpbouw;
+  fooi: number;
+  status: BoekingStatus;
+  statusSinds: number;
+  aangemaakt: number;
+  /** Code die de eigenaar bij de overdracht aan de uitlater geeft */
+  ophaalcode: string;
+  startPositie: Punt;
+  routeNaarOphaal: Punt[];
+  wandelroute: Punt[];
+  gebeurtenissen: WandelGebeurtenis[];
+  scriptStap: number;
+  gestart?: number;
+  beeindigd?: number;
+  annuleringskosten?: number;
+  beoordelingDoorMij?: Beoordeling;
+  reden?: string;
+}
+
+export interface Serie {
+  id: string;
+  uitlaterId: string;
+  hondIds: string[];
+  duur: Duur;
+  dagen: Dag[];
+  tijd: string;
+  actief: boolean;
+  prijs: PrijsOpbouw;
+}
+
+export interface Bericht {
+  id: string;
+  van: 'ik' | 'ander';
+  tekst: string;
+  tijd: number;
+}
+
+export interface Gesprek {
+  /** Id van de ander: een uitlater of een klant */
+  id: string;
+  rol: Rol;
+  berichten: Bericht[];
+}
+
+export interface Gebruiker {
+  voornaam: string;
+  email: string;
+  postcode: string;
+  plaats: string;
+  /** Straat en huisnummer. Een uitlater ziet dit pas na een geaccepteerde boeking. */
+  adres: string;
+  /** Alleen in de demo: vaste plek op de kaart */
+  thuis: Punt;
+}
+
+export interface AppMelding {
+  id: string;
+  rol: Rol;
+  titel: string;
+  tekst: string;
+  icoon: 'checkmark-circle' | 'bicycle' | 'home' | 'camera' | 'walk' | 'notifications' | 'chatbubble' | 'alert-circle' | 'cash';
+  href?: string;
+  tijd: number;
+}
+
+export interface BoekConcept {
+  hondIds: string[];
+  duur: Duur;
+  moment: Moment;
+  uitlaterId: string | null;
+}

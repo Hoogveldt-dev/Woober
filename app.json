@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Woober",
+    "slug": "woober",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "nl.woober.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Woober gebruikt je locatie alleen tijdens een wandeling, zodat de eigenaar de route kan volgen.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Tijdens een wandeling blijft Woober je route vastleggen terwijl je telefoon in je zak zit. Na de wandeling stopt dit direct."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FF5A5F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "nl.woober.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": false
+          }
+        }
+      ]
+    ],
+    "scheme": "woober"
+  }
+}
