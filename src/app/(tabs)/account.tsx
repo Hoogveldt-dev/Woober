@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HondAvatar, PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie } from '../../components/blokken';
@@ -9,6 +9,7 @@ import { Chip, Knop, Kop, Melding, Veld } from '../../components/ui';
 import { euro } from '../../lib/prijs';
 import { leeftijdTekst } from '../../lib/tijd';
 import { procent } from '../../lib/verdienmodel';
+import { WOOFER_URL } from '../../lib/zusterapp';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
@@ -129,6 +130,7 @@ export default function Account() {
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="document-text" titel="Voorwaarden en privacy" sub="Volgt in de echte app" onPress={() => {}} />
           <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
+          <MenuRij icoon="heart" titel="Probeer ook Woofer" sub="Vind een fokpartner voor je hond" onPress={() => Linking.openURL(WOOFER_URL)} />
         </Blok>
 
         <View style={s.privacy}>
