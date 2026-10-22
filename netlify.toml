@@ -1,0 +1,14 @@
+# Web-app op Netlify (woober.nl). Netlify bouwt bij elke push naar main.
+[build]
+  command = "npx expo export -p web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# De web-app is één pagina (app.json: web.output "single"). Stuur elk adres
+# naar index.html zodat Expo Router de juiste pagina toont.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
