@@ -5,16 +5,21 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HondAvatar, PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie } from '../../components/blokken';
-import { Chip, Knop, Kop } from '../../components/ui';
+import { Chip, Knop, Kop, Melding, Veld } from '../../components/ui';
+import { euro } from '../../lib/prijs';
 import { leeftijdTekst } from '../../lib/tijd';
+import { procent } from '../../lib/verdienmodel';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, boekingen } = useApp();
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [bevestig, setBevestig] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeUitslag, setCodeUitslag] = useState<{ gelukt: boolean; tekst: string } | null>(null);
   if (!gebruiker) return null;
+  const uitnodigCode = `WOOBER-${gebruiker.voornaam.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 8)}`;
   const aantal = boekingen.filter((b) => b.mijnRol === 'eigenaar' && b.status === 'afgerond' && b.soort === 'betaald').length;
 
   return (
@@ -62,6 +67,57 @@ export default function Account() {
           <Chip label="Creditcard" icoon="card" actief={betaalmethode === 'kaart'} onPress={() => zetBetaalmethode('kaart')} />
         </View>
 
+        <Sectie>Tegoed en acties</Sectie>
+        <Blok>
+          <Rij label="Jouw tegoed" waarde={euro(tegoed)} sterk />
+          {verdienmodel.uitnodigingstegoed > 0 ? <Rij label="Jouw uitnodigingscode" waarde={uitnodigCode} /> : null}
+        </Blok>
+        {verdienmodel.uitnodigingstegoed > 0 ? (
+          <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(3), marginBottom: ruimte(4) }]}>
+            Nodig een buur uit: jullie krijgen allebei {euro(verdienmodel.uitnodigingstegoed)} tegoed zodra je buur de eerste wandeling heeft gemaakt.
+          </Text>
+        ) : null}
+        <Veld
+          label="Actiecode"
+          value={code}
+          onChangeText={(t) => {
+            setCode(t);
+            setCodeUitslag(null);
+          }}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholder="Bijvoorbeeld WOOBER5"
+          hulp="Tegoed betaalt Woober; je uitlater krijgt altijd het volledige bedrag. In de demo werken WOOBER5 en BUURT10."
+        />
+        <Knop
+          titel="Code verzilveren"
+          variant="secundair"
+          icoon="pricetag"
+          uitgeschakeld={!code.trim()}
+          onPress={() => {
+            const uitslag = verzilverCode(code);
+            setCodeUitslag(uitslag);
+            if (uitslag.gelukt) setCode('');
+          }}
+          stijl={{ marginBottom: ruimte(3) }}
+        />
+        {codeUitslag ? <Melding type={codeUitslag.gelukt ? 'goed' : 'fout'}>{codeUitslag.tekst}</Melding> : null}
+        <View style={{ height: ruimte(4) }} />
+
+        {verdienmodel.plus.aan ? (
+          <View style={s.plus}>
+            <View style={s.plusKop}>
+              <Ionicons name="star" size={18} color={kleuren.primair} />
+              <Text style={s.plusTitel}>{plus ? `Je hebt ${verdienmodel.plus.naam}` : verdienmodel.plus.naam}</Text>
+            </View>
+            <Text style={s.plusTekst}>
+              {verdienmodel.plus.servicekostenKorting >= 1 ? 'Geen servicekosten' : `${procent(verdienmodel.plus.servicekostenKorting)} korting op de servicekosten`} op elke wandeling en
+              oppas, voor {euro(verdienmodel.plus.prijsPerMaand)} per maand. Maandelijks opzegbaar. Je uitlater krijgt evenveel.
+            </Text>
+            <Knop titel={plus ? 'Plus stopzetten' : 'Plus proberen (demo)'} variant={plus ? 'secundair' : 'primair'} icoon={plus ? undefined : 'star'} onPress={() => zetPlus(!plus)} />
+          </View>
+        ) : null}
+
         <Sectie>Woober</Sectie>
         <Blok>
           <MenuRij
@@ -72,6 +128,7 @@ export default function Account() {
           />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="document-text" titel="Voorwaarden en privacy" sub="Volgt in de echte app" onPress={() => {}} />
+          <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
         </Blok>
 
         <View style={s.privacy}>
@@ -109,4 +166,8 @@ const s = StyleSheet.create({
   bevestigTitel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
   bevestigTekst: { fontSize: 14, color: kleuren.tekst, marginVertical: ruimte(3), lineHeight: 20 },
   versie: { fontSize: 12, color: '#A1A1AA', textAlign: 'center', marginTop: ruimte(6) },
+  plus: { padding: ruimte(4), borderRadius: radius.midden, backgroundColor: kleuren.primairVlak, marginBottom: ruimte(5), gap: ruimte(3) },
+  plusKop: { flexDirection: 'row', alignItems: 'center', gap: ruimte(2) },
+  plusTitel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
+  plusTekst: { fontSize: 14, color: kleuren.tekst, lineHeight: 20 },
 });

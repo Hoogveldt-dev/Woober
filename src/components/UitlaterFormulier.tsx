@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { berekenPrijs, DUREN, euro } from '../lib/prijs';
+import { procent } from '../lib/verdienmodel';
+import { useApp } from '../state/AppContext';
 import { DAGDELEN, DAGEN_KORT } from '../lib/tijd';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Beschikbaarheid, Dag, Dagdeel, Dienst, Uitlater, Vervoer, WandelDuur } from '../types';
@@ -20,6 +22,7 @@ function naarCenten(invoer: string): number | null {
 const naarInvoer = (centen: number) => (centen / 100).toFixed(2).replace('.', ',').replace(',00', '');
 
 export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitlater; knopTitel: string; onBewaar: (u: Uitlater) => void }) {
+  const { verdienmodel } = useApp();
   const [bio, setBio] = useState(begin.bio);
   const [ervaring, setErvaring] = useState(begin.ervaring);
   const [professioneel, setProfessioneel] = useState(begin.professioneel);
@@ -57,11 +60,11 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
 
   const voorbeeld =
     centen[30] !== null && toeslagCenten !== null
-      ? berekenPrijs({ tarieven: { 30: centen[30], 45: 0, 60: 0 }, oppasPerUur: 0, toeslagExtraHond: toeslagCenten }, 'uitlaten', 30, 1)
+      ? berekenPrijs({ tarieven: { 30: centen[30], 45: 0, 60: 0 }, oppasPerUur: 0, toeslagExtraHond: toeslagCenten }, 'uitlaten', 30, 1, verdienmodel)
       : null;
   const oppasVoorbeeld =
     oppasCenten !== null && toeslagCenten !== null
-      ? berekenPrijs({ tarieven: { 30: 0, 45: 0, 60: 0 }, oppasPerUur: oppasCenten, toeslagExtraHond: toeslagCenten }, 'oppas', 180, 1)
+      ? berekenPrijs({ tarieven: { 30: 0, 45: 0, 60: 0 }, oppasPerUur: oppasCenten, toeslagExtraHond: toeslagCenten }, 'oppas', 180, 1, verdienmodel)
       : null;
   const wisselDienst = (d: Dienst) => setDiensten((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
 
@@ -178,7 +181,10 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
         <Veld label="Toeslag per extra hond" value={toeslag} onChangeText={setToeslag} keyboardType="decimal-pad" hulp="Voor een tweede hond uit hetzelfde huishouden." fout={toon(fouten.toeslag)} />
         {voorbeeld && uitlaten ? (
           <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(2), marginBottom: ruimte(4) }]}>
-            Bij 30 minuten betaalt de eigenaar {euro(voorbeeld.totaal)} (inclusief servicekosten) en ontvang jij {euro(voorbeeld.uitbetaling)} na aftrek van commissie.
+            Bij 30 minuten betaalt de eigenaar {euro(voorbeeld.totaal)} en ontvang jij {euro(voorbeeld.uitbetaling)}.
+            {verdienmodel.commissiePercentage === 0
+              ? ` Tijdens de ${verdienmodel.naam.toLowerCase()} houdt Woober niets in.`
+              : ` Woober houdt ${procent(verdienmodel.commissiePercentage)} commissie in.`}
           </Text>
         ) : null}
 

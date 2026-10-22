@@ -1,5 +1,4 @@
-import type { BoekConcept, PrijsOpbouw, Punt, Uitlater } from '../types';
-import { berekenPrijs } from './prijs';
+import type { BoekConcept, Dienst, Moment, PrijsOpbouw, Punt, Uitlater } from '../types';
 import { lengte, routeTussen } from './route';
 import { reistijdMin } from './simulatie';
 import { dagdeelVan, dagVan } from './tijd';
@@ -31,7 +30,18 @@ function beschikbaarOp(u: Uitlater, concept: BoekConcept): string | null {
  * Lijst van uitlaters voor een boeking. De eigenaar kiest zelf; Woober sorteert alleen op wat de eigenaar kiest
  * (afstand, beoordeling of prijs) en verdeelt geen opdrachten.
  */
-export function uitlaterOpties(uitlaters: Uitlater[], thuis: Punt, concept: BoekConcept, bekend: string[], geblokkeerd: string[], sortering: Sortering): UitlaterOptie[] {
+type PrijsFunctie = (u: Uitlater, dienst: Dienst, duur: number, aantalHonden: number, moment: Moment) => PrijsOpbouw;
+
+export function uitlaterOpties(
+  uitlaters: Uitlater[],
+  thuis: Punt,
+  concept: BoekConcept,
+  bekend: string[],
+  geblokkeerd: string[],
+  sortering: Sortering,
+  /** Prijs volgens het actieve verdienmodel */
+  prijsVoor: PrijsFunctie,
+): UitlaterOptie[] {
   const lijst = uitlaters
     // Andere selectie per dienst, zoals ritsoorten bij Uber: alleen wie deze dienst aanbiedt
     .filter((u) => !geblokkeerd.includes(u.id) && u.diensten.includes(concept.dienst))
@@ -47,7 +57,7 @@ export function uitlaterOpties(uitlaters: Uitlater[], thuis: Punt, concept: Boek
         afstandM,
         beschikbaar: reden === null,
         reden: reden ?? undefined,
-        prijs: berekenPrijs(u, concept.dienst, concept.duur, Math.max(1, concept.hondIds.length)),
+        prijs: prijsVoor(u, concept.dienst, concept.duur, Math.max(1, concept.hondIds.length), concept.moment),
         bekend: bekend.includes(u.id),
       };
     });

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
-import { annuleringskosten, berekenPrijs, GRATIS, VERLENG_MINUTEN } from '../lib/prijs';
+import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
   ACCEPTEER_NA_MS,
@@ -19,6 +19,7 @@ import {
   wandelVoortgang,
 } from '../lib/simulatie';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
+import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
   AppMelding,
   Beoordeling,
@@ -31,6 +32,7 @@ import type {
   Gesprek,
   Hond,
   Klant,
+  PrijsOpbouw,
   Moment,
   Punt,
   Rol,
@@ -61,6 +63,15 @@ interface AppState {
   concept: BoekConcept | null;
   /** Aantal nagespeelde verzoeken in uitlatermodus, voor een vaste volgorde in de demo */
   verzoekTeller: number;
+  /** Actief verdienmodel. In de echte app kiest het team dit in de database, niet de gebruiker. */
+  verdienmodelId: VerdienmodelId;
+  /** Alleen voor de demo: drukte nabootsen om de drukte-toeslag te laten zien */
+  drukteNagebootst: boolean;
+  /** Eigenaar heeft het abonnement (Woober Plus) */
+  plus: boolean;
+  /** Tegoed van de eigenaar in centen, betaald door Woober (welkomst, uitnodiging, actiecode) */
+  tegoed: number;
+  gebruikteCodes: string[];
 }
 
 export interface Aanvraag {
@@ -87,6 +98,11 @@ interface AppActies {
   zetConcept: (c: BoekConcept | null) => void;
   zetBetaalmethode: (m: Betaalmethode) => void;
   vraagAan: (a: Aanvraag) => string;
+  zetVerdienmodel: (id: VerdienmodelId) => void;
+  zetDrukteNagebootst: (aan: boolean) => void;
+  zetPlus: (aan: boolean) => void;
+  /** Geeft een melding terug voor de gebruiker */
+  verzilverCode: (code: string) => { gelukt: boolean; tekst: string };
   vraagKennismakingAan: (uitlaterId: string, tijdstip: number, bericht: string) => string;
   annuleer: (id: string) => void;
   startNu: (id: string) => void;
@@ -109,6 +125,10 @@ interface AppActies {
   sluitMelding: (id: string) => void;
   accountVerwijderen: () => void;
 
+  /** Het actieve verdienmodel */
+  verdienmodel: Verdienmodel;
+  /** Prijs volgens het actieve verdienmodel, inclusief drukte en abonnement; met tegoed als metTegoed */
+  prijsVoor: (u: Uitlater, dienst: Dienst, duur: number, aantalHonden: number, moment: Moment, metTegoed?: boolean) => PrijsOpbouw;
   uitlater: (id: string) => Uitlater | undefined;
   klant: (id: string | undefined) => Klant | undefined;
   hondenVan: (b: Boeking) => Hond[];
@@ -144,7 +164,22 @@ const LEEG: AppState = {
   betaalmethode: 'ideal',
   concept: null,
   verzoekTeller: 0,
+  verdienmodelId: 'lancering',
+  drukteNagebootst: false,
+  plus: false,
+  tegoed: 0,
+  gebruikteCodes: [],
 };
+
+/** Actiecodes in de demo. In de echte app: tabel promocodes, te verzilveren via verzilver_code(). */
+const DEMO_CODES: Record<string, number> = { WOOBER5: 500, BUURT10: 1000 };
+
+/** Prijsinstellingen die horen bij de huidige staat: actief model, drukte en abonnement */
+function prijsExtra(s: AppState, dienst: Dienst, moment: Moment, nu = Date.now()): PrijsExtra {
+  const model = modelVoor(s.verdienmodelId);
+  const aantalOnline = s.uitlaters.filter((u) => u.online && u.diensten.includes(dienst)).length;
+  return { drukteFactor: drukteFactor(model, { dienst, moment, aantalOnline, nagebootst: s.drukteNagebootst, nu }), plus: s.plus };
+}
 
 export function standaardProfiel(voornaam: string): Uitlater {
   return {
@@ -255,7 +290,7 @@ function demoGeschiedenisEigenaar(thuis: Punt, adres: string, uitlaters: Uitlate
         duur,
         ophaalPunt: thuis,
         adres,
-        prijs: berekenPrijs(u(uitlaterId), dienst, duur, hondIds.length),
+        prijs: berekenPrijs(u(uitlaterId), dienst, duur, hondIds.length, modelVoor('lancering')),
         notitie: notities[dagen % notities.length].replace('{hond}', 'Luna'),
       },
       dagen,
@@ -297,7 +332,7 @@ function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
         duur,
         ophaalPunt: k.positie,
         adres: k.adres,
-        prijs: berekenPrijs(profiel, duur > 60 ? 'oppas' : 'uitlaten', duur, k.honden.length),
+        prijs: berekenPrijs(profiel, duur > 60 ? 'oppas' : 'uitlaten', duur, k.honden.length, modelVoor('lancering')),
       },
       dagen,
       uur,
@@ -338,7 +373,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [setState]);
 
   const aanmelden = useCallback((g: Gebruiker, rol: Rol) => {
-    setState((s) => ({ ...s, gebruiker: g, rol, mijnProfiel: rol === 'uitlater' ? null : s.mijnProfiel }));
+    setState((s) => ({
+      ...s,
+      gebruiker: g,
+      rol,
+      mijnProfiel: rol === 'uitlater' ? null : s.mijnProfiel,
+      tegoed: rol === 'eigenaar' ? s.tegoed + modelVoor(s.verdienmodelId).welkomsttegoed : s.tegoed,
+    }));
   }, [setState]);
 
   const demoStart = useCallback((rol: Rol) => {
@@ -373,8 +414,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const eigenaarHistorie = demoGeschiedenisEigenaar(DEMO_THUIS, DEMO_ADRES, uitlaters);
     const uitlaterHistorie = demoGeschiedenisUitlater(profiel);
     const nu = Date.now();
-    setState({
+    setState((oud) => ({
       ...LEEG,
+      verdienmodelId: oud.verdienmodelId,
+      drukteNagebootst: oud.drukteNagebootst,
       gebruiker,
       rol,
       honden: DEMO_EIGEN_HONDEN,
@@ -397,7 +440,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           berichten: [{ id: 'm3', van: 'ander', tekst: 'Dank je voor de foto’s vanochtend, Bo was helemaal blij!', tijd: nu - 5 * 3600000 }],
         },
       ],
-    });
+    }));
     setWachtSinds(Date.now());
   }, [setState]);
 
@@ -420,13 +463,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const s = ref.current.state;
     const u = uitlaterUit(s, a.uitlaterId);
     if (!s.gebruiker || !u) return '';
-    const prijs = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length);
+    const model = modelVoor(s.verdienmodelId);
+    const extraPrijs = prijsExtra(s, a.dienst, a.moment);
+    // Een vaste afspraak krijgt telkens de prijs zonder tegoed; het tegoed gaat alleen van de eerste keer af
+    const zonderTegoed = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, extraPrijs);
+    const prijs = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, { ...extraPrijs, tegoed: s.tegoed });
     let serieId: string | undefined;
     let moment = a.moment;
     let serie: Serie | null = null;
     if (a.moment.type === 'wekelijks') {
       serieId = nieuwId('s');
-      serie = { id: serieId, uitlaterId: a.uitlaterId, dienst: a.dienst, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs };
+      serie = { id: serieId, uitlaterId: a.uitlaterId, dienst: a.dienst, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs: zonderTegoed };
       moment = { type: 'later', tijdstip: volgendeKeer(a.moment.dagen, a.moment.tijd, Date.now()) };
     }
     const b = basisBoeking({
@@ -446,7 +493,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prijs,
       startPositie: u.positie,
     });
-    setState((st) => ({ ...st, boekingen: [...st.boekingen, b], series: serie ? [...st.series, serie] : st.series, betaalmethode: a.betaalmethode }));
+    setState((st) => ({
+      ...st,
+      boekingen: [...st.boekingen, b],
+      series: serie ? [...st.series, serie] : st.series,
+      betaalmethode: a.betaalmethode,
+      tegoed: Math.max(0, st.tegoed - prijs.korting),
+    }));
     return b.id;
   }, [setState]);
 
@@ -476,13 +529,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const annuleer = useCallback(
     (id: string) =>
-      wijzigBoeking(id, (b) => ({
-        ...b,
-        status: 'geannuleerd',
-        statusSinds: Date.now(),
-        annuleringskosten: b.mijnRol === 'eigenaar' ? annuleringskosten(b, Date.now()) : 0,
-      })),
-    [wijzigBoeking],
+      setState((s) => {
+        const b = s.boekingen.find((x) => x.id === id);
+        if (!b) return s;
+        const kosten = b.mijnRol === 'eigenaar' ? annuleringskosten(b, Date.now()) : 0;
+        // Gratis geannuleerd: gebruikt tegoed komt terug
+        const terug = b.mijnRol === 'eigenaar' && kosten === 0 ? b.prijs.korting : 0;
+        return {
+          ...s,
+          tegoed: s.tegoed + terug,
+          boekingen: s.boekingen.map((x) => (x.id === id ? { ...x, status: 'geannuleerd', statusSinds: Date.now(), annuleringskosten: kosten } : x)),
+        };
+      }),
+    [setState],
   );
 
   const startNu = useCallback(
@@ -669,7 +728,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           ...b,
           duur,
-          prijs: berekenPrijs(u, 'oppas', duur, b.hondIds.length),
+          // Zelfde verdienmodel, drukte en korting als bij het boeken
+          prijs: berekenPrijs(u, 'oppas', duur, b.hondIds.length, modelVoor(b.prijs.modelId), {
+            drukteFactor: b.prijs.drukteFactor,
+            plus: b.prijs.plus,
+            tegoed: b.prijs.korting,
+          }),
           gebeurtenissen: [
             ...b.gebeurtenissen,
             { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Verlengd tot ${duurTekst(duur)}` },
@@ -735,8 +799,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const accountVerwijderen = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
-    setState({ ...LEEG, uitlaters: maakDemoUitlaters() });
+    setState((oud) => ({ ...LEEG, uitlaters: maakDemoUitlaters(), verdienmodelId: oud.verdienmodelId, drukteNagebootst: oud.drukteNagebootst }));
   }, [setState]);
+
+  // Verdienmodel en tegoed
+
+  const zetVerdienmodel = useCallback((id: VerdienmodelId) => zet('verdienmodelId', () => id), [zet]);
+  const zetDrukteNagebootst = useCallback((aan: boolean) => zet('drukteNagebootst', () => aan), [zet]);
+  const zetPlus = useCallback((aan: boolean) => zet('plus', () => aan), [zet]);
+  const verzilverCode = useCallback(
+    (invoer: string) => {
+      const code = invoer.trim().toUpperCase();
+      const bedrag = DEMO_CODES[code];
+      const s = ref.current.state;
+      if (!bedrag) return { gelukt: false, tekst: 'Deze code kennen we niet.' };
+      if (s.gebruikteCodes.includes(code)) return { gelukt: false, tekst: 'Deze code heb je al gebruikt.' };
+      setState((st) => ({ ...st, tegoed: st.tegoed + bedrag, gebruikteCodes: [...st.gebruikteCodes, code] }));
+      return { gelukt: true, tekst: `Gelukt! Er staat ${euro(bedrag)} extra tegoed voor je klaar.` };
+    },
+    [setState],
+  );
+
+  const verdienmodel = modelVoor(state.verdienmodelId);
+  const prijsVoor = useCallback(
+    (u: Uitlater, dienst: Dienst, duur: number, aantalHonden: number, moment: Moment, metTegoed = false) =>
+      berekenPrijs(u, dienst, duur, aantalHonden, modelVoor(state.verdienmodelId), {
+        ...prijsExtra(state, dienst, moment),
+        tegoed: metTegoed ? state.tegoed : 0,
+      }),
+    [state],
+  );
 
   const uitlater = useCallback((id: string) => uitlaterUit(state, id), [state]);
   const klant = useCallback((id: string | undefined) => DEMO_KLANTEN.find((k) => k.id === id), []);
@@ -768,6 +860,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zetConcept,
     zetBetaalmethode,
     vraagAan,
+    zetVerdienmodel,
+    zetDrukteNagebootst,
+    zetPlus,
+    verzilverCode,
+    verdienmodel,
+    prijsVoor,
     vraagKennismakingAan,
     annuleer,
     startNu,
@@ -878,7 +976,7 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
     adres: k.adres,
     sleutel: volgnummer % 2 === 0 ? 'thuis' : 'kastje',
     notitie: k.honden[0].bijzonderheden,
-    prijs: kennismaking ? GRATIS : berekenPrijs(profiel, dienst, duur, k.honden.length),
+    prijs: kennismaking ? GRATIS : berekenPrijs(profiel, dienst, duur, k.honden.length, modelVoor(s.verdienmodelId), prijsExtra(s, dienst, moment)),
     startPositie: profiel.positie,
   });
 }
@@ -940,6 +1038,7 @@ function stapEigenaar(s: AppState, b: Boeking, nu: number, extra: Boeking[]): Bo
               statusSinds: nu,
               aangemaakt: nu,
               moment: { type: 'later', tijdstip: volgendeKeer(serie.dagen, serie.tijd, nu + 3600000) },
+              prijs: serie.prijs,
               ophaalcode: maakOphaalcode(),
               routeNaarOphaal: [],
               wandelroute: [],

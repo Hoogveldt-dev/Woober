@@ -176,7 +176,9 @@ export default function Werk() {
         )}
         {!kennismaking ? (
           <Text style={s.verdienSub}>
-            Jouw tarief {euro(openVerzoek.prijs.tarief + openVerzoek.prijs.toeslag)}, min {euro(openVerzoek.prijs.commissie)} commissie. Het adres zie je na accepteren.
+            Jouw tarief {euro(openVerzoek.prijs.tarief + openVerzoek.prijs.toeslag)}
+            {openVerzoek.prijs.drukteUitlater > 0 ? `, plus ${euro(openVerzoek.prijs.drukteUitlater)} drukte-bonus` : ''}
+            {openVerzoek.prijs.commissie > 0 ? `, min ${euro(openVerzoek.prijs.commissie)} commissie` : ', zonder commissie'}. Het adres zie je na accepteren.
           </Text>
         ) : null}
         <View style={s.knoppen}>

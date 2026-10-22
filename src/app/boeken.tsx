@@ -6,10 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HondAvatar, PersoonAvatar } from '../components/avatars';
 import { Segment, Sterren } from '../components/blokken';
 import { Kaart, type KaartMarker } from '../components/Kaart';
-import { Badge, Chip, Knop, Label } from '../components/ui';
+import { Badge, Chip, Knop, Label, Melding } from '../components/ui';
 import { DUREN, euro, euroKort, OPPAS_DUREN } from '../lib/prijs';
 import { formatAfstand } from '../lib/route';
 import { DAGEN_KORT, dagVan, duurTekst, tijdstipOp, tijdTekst } from '../lib/tijd';
+import { factorTekst } from '../lib/verdienmodel';
 import { uitlaterOpties, type Sortering, type UitlaterOptie } from '../lib/zoeken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
@@ -61,7 +62,7 @@ function OptieRij({ o, gekozen, onKies, onInfo, dienst }: { o: UitlaterOptie; ge
 
 export default function Boeken() {
   const router = useRouter();
-  const { concept, zetConcept, honden, gebruiker, uitlaters, bekend, geblokkeerd } = useApp();
+  const { concept, zetConcept, honden, gebruiker, uitlaters, bekend, geblokkeerd, prijsVoor, verdienmodel } = useApp();
   const [nu] = useState(() => Date.now());
 
   const [dienst, setDienst] = useState<Dienst>(concept?.dienst ?? 'uitlaten');
@@ -85,13 +86,16 @@ export default function Boeken() {
 
   const huidigConcept = { dienst, hondIds, duur, moment, uitlaterId: gekozen };
   const opties = useMemo(
-    () => (gebruiker ? uitlaterOpties(uitlaters, gebruiker.thuis, { dienst, hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering) : []),
-    [uitlaters, gebruiker, dienst, hondIds, duur, moment, bekend, geblokkeerd, sortering],
+    () =>
+      gebruiker ? uitlaterOpties(uitlaters, gebruiker.thuis, { dienst, hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering, prijsVoor) : [],
+    [uitlaters, gebruiker, dienst, hondIds, duur, moment, bekend, geblokkeerd, sortering, prijsVoor],
   );
   if (!gebruiker) return null;
 
   const keuze = opties.find((o) => o.u.id === gekozen && o.beschikbaar);
   const beschikbaar = opties.filter((o) => o.beschikbaar);
+  const drukte = Math.max(1, ...beschikbaar.map((o) => o.prijs.drukteFactor));
+  const zonderServicekosten = verdienmodel.servicekostenPercentage === 0 && verdienmodel.boekingskosten === 0;
 
   const laterDag = moment.type === 'later' ? Math.round((new Date(moment.tijdstip).setHours(0, 0, 0, 0) - new Date(nu).setHours(0, 0, 0, 0)) / 86400000) : 0;
   const laterTijd = moment.type === 'later' ? `${String(new Date(moment.tijdstip).getHours()).padStart(2, '0')}:${String(new Date(moment.tijdstip).getMinutes()).padStart(2, '0')}` : '';
@@ -253,6 +257,14 @@ export default function Boeken() {
           </Text>
         ) : null}
 
+        {drukte > 1 ? (
+          <View style={{ marginTop: ruimte(5) }}>
+            <Melding type="waarschuwing">
+              Het is druk in de buurt: prijzen zijn tijdelijk {factorTekst(drukte)} zo hoog. Het grootste deel van de toeslag gaat naar de {wie}.
+            </Melding>
+          </View>
+        ) : null}
+
         <View style={s.sorteerRij}>
           <Text style={s.aantal}>{beschikbaar.length} beschikbaar</Text>
           <View style={s.rij}>
@@ -275,9 +287,9 @@ export default function Boeken() {
           ))}
         </View>
         <Text style={s.uitleg}>
-          {oppas
-            ? 'Je ziet alleen mensen die oppas aan huis aanbieden. Prijzen zijn inclusief servicekosten; elke oppas bepaalt zelf het uurtarief. Bij iemand nieuw plan je eerst een gratis kennismaking.'
-            : 'Prijzen zijn inclusief servicekosten. Elke uitlater bepaalt zelf het tarief. Voor de eerste wandeling met een nieuwe uitlater plan je eerst een gratis kennismaking.'}
+          {oppas ? 'Je ziet alleen mensen die oppas aan huis aanbieden. ' : ''}
+          {zonderServicekosten ? `Tijdens de ${verdienmodel.naam.toLowerCase()} betaal je alleen het tarief van de ${wie}, zonder servicekosten. ` : 'Prijzen zijn inclusief servicekosten. '}
+          Elke {wie} bepaalt zelf het tarief. Bij iemand nieuw plan je eerst een gratis kennismaking.
         </Text>
       </ScrollView>
 

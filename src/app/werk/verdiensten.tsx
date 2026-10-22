@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Blok, gedeeldeStijl, Rij, Sectie } from '../../components/blokken';
 import { Kop, Melding } from '../../components/ui';
-import { COMMISSIE_PERCENTAGE, euro } from '../../lib/prijs';
+import { euro } from '../../lib/prijs';
+import { procent } from '../../lib/verdienmodel';
 import { DAGEN_KORT, dagTekst, dagVan, duurTekst, tijdTekst } from '../../lib/tijd';
 import { afgerondeOpdrachten, verdiend, verdiendOp } from '../../lib/verdiensten';
 import { useApp } from '../../state/AppContext';
@@ -12,7 +13,7 @@ import { kleuren, ruimte } from '../../theme';
 const GRAFIEK_HOOGTE = 140;
 
 export default function Verdiensten() {
-  const { boekingen, klant } = useApp();
+  const { boekingen, klant, verdienmodel } = useApp();
   const [nu] = useState(() => Date.now());
   const dagen = Array.from({ length: 7 }, (_, i) => new Date(nu - (6 - i) * 86400000));
   const bedragen = dagen.map((d) => verdiendOp(boekingen, d));
@@ -24,6 +25,7 @@ export default function Verdiensten() {
   const fooien = deWeek.reduce((t, b) => t + b.fooi, 0);
   const commissie = deWeek.reduce((t, b) => t + b.prijs.commissie, 0);
   const bruto = deWeek.reduce((t, b) => t + b.prijs.tarief + b.prijs.toeslag, 0);
+  const drukteBonus = deWeek.reduce((t, b) => t + b.prijs.drukteUitlater, 0);
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
@@ -50,10 +52,16 @@ export default function Verdiensten() {
         <Sectie>Deze week</Sectie>
         <Blok>
           <Rij label="Jouw tarieven" waarde={euro(bruto)} />
-          <Rij label={`Commissie Woober (${Math.round(COMMISSIE_PERCENTAGE * 100)}%)`} waarde={`-${euro(commissie)}`} />
+          {drukteBonus > 0 ? <Rij label="Drukte-bonus" waarde={euro(drukteBonus)} /> : null}
+          <Rij label="Commissie Woober" waarde={`-${euro(commissie)}`} />
           <Rij label="Fooien (100% voor jou)" waarde={euro(fooien)} />
           <Rij label="Uitbetaald" waarde={euro(week)} sterk />
         </Blok>
+        <Melding type={verdienmodel.commissiePercentage === 0 ? 'goed' : 'info'}>
+          {verdienmodel.commissiePercentage === 0
+            ? `Tijdens de ${verdienmodel.naam.toLowerCase()} houdt Woober geen commissie in: je tarief is helemaal voor jou.`
+            : `Woober houdt nu ${procent(verdienmodel.commissiePercentage)} commissie in. Wijzigingen hoor je minstens 15 dagen van tevoren.`}
+        </Melding>
         <Melding type="info">
           Na elke wandeling zet Woober je geld klaar; Stripe maakt het over naar je eigen rekening, meestal binnen een paar werkdagen. Je bent zelf verantwoordelijk voor de belastingaangifte van je inkomsten.
         </Melding>

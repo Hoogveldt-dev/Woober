@@ -115,16 +115,37 @@ export type Moment =
 export type Betaalmethode = 'ideal' | 'applepay' | 'kaart';
 export type Sleutel = 'thuis' | 'kastje' | 'overhandigd';
 
+/**
+ * Prijs van één boeking, in centen. Wordt bij de boeking bewaard, met het verdienmodel waarmee hij is berekend,
+ * zodat een latere wijziging van het model niets verandert aan eerdere boekingen.
+ */
 export interface PrijsOpbouw {
-  /** Alle bedragen in centen */
+  /** Verdienmodel waarmee deze prijs is berekend (zie src/lib/verdienmodel.ts) */
+  modelId: string;
+  /** Eigen tarief van de uitlater */
   tarief: number;
+  /** Toeslag voor extra honden, ook door de uitlater bepaald */
   toeslag: number;
+  /** Drukte-factor op het moment van boeken; 1 betekent geen drukte */
+  drukteFactor: number;
+  /** Drukte-toeslag bovenop tarief en toeslag */
+  drukte: number;
+  /** Deel van de drukte-toeslag dat naar de uitlater gaat */
+  drukteUitlater: number;
   servicekosten: number;
+  /** Eigenaar had het abonnement (Woober Plus) en kreeg daardoor korting op de servicekosten */
+  plus: boolean;
+  /** Vast bedrag per boeking voor de eigenaar */
+  boekingskosten: number;
+  /** Tegoed of korting, betaald door Woober */
+  korting: number;
   /** Wat de eigenaar betaalt, zonder fooi */
   totaal: number;
   commissie: number;
   /** Wat de uitlater ontvangt, zonder fooi */
   uitbetaling: number;
+  /** Wat Woober overhoudt vóór betaalkosten; negatief als Woober korting geeft */
+  platform: number;
 }
 
 export type BoekingStatus =

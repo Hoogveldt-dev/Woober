@@ -5,7 +5,8 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { HondenStapel, PersoonAvatar } from '../components/avatars';
 import { Blok, gedeeldeStijl, Rij, Sterren, Vinkje } from '../components/blokken';
 import { Chip, Knop, Label, Melding, Veld } from '../components/ui';
-import { ANNULERINGSDEEL, berekenPrijs, euro, GRATIS_ANNULEREN_UUR } from '../lib/prijs';
+import { PrijsRegels } from '../components/PrijsRegels';
+import { ANNULERINGSDEEL, euro, GRATIS_ANNULEREN_UUR } from '../lib/prijs';
 import { duurTekst, momentTekst, tijdTekst } from '../lib/tijd';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
@@ -19,7 +20,7 @@ const METHODES: { id: Betaalmethode; titel: string; icoon: ComponentProps<typeof
 
 export default function Bevestigen() {
   const router = useRouter();
-  const { concept, uitlater, honden, gebruiker, betaalmethode, vraagAan } = useApp();
+  const { concept, uitlater, honden, gebruiker, betaalmethode, vraagAan, prijsVoor, tegoed } = useApp();
   const u = concept?.uitlaterId ? uitlater(concept.uitlaterId) : undefined;
   const [sleutel, setSleutel] = useState<Sleutel>('thuis');
   const [notitie, setNotitie] = useState('');
@@ -31,7 +32,8 @@ export default function Bevestigen() {
 
   const gekozenHonden = honden.filter((h) => concept.hondIds.includes(h.id));
   const oppas = concept.dienst === 'oppas';
-  const prijs = berekenPrijs(u, concept.dienst, concept.duur, gekozenHonden.length);
+  // Prijs volgens het actieve verdienmodel; eventueel tegoed gaat er direct af
+  const prijs = prijsVoor(u, concept.dienst, concept.duur, gekozenHonden.length, concept.moment, true);
   const wekelijks = concept.moment.type === 'wekelijks';
   const keer = oppas ? 'oppas' : 'wandeling';
   const start = concept.moment.type === 'later' ? concept.moment.tijdstip : concept.moment.type === 'nu' ? nu : null;
@@ -120,14 +122,22 @@ export default function Bevestigen() {
 
         <Label>{wekelijks ? `Prijs per ${keer}` : 'Prijs'}</Label>
         <Blok>
-          <Rij
-            label={oppas ? `${u.voornaam}, ${duurTekst(concept.duur)} à ${euro(u.oppasPerUur)} per uur` : `Tarief ${u.voornaam}, ${concept.duur} min`}
-            waarde={euro(prijs.tarief)}
+          <PrijsRegels
+            prijs={prijs}
+            tariefLabel={oppas ? `${u.voornaam}, ${duurTekst(concept.duur)} à ${euro(u.oppasPerUur)} per uur` : `Tarief ${u.voornaam}, ${concept.duur} min`}
+            aantalHonden={gekozenHonden.length}
           />
-          {prijs.toeslag > 0 ? <Rij label={`Extra hond${gekozenHonden.length > 2 ? 'en' : ''}`} waarde={euro(prijs.toeslag)} /> : null}
-          <Rij label="Servicekosten Woober" waarde={euro(prijs.servicekosten)} />
-          <Rij label="Totaal" waarde={euro(prijs.totaal)} sterk />
         </Blok>
+        {prijs.drukte > 0 ? (
+          <Melding type="waarschuwing">
+            Het is druk: er is nu meer vraag dan aanbod. Van de drukte-toeslag gaat {euro(prijs.drukteUitlater)} naar {u.voornaam}.
+          </Melding>
+        ) : null}
+        {prijs.korting > 0 ? (
+          <Melding type="goed">
+            {euro(prijs.korting)} van je tegoed gaat eraf{wekelijks ? ', alleen bij de eerste keer' : ''}. {tegoed > prijs.korting ? ` Je houdt ${euro(tegoed - prijs.korting)} over.` : ' Daarmee is je tegoed op.'}
+          </Melding>
+        ) : null}
 
         <Melding type="info">
           {wekelijks

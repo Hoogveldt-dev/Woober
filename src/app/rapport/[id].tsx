@@ -2,9 +2,10 @@ import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HondenStapel, PersoonAvatar } from '../../components/avatars';
-import { Blok, gedeeldeStijl, Rij, Sectie, SterrenKiezer, Tegel } from '../../components/blokken';
+import { Blok, gedeeldeStijl, Sectie, SterrenKiezer, Tegel } from '../../components/blokken';
 import { Kaart } from '../../components/Kaart';
 import { Chip, Knop, Melding, Veld } from '../../components/ui';
+import { PrijsRegels } from '../../components/PrijsRegels';
 import { WandelFeed } from '../../components/WandelFeed';
 import { REVIEW_TAGS_OPPAS, REVIEW_TAGS_UITLATER } from '../../data/uitlaters';
 import { boekingOpKaart } from '../../lib/kaartLagen';
@@ -91,11 +92,13 @@ export default function Rapport() {
         <View style={{ height: ruimte(4) }} />
         <Sectie>Betaling</Sectie>
         <Blok>
-          <Rij label={oppas ? `${u.voornaam}, ${duurTekst(b.duur)} oppas` : `Tarief ${u.voornaam}`} waarde={euro(b.prijs.tarief)} />
-          {b.prijs.toeslag > 0 ? <Rij label="Extra hond" waarde={euro(b.prijs.toeslag)} /> : null}
-          <Rij label="Servicekosten" waarde={euro(b.prijs.servicekosten)} />
-          {b.fooi > 0 ? <Rij label="Fooi" waarde={euro(b.fooi)} /> : null}
-          <Rij label={`Betaald met ${METHODE[b.betaalmethode]}`} waarde={euro(b.prijs.totaal + b.fooi)} sterk />
+          <PrijsRegels
+            prijs={b.prijs}
+            tariefLabel={oppas ? `${u.voornaam}, ${duurTekst(b.duur)} oppas` : `Tarief ${u.voornaam}`}
+            aantalHonden={b.hondIds.length}
+            fooi={b.fooi}
+            totaalLabel={`Betaald met ${METHODE[b.betaalmethode]}`}
+          />
         </Blok>
 
         {b.fooi === 0 ? (

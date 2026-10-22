@@ -12,7 +12,7 @@ import { kleuren, radius, ruimte } from '../../theme';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen } = useApp();
+  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, verdienmodel } = useApp();
   const [bevestig, setBevestig] = useState(false);
   if (!gebruiker || !mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
@@ -52,6 +52,7 @@ export default function UitlaterAccount() {
           />
           <MenuRij icoon="paw" titel="Mijn eigen hond laten uitlaten" sub={honden.length ? 'Wissel naar eigenaarmodus' : 'Maak een hondenprofiel aan'} onPress={() => wisselRol('eigenaar')} />
           <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, incidenten, regels" onPress={() => router.push('/veiligheid')} />
+          <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
         </Blok>
 
         <View style={s.privacy}>

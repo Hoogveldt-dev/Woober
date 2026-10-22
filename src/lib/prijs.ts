@@ -1,13 +1,10 @@
 import type { Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
+import type { Verdienmodel } from './verdienmodel';
 
 /**
- * Verdienmodel (zie PLAN.md). De uitlater kiest zelf het tarief; Woober rekent daarbovenop
- * servicekosten aan de eigenaar en houdt commissie in op de uitbetaling. Beide percentages
- * zijn nog niet definitief en staan daarom hier op één plek.
+ * Prijsberekening. De uitlater kiest zelf het tarief; wat Woober daarbovenop rekent of inhoudt staat in het
+ * actieve verdienmodel (src/lib/verdienmodel.ts). Dezelfde regels staan in bereken_prijs() in de migratie.
  */
-export const SERVICEKOSTEN_PERCENTAGE = 0.1;
-export const SERVICEKOSTEN_MINIMUM = 99;
-export const COMMISSIE_PERCENTAGE = 0.1;
 
 /** Annuleren is gratis tot dit aantal uur voor een geplande wandeling */
 export const GRATIS_ANNULEREN_UUR = 2;
@@ -25,21 +22,81 @@ export function tariefVoor(uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur'>,
   return uitlater.tarieven[duur as WandelDuur] ?? 0;
 }
 
+export interface PrijsExtra {
+  /** Drukte-factor, 1 = geen drukte */
+  drukteFactor?: number;
+  /** Eigenaar heeft het abonnement (Woober Plus) */
+  plus?: boolean;
+  /** Beschikbaar tegoed van de eigenaar; wordt als korting gebruikt tot het totaal */
+  tegoed?: number;
+}
+
 export function berekenPrijs(
   uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur' | 'toeslagExtraHond'>,
   dienst: Dienst,
   duur: number,
   aantalHonden: number,
+  model: Verdienmodel,
+  extra: PrijsExtra = {},
 ): PrijsOpbouw {
   const tarief = tariefVoor(uitlater, dienst, duur);
   const toeslag = Math.max(0, aantalHonden - 1) * uitlater.toeslagExtraHond;
   const basis = tarief + toeslag;
-  const servicekosten = Math.max(SERVICEKOSTEN_MINIMUM, Math.round(basis * SERVICEKOSTEN_PERCENTAGE));
-  const commissie = Math.round(basis * COMMISSIE_PERCENTAGE);
-  return { tarief, toeslag, servicekosten, totaal: basis + servicekosten, commissie, uitbetaling: basis - commissie };
+
+  const drukteFactor = model.drukte.aan ? Math.max(1, Math.min(model.drukte.maxFactor, extra.drukteFactor ?? 1)) : 1;
+  const drukte = Math.round(basis * (drukteFactor - 1));
+  const drukteUitlater = Math.round(drukte * model.drukte.deelUitlater);
+
+  let servicekosten = 0;
+  const metPlus = Boolean(extra.plus) && model.plus.aan && model.servicekostenPercentage > 0;
+  if (model.servicekostenPercentage > 0) {
+    servicekosten = Math.max(model.servicekostenMinimum, Math.round((basis + drukte) * model.servicekostenPercentage));
+    if (model.servicekostenMaximum !== null) servicekosten = Math.min(model.servicekostenMaximum, servicekosten);
+    if (metPlus) servicekosten = Math.round(servicekosten * (1 - model.plus.servicekostenKorting));
+  }
+  const boekingskosten = model.boekingskosten;
+
+  const zonderKorting = basis + drukte + servicekosten + boekingskosten;
+  const korting = Math.max(0, Math.min(extra.tegoed ?? 0, zonderKorting));
+  const totaal = zonderKorting - korting;
+
+  const commissie = Math.round((basis + drukteUitlater) * model.commissiePercentage);
+  const uitbetaling = basis + drukteUitlater - commissie;
+  return {
+    modelId: model.id,
+    tarief,
+    toeslag,
+    drukteFactor,
+    drukte,
+    drukteUitlater,
+    servicekosten,
+    plus: metPlus,
+    boekingskosten,
+    korting,
+    totaal,
+    commissie,
+    uitbetaling,
+    platform: totaal - uitbetaling,
+  };
 }
 
-export const GRATIS: PrijsOpbouw = { tarief: 0, toeslag: 0, servicekosten: 0, totaal: 0, commissie: 0, uitbetaling: 0 };
+/** Prijs van een gratis kennismaking */
+export const GRATIS: PrijsOpbouw = {
+  modelId: 'kennismaking',
+  tarief: 0,
+  toeslag: 0,
+  drukteFactor: 1,
+  drukte: 0,
+  drukteUitlater: 0,
+  servicekosten: 0,
+  plus: false,
+  boekingskosten: 0,
+  korting: 0,
+  totaal: 0,
+  commissie: 0,
+  uitbetaling: 0,
+  platform: 0,
+};
 
 /** Kosten als de eigenaar nu annuleert */
 export function annuleringskosten(b: Boeking, nu: number): number {
