@@ -1,0 +1,194 @@
+# Woober: plan voor het eerste concept
+
+Oktober 2026 · versie 0.1 · hoort bij de klikbare demo in deze repository
+
+## In het kort
+
+Woober is het zusje van Woofer. Woofer brengt fokkers bij elkaar; Woober brengt hondeneigenaren en uitlaters bij elkaar, op de manier waarop Uber en Lyft een rit regelen: je opent de app, ziet uitlaters in de buurt op de kaart, boekt er een, volgt de wandeling live en betaalt en beoordeelt in de app.
+
+Zelfde huisstijl als Woofer (kleuren, verloop, knoppen, lettertype, toon), maar een eigen merk, een eigen repository en straks een eigen database.
+
+**De belangrijkste ontwerpkeuze**: het voelt als Uber, maar onder de motorkap is het een marktplaats. De uitlater bepaalt zelf tarief, werkgebied en werktijden en zegt vrij ja of nee; de eigenaar kiest zelf de uitlater. Woober wijst niets toe, stelt geen prijzen vast en straft niemand voor weigeren. Dat is nodig vanwege de Wet platformwerk (zie [Juridische keuzes in de code](#juridische-keuzes-in-de-code)). Het Uber-gevoel komt uit de vormgeving en de snelheid, niet uit de sturing.
+
+## Hoe Uber-elementen in Woober terugkomen
+
+| Uber of Lyft | Woober | Waarom zo |
+| --- | --- | --- |
+| Kaart met auto's in de buurt | Kaart met uitlaters die online zijn, met reistijd | Direct zien dat er iemand beschikbaar is |
+| "Waar wil je heen?" | "Wie laat Luna uit?" met snelkeuzes (nu 30 min, nu 60 min, later, elke week) | Boeken in twee tikken |
+| Kies UberX, Comfort, XL | Kies een uitlater uit een lijst, met eigen prijs, beoordeling en reistijd | Eigenaar kiest; geen automatische toewijzing |
+| Prijs vooraf | Prijs vooraf, maar het tarief komt van de uitlater | Platform bepaalt de vergoeding niet |
+| Chauffeur is onderweg, live op de kaart | Uitlater is onderweg, met aftellende minuten | Zelfde gevoel van zekerheid |
+| Pincode bij instappen | Ophaalcode van 4 cijfers bij de deur | Hond gaat alleen mee met de juiste persoon |
+| Live rit volgen | Live wandeling volgen met route, foto's, plas en poep | Kern van het vertrouwen |
+| Betalen in de app, fooi, sterren | Idem, fooi gaat volledig naar de uitlater | Geen contant geld, geen gedoe |
+| Chauffeursapp: online gaan, verzoek accepteren | Uitlatermodus: online gaan, verzoek accepteren of weigeren | Weigeren heeft geen gevolgen |
+| Acceptatiegraad, deactivatie door algoritme | **Bewust niet** | Raakt twee criteria van de Wet platformwerk |
+
+## Positionering
+
+De markt is niet leeg: Pawshake doet dit landelijk en er zijn veel lokale uitlaatservices. Woober onderscheidt zich op drie punten:
+
+1. **Nu uitlaten**: binnen een kwartier iemand aan de deur, zoals een taxi. Pawshake werkt met aanvragen vooraf.
+2. **Live meekijken**: route, foto's en een wandelrapport na afloop, standaard bij elke wandeling.
+3. **Vaste wekelijkse wandeling**: één keer instellen, daarna loopt het vanzelf, met dezelfde uitlater.
+
+Start in één stad (voorstel: Nijmegen, gelijk aan de Woofer-pilot). Eerst uitlaters werven, dan eigenaren.
+
+## Rollen en kernflows
+
+Eén account kan beide rollen hebben, zoals iemand die zelf een hond heeft en ook bijverdient. Wisselen gaat via Account.
+
+### Eigenaar
+
+1. Aanmelden: voornaam, e-mail, ophaaladres, 18 jaar of ouder, akkoord met voorwaarden.
+2. Hondenprofiel: naam, ras of kruising, geboortedatum, grootte, energie, aanlijnen, omgang met andere honden, karakter, bijzonderheden, dierenarts. Meer honden mogelijk.
+3. Startscherm: kaart met uitlaters in de buurt en de vraag "Wie laat je hond uit?".
+4. Uitlater kiezen: welke honden, wanneer (nu, later, elke week), hoe lang (30, 45 of 60 minuten), sorteren op afstand, beoordeling of prijs.
+5. Nieuwe uitlater? Eerst een gratis kennismaking van een kwartier. Bekende uitlater? Direct boeken.
+6. Bevestigen: sleutelafspraak, bericht, betaalmethode (iDEAL, Apple Pay, kaart), prijsopbouw, annuleringsregels.
+7. Live: aanvraag verstuurd, uitlater onderweg met aftellende minuten, ophaalcode, wandeling live met route en foto's, noodknop.
+8. Wandelrapport: route, duur, afstand, plas en poep, foto's, notitie van de uitlater, betaling, fooi en beoordeling. Daarna opnieuw boeken of er een vaste wandeling van maken.
+
+### Uitlater
+
+1. Aanmelden als uitlater en profiel invullen: over jou, ervaring, particulier of bedrijf met KvK, vervoer, **eigen tarief** per duur, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
+2. Verificatie: identiteit, aansprakelijkheidsverzekering en uitbetaalrekening verplicht; VOG optioneel. Pas daarna online.
+3. Online gaan met de grote knop op de kaart. Verzoeken uit de buurt verschijnen als kaart onderin, met hond, afstand, moment, duur en wat je ontvangt.
+4. Accepteren of weigeren. Weigeren heeft geen gevolgen en wordt niet geteld.
+5. Onderweg naar de eigenaar, "Ik ben er", ophaalcode invullen, wandeling starten.
+6. Tijdens de wandeling: foto, plas, poep, water en notitie met één tik; noodknop; beëindigen.
+7. Afronden: verdiensten zien en de eigenaar beoordelen. Overzicht per week onder Verdiensten.
+
+### Status van een boeking
+
+```mermaid
+stateDiagram-v2
+    [*] --> aangevraagd: eigenaar boekt
+    aangevraagd --> gepland: uitlater accepteert (later of wekelijks)
+    aangevraagd --> onderweg: uitlater accepteert (nu)
+    aangevraagd --> geweigerd: uitlater weigert, zonder gevolgen
+    gepland --> onderweg: tijd om te vertrekken
+    onderweg --> aangekomen: "Ik ben er"
+    aangekomen --> bezig: juiste ophaalcode
+    bezig --> afgerond: uitlater beëindigt
+    gepland --> afgerond: kennismaking gehad
+    aangevraagd --> geannuleerd
+    gepland --> geannuleerd
+    onderweg --> geannuleerd: kosten 50% van tarief
+    aangekomen --> geannuleerd: kosten 50% van tarief
+```
+
+## Wat de demo laat zien
+
+De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata in het geheugen; de andere kant (uitlater of eigenaar) wordt nagespeeld en de tijd loopt 30 keer sneller. Starten: zie [README.md](README.md).
+
+| Onderdeel | Bestand |
+| --- | --- |
+| Welkom met snelle demo als eigenaar of uitlater | `src/app/welkom.tsx` |
+| Aanmelden met rolkeuze | `src/app/aanmelden.tsx` |
+| Hondenprofiel | `src/components/HondFormulier.tsx`, `src/app/hond-aanmaken.tsx`, `src/app/hond/[id].tsx` |
+| Startscherm eigenaar met kaart | `src/app/(tabs)/index.tsx` |
+| Uitlater kiezen (de "Kies je rit"-stap) | `src/app/boeken.tsx`, `src/lib/zoeken.ts` |
+| Profiel van een uitlater | `src/app/uitlater/[id].tsx` |
+| Kennismaking aanvragen | `src/app/kennismaking.tsx` |
+| Bevestigen en betalen | `src/app/bevestigen.tsx` |
+| Live volgen, ophaalcode, noodknop | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
+| Wandelrapport, fooi, beoordeling | `src/app/rapport/[id].tsx` |
+| Activiteit en vaste wandelingen | `src/app/(tabs)/activiteit.tsx` |
+| Chat met signalering van betalen buiten de app | `src/app/chat/[id].tsx` |
+| Melden en blokkeren | `src/components/MeldenBlad.tsx` |
+| Uitlater: online gaan en verzoeken | `src/app/werk/index.tsx` |
+| Uitlater: opdracht uitvoeren | `src/app/opdracht/[id].tsx` |
+| Uitlater: verdiensten, opdrachten, profiel, verificatie | `src/app/werk/*`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
+| Veiligheid en hulp | `src/app/veiligheid.tsx` |
+| Kaart van de demowijk met routes | `src/components/Kaart.tsx`, `src/data/stad.ts`, `src/lib/route.ts` |
+| Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts` |
+| Simulatie van de andere kant | `src/lib/simulatie.ts`, `src/state/AppContext.tsx` |
+| Databaseschema met RLS (concept) | `supabase/migrations/`, test: `npm run test:db` |
+
+## Prijs en verdienmodel
+
+In de demo, aan te passen in `src/lib/prijs.ts`:
+
+- De uitlater kiest een tarief per 30, 45 en 60 minuten en een toeslag per extra hond.
+- De eigenaar betaalt daarbovenop **10% servicekosten** (minimaal €0,99).
+- Woober houdt **10% commissie** in op de uitbetaling aan de uitlater.
+- Fooi gaat volledig naar de uitlater.
+- Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is. Daarna krijgt de uitlater 50% van het tarief.
+
+Voorbeeld: Sanne vraagt €12 voor 30 minuten. De eigenaar betaalt €13,20, Sanne ontvangt €10,80, Woober houdt €2,40 over, waarvan de Stripe-kosten nog af gaan. Of het percentage aan beide kanten blijft, of alleen bij de eigenaar of alleen bij de uitlater, is een open vraag.
+
+Let op bij betalen: kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
+
+## Juridische keuzes in de code
+
+De Wet platformwerk (implementatie van Richtlijn (EU) 2024/2831, beoogd per 1 januari 2027) gaat uit van een arbeidsovereenkomst als twee van vijf criteria gelden. Zo houdt de demo daar rekening mee:
+
+| Criterium | Hoe Woober het vermijdt | Waar in de code |
+| --- | --- | --- |
+| Platform bepaalt de vergoeding | Uitlater kiest het tarief; Woober rekent alleen servicekosten en commissie | `UitlaterFormulier.tsx`, `prijs.ts`, `vraag_wandeling_aan()` |
+| Platform wijst werk toe | Eigenaar kiest de uitlater; sorteren alleen op de keuze van de eigenaar | `boeken.tsx`, `zoeken.ts` |
+| Toezicht op het werk | Route alleen zichtbaar voor de eigenaar tijdens de wandeling; niet gebruikt voor beoordeling | `kaartLagen.ts`, `veiligheid.tsx` |
+| Beperken van weigeren, ook via sancties | Weigeren en afzeggen zonder gevolgen; er wordt geen acceptatiegraad bijgehouden | `weiger()` in `AppContext.tsx`, `wijzig_status()` |
+| Richtlijnen opleggen | Alleen veiligheid en wettelijke regels (ophaalcode, aanlijnen, opruimplicht, maximum aantal honden) | `veiligheid.tsx` |
+
+Verder: meldingen en schorsingen beoordeelt altijd een mens, met uitleg en de mogelijkheid om te reageren. Reviews alleen na een betaalde wandeling. Adres pas zichtbaar na accepteren. Locatie alleen tijdens de wandeling, na 30 dagen weg.
+
+Twee punten blijven voor een arbeidsrechtspecialist: het rechtsvermoeden bij een uurtarief onder €38 (uitlaattarieven liggen daar meestal onder; tussen wie wordt dan een arbeidsovereenkomst vermoed?) en of de "Nu"-knop met snelle reactie als sturing kan worden gezien.
+
+## Van demo naar MVP
+
+De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wordt vervangen.
+
+| Nu in de demo | Straks in de MVP |
+| --- | --- |
+| Staat in het geheugen (`AppContext.tsx`) | Supabase in eu-central-1 met het schema in `supabase/migrations/`; Auth met e-mail, Apple en Google |
+| Andere kant nagespeeld (`simulatie.ts`) | Echte gebruikers; statuswijzigingen via de databasefuncties (`wijzig_status`, `start_wandeling`) |
+| Eigen SVG-kaart (`Kaart.tsx`) | `react-native-maps` of `expo-maps`; de props (markers, routes, focus) blijven gelijk, `Punt` wordt breedte- en lengtegraad |
+| Positie berekend uit de tijd | `expo-location` met achtergrondtaak, alleen tijdens `bezig`; posities via Supabase Realtime naar de eigenaar |
+| Betaling getoond | Stripe Connect: account per uitlater, platformvergoeding per boeking, webhooks via een Supabase Edge Function |
+| Verificatie afvinken | Stripe Identity voor ID, polis uploaden naar een privé-bucket, controle door een medewerker |
+| Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
+| Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
+| Melden en blokkeren lokaal | Moderatiescherm voor het team (eerst Supabase Studio, later een eigen beheerpagina) |
+
+Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 36 controles). Belangrijkste regels:
+
+- Prijzen berekent de database uit het tarief van de uitlater; de app stuurt nooit een bedrag mee.
+- Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
+- Verificatievelden kan alleen Woober zetten (kolomrechten).
+- Een eerste wandeling kan pas na een afgeronde kennismaking; boeken bij een geblokkeerde gebruiker kan niet.
+- Locatie toevoegen kan alleen tijdens een lopende wandeling, door de uitlater van die wandeling.
+
+### Volgorde van bouwen
+
+1. Supabase-project aanmaken (los van Woofer), migratie draaien, Auth instellen.
+2. Accounts, honden en uitlaatprofielen echt opslaan; demo-modus behouden voor presentaties.
+3. Boeken en statusovergangen via de databasefuncties, met Realtime.
+4. Echte kaart en locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer).
+5. Stripe Connect en iDEAL; eerst in testmodus.
+6. Pushmeldingen.
+7. Foto's, moderatie, account verwijderen inclusief data.
+8. Besloten test met een handvol uitlaters en eigenaren in de pilotstad.
+
+## Bewust nog niet in de demo
+
+- Groepswandelingen met honden van verschillende eigenaren
+- Oppas aan huis en logeeropvang
+- Direct boeken zonder acceptatie
+- Abonnement voor uitlaters
+- Koppeling met Woofer, zoals hetzelfde hondenprofiel
+- Echte foto's, echte locatie, echte betalingen en pushmeldingen
+
+## Open vragen
+
+- [ ] Servicekosten en commissie: beide 10%, of alles bij één kant?
+- [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.
+- [ ] Verzekering per uitlater of collectief via Woober?
+- [ ] Alleen particuliere uitlaters, of ook bedrijven met KvK? De demo laat beide zien.
+- [ ] Mag Woober een VOG vragen? In de demo optioneel.
+- [ ] Pilotstad: Nijmegen?
+- [ ] **Naam**: Woober lijkt in klank en schrijfwijze op Uber. Laat een merkenonderzoek doen (BOIP en EUIPO) voordat je investeert in het merk; grote merken treden vaak op tegen namen die op hun merk lijken.
+
+Dit plan is geen juridisch advies; laat het juridisch kader toetsen voor de lancering.

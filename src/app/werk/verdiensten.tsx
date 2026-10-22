@@ -55,7 +55,7 @@ export default function Verdiensten() {
           <Rij label="Uitbetaald" waarde={euro(week)} sterk />
         </Blok>
         <Melding type="info">
-          Uitbetaling op de eerstvolgende werkdag na een wandeling, via Stripe naar je eigen rekening. Je bent zelf verantwoordelijk voor de belastingaangifte van je inkomsten.
+          Na elke wandeling zet Woober je geld klaar; Stripe maakt het over naar je eigen rekening, meestal binnen een paar werkdagen. Je bent zelf verantwoordelijk voor de belastingaangifte van je inkomsten.
         </Melding>
 
         <Sectie>Afgeronde wandelingen</Sectie>

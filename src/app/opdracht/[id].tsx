@@ -237,7 +237,7 @@ export default function Opdracht() {
           {!kennismaking ? (
             <>
               <Text style={s.sub}>
-                {hondNamen} is weer thuis. Je ontvangt {euro(b.prijs.uitbetaling + b.fooi)} op de eerstvolgende werkdag.
+                {hondNamen} is weer thuis. Je ontvangt {euro(b.prijs.uitbetaling + b.fooi)}, via Stripe op je rekening.
               </Text>
               <View style={s.tegels}>
                 <Tegel waarde={`${Math.round(verstrekenMin(b, nu))} min`} label="duur" />

@@ -100,7 +100,9 @@ export default function Bevestigen() {
         <Melding type="info">
           {wekelijks
             ? `${u.voornaam} bevestigt de vaste wandeling. Je betaalt telkens pas na afloop van een wandeling.`
-            : 'We reserveren het bedrag nu en schrijven het pas af na de wandeling. Een fooi kan achteraf, die gaat volledig naar de uitlater.'}
+            : methode === 'ideal'
+              ? 'Met iDEAL betaal je direct. Annuleer je op tijd, dan krijg je alles terug. Een fooi kan achteraf, die gaat volledig naar de uitlater.'
+              : 'We reserveren het bedrag nu en schrijven het pas af na de wandeling. Een fooi kan achteraf, die gaat volledig naar de uitlater.'}
         </Melding>
         <Melding type="goed">
           {u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die schade tijdens het uitlaten dekt.

@@ -87,4 +87,4 @@ export const UITERWAARD_RAND = 182;
 /** Vaste demo-adressen */
 export const DEMO_THUIS: Punt = { x: 355, y: 570 };
 export const DEMO_ADRES = 'Molenstraat 24';
-export const DEMO_UITLATER_START: Punt = { x: 160, y: 760 };
+export const DEMO_UITLATER_START: Punt = { x: 250, y: 690 };
