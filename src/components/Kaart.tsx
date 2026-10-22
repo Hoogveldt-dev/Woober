@@ -15,16 +15,18 @@ import {
   XS,
   YS,
 } from '../data/stad';
+import { PLEK_SOORTEN } from '../lib/plekken';
 import { gladmaken, omvatting } from '../lib/route';
 import { kaartKleuren, kleuren, schaduw } from '../theme';
-import type { GebeurtenisSoort, Punt, Vervoer } from '../types';
+import type { GebeurtenisSoort, PlekSoort, Punt, Vervoer } from '../types';
 
 export type KaartMarker =
   | { id: string; soort: 'thuis' | 'klant'; punt: Punt; label?: string }
   | { id: string; soort: 'uitlater'; punt: Punt; naam: string; kleur: [string, string]; vervoer: Vervoer; bubbel?: string; actief?: boolean; onPress?: () => void }
   | { id: string; soort: 'hond'; punt: Punt; kleur: [string, string] }
   | { id: string; soort: 'ik'; punt: Punt }
-  | { id: string; soort: 'gebeurtenis'; punt: Punt; gebeurtenis: GebeurtenisSoort };
+  | { id: string; soort: 'gebeurtenis'; punt: Punt; gebeurtenis: GebeurtenisSoort }
+  | { id: string; soort: 'plek'; punt: Punt; naam: string; plekSoort: PlekSoort; actief?: boolean; onPress?: () => void };
 
 export interface KaartRoute {
   id: string;
@@ -310,6 +312,25 @@ function MarkerInhoud({ m }: { m: KaartMarker }) {
         </View>
       );
     }
+    case 'plek': {
+      const soort = PLEK_SOORTEN[m.plekSoort];
+      return (
+        <View style={s.midden}>
+          {m.actief ? (
+            <View style={s.bubbelVak}>
+              <View style={[s.bubbel, { backgroundColor: soort.kleur }]}>
+                <Text style={s.bubbelTekst} numberOfLines={1}>
+                  {m.naam}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+          <View style={[s.plek, schaduw, { backgroundColor: soort.kleur }, m.actief && s.plekActief]}>
+            <MaterialCommunityIcons name={soort.icoon} size={m.actief ? 20 : 16} color="#fff" />
+          </View>
+        </View>
+      );
+    }
   }
 }
 
@@ -326,6 +347,7 @@ export function Kaart({
   maxZoom = 0.95,
   minZoom = 0.3,
   vast,
+  onMidden,
   stijl,
 }: {
   markers?: KaartMarker[];
@@ -338,11 +360,14 @@ export function Kaart({
   minZoom?: number;
   /** Niet verschuifbaar, bijvoorbeeld binnen een scrollende pagina */
   vast?: boolean;
+  /** Na elke verschuiving het punt in het midden van het vrije deel, bijvoorbeeld onder een speld om een plek aan te wijzen */
+  onMidden?: (p: Punt) => void;
   stijl?: StyleProp<ViewStyle>;
 }) {
   const [maat, setMaat] = useState({ w: 0, h: 0 });
-  const [verschuiving, setVerschuiving] = useState({ x: 0, y: 0 });
-  const [sleep, setSleep] = useState({ x: 0, y: 0 });
+  // Vaste verschuiving plus de lopende sleepbeweging, in één staat zodat loslaten ze zuiver kan optellen
+  const [schuif, setSchuif] = useState({ x: 0, y: 0, sleepX: 0, sleepY: 0 });
+  const verschuiving = useMemo(() => ({ x: schuif.x, y: schuif.y }), [schuif.x, schuif.y]);
 
   const camera = useMemo(() => {
     const { w, h } = maat;
@@ -360,25 +385,30 @@ export function Kaart({
     const cy = (o.minY + o.maxY) / 2;
     const x0 = cx - w / 2 / z;
     const y0 = cy - (bovenmarge + beschikbaarH / 2) / z;
-    return { z, x0, y0 };
+    return { z, x0, y0, middenY: bovenmarge + beschikbaarH / 2 };
   }, [maat, focus, bovenmarge, ondermarge, maxZoom, minZoom]);
 
   const tekstSchaal = Math.round(Math.min(2.2, Math.max(1, 1 / camera.z)) * 5) / 5;
-  const dx = verschuiving.x + sleep.x;
-  const dy = verschuiving.y + sleep.y;
+  const dx = schuif.x + schuif.sleepX;
+  const dy = schuif.y + schuif.sleepY;
   const x0 = camera.x0 - dx / camera.z;
   const y0 = camera.y0 - dy / camera.z;
+
+  // Na loslaten, centreren of een andere camera het punt in het midden doorgeven
+  useEffect(() => {
+    if (!onMidden || maat.w === 0) return;
+    onMidden({ x: camera.x0 + (maat.w / 2 - verschuiving.x) / camera.z, y: camera.y0 + (camera.middenY - verschuiving.y) / camera.z });
+  }, [onMidden, camera, maat.w, verschuiving]);
 
   const pan = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
-        onPanResponderMove: (_e, g) => setSleep({ x: g.dx, y: g.dy }),
-        onPanResponderRelease: (_e, g) => {
-          setVerschuiving((v) => ({ x: v.x + g.dx, y: v.y + g.dy }));
-          setSleep({ x: 0, y: 0 });
-        },
-        onPanResponderTerminate: () => setSleep({ x: 0, y: 0 }),
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderMove: (_e, g) => setSchuif((v) => ({ ...v, sleepX: g.dx, sleepY: g.dy })),
+        // De laatste beweging telt; op het web geeft loslaten soms een verschuiving van 0 door
+        onPanResponderRelease: () => setSchuif((v) => ({ x: v.x + v.sleepX, y: v.y + v.sleepY, sleepX: 0, sleepY: 0 })),
+        onPanResponderTerminate: () => setSchuif((v) => ({ ...v, sleepX: 0, sleepY: 0 })),
       }),
     [],
   );
@@ -424,8 +454,8 @@ export function Kaart({
             return (
               <View key={m.id} style={[s.marker, { left: pos.left, top: pos.top }]} pointerEvents="box-none">
                 <View style={s.anker} pointerEvents="box-none">
-                  {m.soort === 'uitlater' && m.onPress ? (
-                    <Pressable onPress={m.onPress} accessibilityRole="button" accessibilityLabel={`Uitlater ${m.naam}`}>
+                  {(m.soort === 'uitlater' || m.soort === 'plek') && m.onPress ? (
+                    <Pressable onPress={m.onPress} accessibilityRole="button" accessibilityLabel={m.soort === 'uitlater' ? `Uitlater ${m.naam}` : m.naam} hitSlop={6}>
                       {inhoud}
                     </Pressable>
                   ) : (
@@ -437,7 +467,7 @@ export function Kaart({
           })}
           {verschoven ? (
             <Pressable
-              onPress={() => setVerschuiving({ x: 0, y: 0 })}
+              onPress={() => setSchuif({ x: 0, y: 0, sleepX: 0, sleepY: 0 })}
               accessibilityRole="button"
               accessibilityLabel="Kaart centreren"
               style={[s.centreer, schaduw, { bottom: ondermarge + 14 }]}
@@ -501,6 +531,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  plek: { width: 30, height: 30, borderRadius: 15, borderWidth: 2.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  plekActief: { width: 40, height: 40, borderRadius: 20, borderWidth: 3 },
   centreer: {
     position: 'absolute',
     right: 14,

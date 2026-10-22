@@ -274,3 +274,41 @@ export interface BoekConcept {
   moment: Moment;
   uitlaterId: string | null;
 }
+
+/** Plekken op de kaart voor hondeneigenaren en uitlaters */
+export type PlekSoort = 'losloop' | 'strand' | 'horeca' | 'overig';
+
+/** Review van een plek door een gebruiker. Eén per persoon per plek, aan te passen. */
+export interface PlekReview {
+  id: string;
+  /** Alleen de voornaam */
+  van: string;
+  sterren: number;
+  tekst: string;
+  /** Unix-tijd in ms */
+  datum: number;
+  /** Door de gebruiker zelf geschreven */
+  vanMij?: boolean;
+}
+
+export interface Plek {
+  id: string;
+  soort: PlekSoort;
+  naam: string;
+  punt: Punt;
+  omschrijving: string;
+  /** Korte feiten, zoals "Omheind" of "Waterbak bij de deur" */
+  kenmerken: string[];
+  /** Regels die per seizoen of tijdstip verschillen, zoals een strandverbod in de zomer */
+  regels?: string;
+  reviews: PlekReview[];
+  /** Voornaam van de gebruiker die de plek heeft toegevoegd; leeg als Woober hem heeft toegevoegd */
+  toegevoegdDoor?: string;
+  /** Door de gebruiker zelf toegevoegd */
+  vanMij?: boolean;
+  /** Een medewerker heeft de plek bekeken. Nieuwe plekken van gebruikers zijn meteen zichtbaar, met een label. */
+  gecontroleerd: boolean;
+}
+
+/** Wat een gebruiker invult bij het toevoegen van een plek */
+export type NieuwePlek = Pick<Plek, 'soort' | 'naam' | 'punt' | 'omschrijving' | 'kenmerken' | 'regels'>;
