@@ -42,6 +42,10 @@ export default function Veiligheid() {
           <Punt icoon="navigate" titel="Live meekijken" tekst="Tijdens de wandeling zie je de route, foto's en plas- en poepmomenten." />
           <Punt icoon="star" titel="Echte reviews" tekst="Alleen wie een betaalde wandeling heeft gehad, kan een review schrijven." />
           <Punt icoon="key" titel="Sleutels" tekst="Deel sleutelcodes pas na een bevestigde boeking, en alleen via de chat in de app." />
+          <Sectie>Oppas aan huis</Sectie>
+          <Punt icoon="home" titel="Iemand in je huis" tekst="Kies voor oppas iemand die je al kent van een kennismaking. Leg huisregels, eten en de plek van de riem vast in je bericht." />
+          <Punt icoon="videocam" titel="Camera's" tekst="Hangen er camera's in huis, meld dat bij het boeken. Iemand filmen zonder dat die het weet mag niet." />
+          <Punt icoon="time" titel="Later thuis" tekst="Verleng in de app met een uur. De oppas ziet het direct; het extra uur betaal je achteraf." />
         </>
       ) : (
         <>
@@ -52,7 +56,8 @@ export default function Veiligheid() {
           <Punt icoon="people" titel="Altijd een mens" tekst="Een melding over jou wordt altijd door een medewerker bekeken. Je krijgt uitleg en kunt reageren voordat er iets gebeurt." />
           <Sectie>Onderweg</Sectie>
           <Punt icoon="keypad" titel="Ophaalcode" tekst="Vraag bij de deur altijd om de code. Zo weet de eigenaar dat de juiste persoon de hond meeneemt." />
-          <Punt icoon="umbrella" titel="Verzekerd" tekst="Je aansprakelijkheidsverzekering dekt schade die een hond onder jouw toezicht veroorzaakt." />
+          <Punt icoon="umbrella" titel="Verzekerd" tekst="Je aansprakelijkheidsverzekering dekt schade die een hond onder jouw toezicht veroorzaakt, en bij oppas ook schade in het huis." />
+          <Punt icoon="home" titel="Oppas aan huis" tekst="Je bent te gast. Ga alleen in de ruimtes die de eigenaar noemt, en meld camera's of iets vreemds via de app." />
         </>
       )}
 

@@ -84,7 +84,7 @@ export default function Kennismaking() {
         <Veld label="Bericht" value={bericht} onChangeText={setBericht} multiline maxLength={300} />
 
         <Melding type="info">
-          Bespreek bij de kennismaking hoe je hond reageert op andere honden, fietsers en verkeer, en hoe het met de sleutel gaat. Daarna kun je wandelingen boeken.
+          Bespreek bij de kennismaking hoe je hond reageert op andere honden, fietsers en verkeer, hoe het met de sleutel gaat en, bij oppas, wat de huisregels zijn. Daarna kun je boeken.
         </Melding>
 
         <Knop titel="Kennismaking aanvragen" icoon="hand-left" uitgeschakeld={!tijd} onPress={verstuur} stijl={{ marginTop: ruimte(4) }} />

@@ -17,7 +17,7 @@ export default function Welkom() {
         <View style={s.midden}>
           <Logo grootte={88} kleur="#fff" binnen={kleuren.primair} />
           <Text style={s.logo}>woober</Text>
-          <Text style={s.slogan}>Je hond uitgelaten door iemand uit de buurt. Zo geregeld.</Text>
+          <Text style={s.slogan}>Uitlaten of oppas voor je hond, door iemand uit de buurt. Zo geregeld.</Text>
         </View>
 
         <View style={s.knoppen}>

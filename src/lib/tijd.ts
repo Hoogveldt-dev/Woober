@@ -110,3 +110,22 @@ export function minutenTekst(min: number): string {
   const m = Math.max(1, Math.round(min));
   return `${m} min`;
 }
+
+/** "30 min", "3 uur", "2,5 uur" of "2 uur 10 min" */
+export function duurTekst(minuten: number): string {
+  const m = Math.round(minuten);
+  if (m < 90) return `${m} min`;
+  if (m % 30 === 0) return `${String(m / 60).replace('.', ',')} uur`;
+  return `${Math.floor(m / 60)} uur ${m % 60} min`;
+}
+
+/** Verstreken tijd als klok: "2:05" */
+export function klokTekst(minuten: number): string {
+  const m = Math.max(0, Math.floor(minuten));
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/** Tot hoe laat, bijv. "tot 23:10" */
+export function totTekst(start: number, minuten: number): string {
+  return `tot ${tijdTekst(start + minuten * 60000)}`;
+}

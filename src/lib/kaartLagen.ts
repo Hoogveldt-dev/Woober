@@ -2,7 +2,7 @@ import type { KaartMarker, KaartRoute } from '../components/Kaart';
 import { kleuren } from '../theme';
 import type { Boeking, Punt, Vervoer } from '../types';
 import { deelPad, puntOpPad, restPad } from './route';
-import { huidigePositie, resterendeRitMin, ritVoortgang, wandelVoortgang } from './simulatie';
+import { huidigePositie, opPlasronde, PLASRONDE, plasrondeVoortgang, resterendeRitMin, ritVoortgang, scriptVoortgang, wandelVoortgang } from './simulatie';
 
 interface Wie {
   voornaam: string;
@@ -28,6 +28,24 @@ export function boekingOpKaart(
     .filter((g) => g.soort !== 'start' && g.soort !== 'einde')
     .map((g) => ({ id: g.id, soort: 'gebeurtenis', gebeurtenis: g.soort, punt: puntOpPad(b.wandelroute, g.voortgang) }));
 
+  // Oppas: de hond is thuis, behalve tijdens het plasrondje om het blok
+  if (b.dienst === 'oppas' && (b.status === 'bezig' || b.status === 'afgerond') && b.wandelroute.length > 1) {
+    // Na afloop alleen tonen hoe ver het plasrondje echt is gekomen
+    const v = b.status === 'afgerond' ? (b.gebeurtenissen.find((g) => g.soort === 'einde')?.voortgang ?? 1) : scriptVoortgang(b, nu);
+    const pv = plasrondeVoortgang(v);
+    const pos = b.status === 'bezig' && opPlasronde(v) ? puntOpPad(b.wandelroute, pv) : b.ophaalPunt;
+    const plas: KaartMarker[] = b.gebeurtenissen.some((g) => g.soort === 'plas')
+      ? [{ id: 'plas', soort: 'gebeurtenis', gebeurtenis: 'plas', punt: puntOpPad(b.wandelroute, 0.5) }]
+      : [];
+    const hond: KaartMarker[] =
+      b.status !== 'bezig' ? [] : opties.uitlaterAlsIk ? [{ id: 'ik', soort: 'ik', punt: pos }] : [{ id: 'hond', soort: 'hond', punt: pos, kleur: hondKleur }];
+    return {
+      markers: [ophaal, ...plas, ...hond],
+      routes: v > PLASRONDE.van ? [{ id: 'gelopen', punten: deelPad(b.wandelroute, pv), kleur: kleuren.primair, dikte: 6 }] : [],
+      focus: b.wandelroute,
+    };
+  }
+
   switch (b.status) {
     case 'onderweg': {
       const v = ritVoortgang(b, wie.vervoer, nu);
@@ -51,7 +69,7 @@ export function boekingOpKaart(
       return { markers: [ophaal, ...gebeurtenissen, hond], routes, focus: b.wandelroute };
     }
     case 'afgerond':
-      if (b.soort !== 'wandeling' || b.wandelroute.length === 0) return { markers: [ophaal], routes: [], focus: [b.ophaalPunt] };
+      if (b.soort !== 'betaald' || b.wandelroute.length === 0) return { markers: [ophaal], routes: [], focus: [b.ophaalPunt] };
     {
       // Bij een eerder beëindigde wandeling alleen het echt gelopen stuk tonen
       const gelopen = deelPad(b.wandelroute, b.gebeurtenissen.find((g) => g.soort === 'einde')?.voortgang ?? 1);

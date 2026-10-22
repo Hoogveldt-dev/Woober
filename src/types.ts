@@ -6,7 +6,13 @@ export interface Punt {
 
 export type Rol = 'eigenaar' | 'uitlater';
 
-export type Duur = 30 | 45 | 60;
+/** Wat je boekt, zoals de ritsoorten bij Uber: een wandeling of oppas aan huis */
+export type Dienst = 'uitlaten' | 'oppas';
+
+/** Duur van een wandeling in minuten */
+export type WandelDuur = 30 | 45 | 60;
+/** Duur van oppas aan huis in minuten */
+export type OppasDuur = 120 | 180 | 240 | 300;
 
 export type Grootte = 'klein' | 'middel' | 'groot';
 export type Energie = 'rustig' | 'gemiddeld' | 'energiek';
@@ -67,8 +73,12 @@ export interface Uitlater {
   /** Professionele uitlaatservice met KvK-nummer, of particulier */
   professioneel: boolean;
   bedrijfsnaam?: string;
+  /** Welke diensten deze persoon aanbiedt */
+  diensten: Dienst[];
   /** Eigen tarief van de uitlater in centen, per wandelduur */
-  tarieven: Record<Duur, number>;
+  tarieven: Record<WandelDuur, number>;
+  /** Eigen uurtarief voor oppas aan huis in centen, 0 als die dienst niet wordt aangeboden */
+  oppasPerUur: number;
   /** Toeslag per extra hond van hetzelfde huishouden, in centen */
   toeslagExtraHond: number;
   maxHonden: number;
@@ -127,13 +137,13 @@ export type BoekingStatus =
   | 'geannuleerd'
   | 'geweigerd';
 
-export type GebeurtenisSoort = 'start' | 'foto' | 'plas' | 'poep' | 'water' | 'notitie' | 'einde' | 'incident';
+export type GebeurtenisSoort = 'start' | 'foto' | 'plas' | 'poep' | 'water' | 'eten' | 'spelen' | 'slapen' | 'notitie' | 'einde' | 'incident';
 
 export interface WandelGebeurtenis {
   id: string;
   soort: GebeurtenisSoort;
   tijd: number;
-  /** Plek op de wandelroute, van 0 tot 1 */
+  /** Plek op de wandelroute, van 0 tot 1. Bij oppas: tijd sinds de start als deel van de basisduur. */
   voortgang: number;
   tekst?: string;
   /** Plaatsvervanger voor een foto */
@@ -148,20 +158,25 @@ export interface Beoordeling {
 
 export interface Boeking {
   id: string;
-  soort: 'wandeling' | 'kennismaking';
+  /** Betaalde boeking (uitlaten of oppas, zie dienst) of een gratis kennismaking */
+  soort: 'betaald' | 'kennismaking';
+  dienst: Dienst;
   /** Vanuit welke rol de gebruiker deze boeking ziet */
   mijnRol: Rol;
   uitlaterId: string;
   /** Alleen in uitlatermodus: de eigenaar die boekt */
   klantId?: string;
   hondIds: string[];
-  duur: Duur;
+  /** Geboekte duur in minuten */
+  duur: number;
   moment: Moment;
   serieId?: string;
   ophaalPunt: Punt;
   adres: string;
   sleutel: Sleutel;
   notitie: string;
+  /** Alleen bij oppas: de eigenaar meldt vooraf dat er camera's in huis hangen */
+  cameraInHuis?: boolean;
   betaalmethode: Betaalmethode;
   prijs: PrijsOpbouw;
   fooi: number;
@@ -176,6 +191,8 @@ export interface Boeking {
   gebeurtenissen: WandelGebeurtenis[];
   scriptStap: number;
   gestart?: number;
+  /** Geboekte duur op het moment van starten. Verlengen verandert alleen duur, zodat eerdere momenten op hun plek blijven. */
+  basisDuur?: number;
   beeindigd?: number;
   annuleringskosten?: number;
   beoordelingDoorMij?: Beoordeling;
@@ -185,8 +202,9 @@ export interface Boeking {
 export interface Serie {
   id: string;
   uitlaterId: string;
+  dienst: Dienst;
   hondIds: string[];
-  duur: Duur;
+  duur: number;
   dagen: Dag[];
   tijd: string;
   actief: boolean;
@@ -229,8 +247,9 @@ export interface AppMelding {
 }
 
 export interface BoekConcept {
+  dienst: Dienst;
   hondIds: string[];
-  duur: Duur;
+  duur: number;
   moment: Moment;
   uitlaterId: string | null;
 }

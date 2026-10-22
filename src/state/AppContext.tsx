@@ -2,27 +2,30 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
-import { annuleringskosten, berekenPrijs, GRATIS } from '../lib/prijs';
-import { routeTussen, wandelroute } from '../lib/route';
+import { annuleringskosten, berekenPrijs, GRATIS, VERLENG_MINUTEN } from '../lib/prijs';
+import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
   ACCEPTEER_NA_MS,
+  factorVoor,
   AFSLUITENDE_NOTITIES,
+  OPPAS_NOTITIES,
+  scriptVoor,
   maakOphaalcode,
   NIEUW_VERZOEK_NA_MS,
   OVERDRACHT_NA_MS,
   ritVoortgang,
+  scriptVoortgang,
   TIJDSFACTOR,
-  WANDEL_SCRIPT,
   wandelVoortgang,
 } from '../lib/simulatie';
-import { tijdstipOp, volgendeKeer } from '../lib/tijd';
+import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import type {
   AppMelding,
   Beoordeling,
   Betaalmethode,
   BoekConcept,
   Boeking,
-  Duur,
+  Dienst,
   GebeurtenisSoort,
   Gebruiker,
   Gesprek,
@@ -56,12 +59,16 @@ interface AppState {
   gemeld: string[];
   betaalmethode: Betaalmethode;
   concept: BoekConcept | null;
+  /** Aantal nagespeelde verzoeken in uitlatermodus, voor een vaste volgorde in de demo */
+  verzoekTeller: number;
 }
 
 export interface Aanvraag {
+  dienst: Dienst;
   uitlaterId: string;
   hondIds: string[];
-  duur: Duur;
+  duur: number;
+  cameraInHuis?: boolean;
   moment: Moment;
   sleutel: Sleutel;
   notitie: string;
@@ -94,6 +101,8 @@ interface AppActies {
   startWandeling: (id: string, code: string) => boolean;
   voegToe: (id: string, soort: GebeurtenisSoort, tekst?: string) => void;
   beeindig: (id: string) => void;
+  /** Oppas met een uur verlengen; in de echte app moet de oppas dit eerst bevestigen */
+  verleng: (id: string) => void;
   stuurBericht: (metId: string, rol: Rol, tekst: string) => void;
   blokkeer: (id: string) => void;
   meld: (id: string, reden: string) => void;
@@ -134,6 +143,7 @@ const LEEG: AppState = {
   gemeld: [],
   betaalmethode: 'ideal',
   concept: null,
+  verzoekTeller: 0,
 };
 
 export function standaardProfiel(voornaam: string): Uitlater {
@@ -145,6 +155,8 @@ export function standaardProfiel(voornaam: string): Uitlater {
     bio: '',
     ervaring: '',
     professioneel: false,
+    diensten: ['uitlaten'],
+    oppasPerUur: 1100,
     tarieven: { 30: 1200, 45: 1600, 60: 1900 },
     toeslagExtraHond: 500,
     maxHonden: 2,
@@ -167,7 +179,8 @@ function basisBoeking(deel: Partial<Boeking> & Pick<Boeking, 'mijnRol' | 'uitlat
   const nu = Date.now();
   return {
     id: nieuwId('b'),
-    soort: 'wandeling',
+    soort: 'betaald',
+    dienst: 'uitlaten',
     duur: 30,
     moment: { type: 'nu' },
     sleutel: 'thuis',
@@ -188,12 +201,18 @@ function basisBoeking(deel: Partial<Boeking> & Pick<Boeking, 'mijnRol' | 'uitlat
   };
 }
 
-/** Een afgeronde wandeling in het verleden, met volledige route en gebeurtenissen */
+/** Route van de hond: een wandeling naar het park, of bij oppas alleen een plasrondje om het blok */
+function routeVoor(b: Pick<Boeking, 'dienst' | 'ophaalPunt' | 'duur'>) {
+  return b.dienst === 'oppas' ? blokRondje(b.ophaalPunt) : wandelroute(b.ophaalPunt, b.duur);
+}
+
+/** Een afgeronde wandeling of oppas in het verleden, met volledige route en gebeurtenissen */
 function historie(deel: Parameters<typeof basisBoeking>[0], dagenGeleden: number, uur: number): Boeking {
   const b = basisBoeking(deel);
   const start = new Date(Date.now() - dagenGeleden * 86400000);
   start.setHours(uur, 0, 0, 0);
-  const route = b.soort === 'wandeling' ? wandelroute(b.ophaalPunt, b.duur) : [];
+  const route = b.soort === 'betaald' ? routeVoor(b) : [];
+  const script = scriptVoor(b.dienst);
   return {
     ...b,
     status: 'afgerond',
@@ -201,19 +220,20 @@ function historie(deel: Parameters<typeof basisBoeking>[0], dagenGeleden: number
     aangemaakt: start.getTime() - 86400000,
     statusSinds: start.getTime(),
     gestart: start.getTime(),
-    beeindigd: start.getTime() + (b.soort === 'wandeling' ? b.duur * 60000 : 15 * 60000),
+    basisDuur: b.duur,
+    beeindigd: start.getTime() + (b.soort === 'betaald' ? b.duur * 60000 : 15 * 60000),
     wandelroute: route,
-    scriptStap: WANDEL_SCRIPT.length,
+    scriptStap: script.length,
     gebeurtenissen:
-      b.soort === 'wandeling'
+      b.soort === 'betaald'
         ? [
             { id: nieuwId('g'), soort: 'start', tijd: start.getTime(), voortgang: 0 },
-            ...WANDEL_SCRIPT.map((s) => ({
+            ...script.map((s) => ({
               id: nieuwId('g'),
               soort: s.soort,
               tijd: start.getTime() + s.bij * b.duur * 60000,
               voortgang: s.bij,
-              tekst: s.tekst,
+              tekst: s.tekst.replace('{hond}', 'je hond'),
               kleur: s.kleur,
             })),
             { id: nieuwId('g'), soort: 'einde', tijd: start.getTime() + b.duur * 60000, voortgang: 1, tekst: deel.notitie || undefined },
@@ -224,17 +244,19 @@ function historie(deel: Parameters<typeof basisBoeking>[0], dagenGeleden: number
 
 function demoGeschiedenisEigenaar(thuis: Punt, adres: string, uitlaters: Uitlater[]): Boeking[] {
   const u = (id: string) => uitlaters.find((x) => x.id === id)!;
-  const wandeling = (uitlaterId: string, hondIds: string[], duur: Duur, dagen: number, uur: number, sterren: number | null) => {
+  const wandeling = (uitlaterId: string, hondIds: string[], duur: number, dagen: number, uur: number, sterren: number | null, dienst: Dienst = 'uitlaten') => {
+    const notities = dienst === 'oppas' ? OPPAS_NOTITIES : AFSLUITENDE_NOTITIES;
     const b = historie(
       {
         mijnRol: 'eigenaar',
+        dienst,
         uitlaterId,
         hondIds,
         duur,
         ophaalPunt: thuis,
         adres,
-        prijs: berekenPrijs(u(uitlaterId), duur, hondIds.length),
-        notitie: AFSLUITENDE_NOTITIES[dagen % AFSLUITENDE_NOTITIES.length],
+        prijs: berekenPrijs(u(uitlaterId), dienst, duur, hondIds.length),
+        notitie: notities[dagen % notities.length].replace('{hond}', 'Luna'),
       },
       dagen,
       uur,
@@ -245,13 +267,14 @@ function demoGeschiedenisEigenaar(thuis: Punt, adres: string, uitlaters: Uitlate
     wandeling('u1', ['h-luna'], 30, 1, 12, 5),
     wandeling('u1', ['h-luna', 'h-moos'], 45, 3, 12, 5),
     wandeling('u2', ['h-moos'], 30, 4, 10, 5),
+    wandeling('u1', ['h-luna', 'h-moos'], 180, 5, 19, 5, 'oppas'),
     wandeling('u1', ['h-luna'], 60, 6, 17, null),
     historie({ mijnRol: 'eigenaar', soort: 'kennismaking', uitlaterId: 'u2', hondIds: ['h-luna', 'h-moos'], ophaalPunt: thuis, adres }, 9, 18),
   ];
 }
 
 function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
-  const items: [string, Duur, number, number][] = [
+  const items: [string, number, number, number][] = [
     ['k1', 30, 0, 9],
     ['k2', 60, 1, 12],
     ['k1', 30, 1, 17],
@@ -260,19 +283,21 @@ function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
     ['k2', 60, 4, 12],
     ['k3', 45, 5, 10],
     ['k1', 30, 6, 12],
+    ['k4', 240, 2, 19],
   ];
   return items.map(([klantId, duur, dagen, uur], i) => {
     const k = DEMO_KLANTEN.find((x) => x.id === klantId)!;
     const b = historie(
       {
         mijnRol: 'uitlater',
+        dienst: duur > 60 ? 'oppas' : 'uitlaten',
         uitlaterId: profiel.id,
         klantId,
         hondIds: k.honden.map((h) => h.id),
         duur,
         ophaalPunt: k.positie,
         adres: k.adres,
-        prijs: berekenPrijs(profiel, duur, k.honden.length),
+        prijs: berekenPrijs(profiel, duur > 60 ? 'oppas' : 'uitlaten', duur, k.honden.length),
       },
       dagen,
       uur,
@@ -330,6 +355,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...standaardProfiel('Robin'),
       bio: 'Thuiswerker met een flexibel rooster. Ik fiets naar je toe en neem altijd water mee.',
       ervaring: 'Zelf twee honden gehad, drie jaar uitlaatwerk.',
+      diensten: ['uitlaten', 'oppas'],
       verificatie: { identiteit: true, verzekering: true, uitbetaling: true, vog: false },
       beoordeling: 4.9,
       aantalBeoordelingen: 23,
@@ -394,20 +420,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const s = ref.current.state;
     const u = uitlaterUit(s, a.uitlaterId);
     if (!s.gebruiker || !u) return '';
-    const prijs = berekenPrijs(u, a.duur, a.hondIds.length);
+    const prijs = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length);
     let serieId: string | undefined;
     let moment = a.moment;
     let serie: Serie | null = null;
     if (a.moment.type === 'wekelijks') {
       serieId = nieuwId('s');
-      serie = { id: serieId, uitlaterId: a.uitlaterId, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs };
+      serie = { id: serieId, uitlaterId: a.uitlaterId, dienst: a.dienst, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs };
       moment = { type: 'later', tijdstip: volgendeKeer(a.moment.dagen, a.moment.tijd, Date.now()) };
     }
     const b = basisBoeking({
       mijnRol: 'eigenaar',
+      dienst: a.dienst,
       uitlaterId: a.uitlaterId,
       hondIds: a.hondIds,
       duur: a.duur,
+      cameraInHuis: a.cameraInHuis,
       moment,
       serieId,
       ophaalPunt: s.gebruiker.thuis,
@@ -471,7 +499,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wijzigBoeking(id, (b) => {
         const stapMs = (5 * 60000) / TIJDSFACTOR;
         if (b.status === 'onderweg') return { ...b, statusSinds: b.statusSinds - stapMs };
-        if (b.status === 'bezig' && b.gestart) return { ...b, gestart: b.gestart - stapMs };
+        // Bij oppas springt de demo een half uur vooruit
+        if (b.status === 'bezig' && b.gestart) return { ...b, gestart: b.gestart - ((b.dienst === 'oppas' ? 30 : 5) * 60000) / factorVoor(b) };
         if (b.status === 'aangekomen') return { ...b, statusSinds: b.statusSinds - OVERDRACHT_NA_MS };
         return b;
       }),
@@ -533,7 +562,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wijzigBoeking(id, (b) => {
         if (b.status !== 'aangevraagd') return b;
         const nu = Date.now();
-        if (b.moment.type === 'nu' && b.soort === 'wandeling') {
+        if (b.moment.type === 'nu' && b.soort === 'betaald') {
           return { ...b, status: 'onderweg', statusSinds: nu, routeNaarOphaal: routeTussen(b.startPositie, b.ophaalPunt) };
         }
         return { ...b, status: 'gepland', statusSinds: nu };
@@ -567,7 +596,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: 'bezig',
         statusSinds: nu,
         gestart: nu,
-        wandelroute: wandelroute(x.ophaalPunt, x.duur),
+        basisDuur: x.duur,
+        wandelroute: routeVoor(x),
         gebeurtenissen: [{ id: nieuwId('g'), soort: 'start', tijd: nu, voortgang: 0 }],
       }));
       return true;
@@ -593,7 +623,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               id: nieuwId('g'),
               soort,
               tijd: nu,
-              voortgang: wandelVoortgang(b, nu),
+              voortgang: b.dienst === 'oppas' ? scriptVoortgang(b, nu) : wandelVoortgang(b, nu),
               tekst,
               kleur: soort === 'foto' ? fotoKleuren[fotos % fotoKleuren.length] : undefined,
             },
@@ -608,16 +638,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wijzigBoeking(id, (b) => {
         const nu = Date.now();
         if (b.soort === 'kennismaking') return { ...b, status: 'afgerond', statusSinds: nu, gestart: b.gestart ?? nu, beeindigd: nu };
+        // Beëindigt de eigenaar (bij oppas: "Ik ben thuis"), dan laat de nagespeelde oppas nog een notitie achter
+        const hond = ref.current.state.honden.find((h) => h.id === b.hondIds[0])?.naam ?? 'je hond';
+        const notities = b.dienst === 'oppas' ? OPPAS_NOTITIES : AFSLUITENDE_NOTITIES;
+        const tekst = b.mijnRol === 'eigenaar' ? notities[0].replace('{hond}', hond) : undefined;
         return {
           ...b,
           status: 'afgerond',
           statusSinds: nu,
           beeindigd: nu,
-          gebeurtenissen: [...b.gebeurtenissen, { id: nieuwId('g'), soort: 'einde', tijd: nu, voortgang: wandelVoortgang(b, nu) }],
+          gebeurtenissen: [
+            ...b.gebeurtenissen,
+            { id: nieuwId('g'), soort: 'einde', tijd: nu, voortgang: b.dienst === 'oppas' ? scriptVoortgang(b, nu) : wandelVoortgang(b, nu), tekst },
+          ],
         };
       });
       setWachtSinds(Date.now());
     },
+    [wijzigBoeking],
+  );
+
+  const verleng = useCallback(
+    (id: string) =>
+      wijzigBoeking(id, (b) => {
+        if (b.dienst !== 'oppas' || !['gepland', 'onderweg', 'aangekomen', 'bezig'].includes(b.status)) return b;
+        const u = uitlaterUit(ref.current.state, b.uitlaterId);
+        if (!u) return b;
+        const duur = b.duur + VERLENG_MINUTEN;
+        const nu = Date.now();
+        return {
+          ...b,
+          duur,
+          prijs: berekenPrijs(u, 'oppas', duur, b.hondIds.length),
+          gebeurtenissen: [
+            ...b.gebeurtenissen,
+            { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Verlengd tot ${duurTekst(duur)}` },
+          ],
+        };
+      }),
     [wijzigBoeking],
   );
 
@@ -691,7 +749,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const actieveBoeking = useMemo(
-    () => state.boekingen.find((b) => b.mijnRol === 'eigenaar' && b.soort === 'wandeling' && (LOPEND.includes(b.status) || (b.status === 'aangevraagd' && b.moment.type === 'nu'))),
+    () => state.boekingen.find((b) => b.mijnRol === 'eigenaar' && b.soort === 'betaald' && (LOPEND.includes(b.status) || (b.status === 'aangevraagd' && b.moment.type === 'nu'))),
     [state.boekingen],
   );
   const openVerzoek = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && b.status === 'aangevraagd'), [state.boekingen]);
@@ -724,6 +782,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     startWandeling,
     voegToe,
     beeindig,
+    verleng,
     stuurBericht,
     blokkeer,
     meld,
@@ -776,7 +835,8 @@ function verwerkTik(s: AppState, nu: number, wachtSinds: number): AppState {
     if (!bezig && nu - wachtSinds > NIEUW_VERZOEK_NA_MS) {
       const recent = boekingen.filter((b) => b.mijnRol === 'uitlater' && b.aangemaakt > wachtSinds);
       if (recent.length === 0) {
-        extra.push(maakVerzoek(s, boekingen.filter((b) => b.mijnRol === 'uitlater').length));
+        extra.push(maakVerzoek(s, s.verzoekTeller));
+        return { ...s, boekingen: [...boekingen, ...extra], verzoekTeller: s.verzoekTeller + 1 };
       }
     }
   }
@@ -794,17 +854,21 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
   const klanten = DEMO_KLANTEN.filter((k) => !s.geblokkeerd.includes(k.id) && k.honden.length <= profiel.maxHonden);
   const lijst = klanten.length ? klanten : DEMO_KLANTEN;
   const k = lijst[volgnummer % lijst.length];
-  const duren: Duur[] = [30, 60, 45];
+  // Afwisselend wandelingen en oppas, voor zover de uitlater die diensten aanbiedt
+  const oppas = profiel.diensten.includes('oppas') && (!profiel.diensten.includes('uitlaten') || volgnummer % 3 === 1);
+  const duren = oppas ? [120, 180, 240] : [30, 60, 45];
   const duur = duren[volgnummer % duren.length];
   const kennismaking = volgnummer % 4 === 3;
   const moment: Moment = kennismaking
     ? { type: 'later', tijdstip: tijdstipOp(1, '18:00') }
     : volgnummer % 5 === 4
-      ? { type: 'later', tijdstip: tijdstipOp(1, '12:30') }
+      ? { type: 'later', tijdstip: tijdstipOp(1, oppas ? '19:30' : '12:30') }
       : { type: 'nu' };
+  const dienst: Dienst = oppas ? 'oppas' : 'uitlaten';
   return basisBoeking({
     mijnRol: 'uitlater',
-    soort: kennismaking ? 'kennismaking' : 'wandeling',
+    soort: kennismaking ? 'kennismaking' : 'betaald',
+    dienst,
     uitlaterId: profiel.id,
     klantId: k.id,
     hondIds: k.honden.map((h) => h.id),
@@ -814,7 +878,7 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
     adres: k.adres,
     sleutel: volgnummer % 2 === 0 ? 'thuis' : 'kastje',
     notitie: k.honden[0].bijzonderheden,
-    prijs: kennismaking ? GRATIS : berekenPrijs(profiel, duur, k.honden.length),
+    prijs: kennismaking ? GRATIS : berekenPrijs(profiel, dienst, duur, k.honden.length),
     startPositie: profiel.positie,
   });
 }
@@ -825,14 +889,14 @@ function stapEigenaar(s: AppState, b: Boeking, nu: number, extra: Boeking[]): Bo
   switch (b.status) {
     case 'aangevraagd': {
       if (nu - b.statusSinds < ACCEPTEER_NA_MS) return b;
-      if (b.moment.type === 'nu' && b.soort === 'wandeling') {
+      if (b.moment.type === 'nu' && b.soort === 'betaald') {
         return { ...b, status: 'onderweg', statusSinds: nu, startPositie: u.positie, routeNaarOphaal: routeTussen(u.positie, b.ophaalPunt) };
       }
       return { ...b, status: 'gepland', statusSinds: nu };
     }
     case 'gepland': {
       // Een geplande wandeling start vanzelf kort voor het afgesproken tijdstip
-      if (b.soort === 'wandeling' && b.moment.type === 'later' && nu >= b.moment.tijdstip - 10 * 60000 && nu < b.moment.tijdstip + 3600000) {
+      if (b.soort === 'betaald' && b.moment.type === 'later' && nu >= b.moment.tijdstip - 10 * 60000 && nu < b.moment.tijdstip + 3600000) {
         return { ...b, status: 'onderweg', statusSinds: nu, startPositie: u.positie, routeNaarOphaal: routeTussen(u.positie, b.ophaalPunt) };
       }
       return b;
@@ -846,22 +910,26 @@ function stapEigenaar(s: AppState, b: Boeking, nu: number, extra: Boeking[]): Bo
         status: 'bezig',
         statusSinds: nu,
         gestart: nu,
-        wandelroute: wandelroute(b.ophaalPunt, b.duur),
+        basisDuur: b.duur,
+        wandelroute: routeVoor(b),
         gebeurtenissen: [...b.gebeurtenissen, { id: nieuwId('g'), soort: 'start', tijd: nu, voortgang: 0 }],
       };
     case 'bezig': {
       const v = wandelVoortgang(b, nu);
+      const sv = scriptVoortgang(b, nu);
       const hond = s.honden.find((h) => h.id === b.hondIds[0])?.naam ?? 'je hond';
       let stap = b.scriptStap;
       const nieuw = [...b.gebeurtenissen];
-      while (stap < WANDEL_SCRIPT.length && WANDEL_SCRIPT[stap].bij <= v) {
-        const item = WANDEL_SCRIPT[stap];
+      const script = scriptVoor(b.dienst);
+      while (stap < script.length && script[stap].bij <= sv) {
+        const item = script[stap];
         nieuw.push({ id: nieuwId('g'), soort: item.soort, tijd: nu, voortgang: item.bij, tekst: item.tekst.replace('{hond}', hond), kleur: item.kleur });
         stap++;
       }
       if (v >= 1) {
-        const notitie = AFSLUITENDE_NOTITIES[s.boekingen.indexOf(b) % AFSLUITENDE_NOTITIES.length].replace('{hond}', hond);
-        nieuw.push({ id: nieuwId('g'), soort: 'einde', tijd: nu, voortgang: 1, tekst: notitie });
+        const notities = b.dienst === 'oppas' ? OPPAS_NOTITIES : AFSLUITENDE_NOTITIES;
+        const notitie = notities[s.boekingen.indexOf(b) % notities.length].replace('{hond}', hond);
+        nieuw.push({ id: nieuwId('g'), soort: 'einde', tijd: nu, voortgang: b.dienst === 'oppas' ? sv : 1, tekst: notitie });
         const serie = b.serieId ? s.series.find((x) => x.id === b.serieId) : undefined;
         if (serie?.actief) {
           extra.push(
@@ -923,7 +991,7 @@ function maakMelding(s: AppState, b: Boeking, oud: { status: Boeking['status']; 
         tijd,
         icoon: 'notifications',
         titel: b.soort === 'kennismaking' ? 'Nieuwe kennismaking' : 'Nieuw verzoek',
-        tekst: `${k?.voornaam ?? 'Een eigenaar'} vraagt of je ${k?.honden.map((h) => h.naam).join(' en ')} wilt uitlaten.`,
+        tekst: `${k?.voornaam ?? 'Een eigenaar'} vraagt of je ${b.dienst === 'oppas' ? 'wilt oppassen op' : 'wilt uitlaten:'} ${k?.honden.map((h) => h.naam).join(' en ')}.`,
         href: '/werk',
       };
     }
@@ -934,6 +1002,7 @@ function maakMelding(s: AppState, b: Boeking, oud: { status: Boeking['status']; 
   const naam = u?.voornaam ?? 'De uitlater';
   const hond = s.honden.find((h) => h.id === b.hondIds[0])?.naam ?? 'je hond';
   const href = `/wandeling/${b.id}`;
+  const oppas = b.dienst === 'oppas';
   if (oud.status !== b.status) {
     switch (b.status) {
       case 'gepland':
@@ -947,14 +1016,18 @@ function maakMelding(s: AppState, b: Boeking, oud: { status: Boeking['status']; 
           href,
         };
       case 'onderweg':
-        return { id, rol: 'eigenaar', tijd, icoon: 'bicycle', titel: `${naam} is onderweg`, tekst: `Om ${hond} op te halen.`, href };
+        return { id, rol: 'eigenaar', tijd, icoon: 'bicycle', titel: `${naam} is onderweg`, tekst: oppas ? `Om op ${hond} te passen.` : `Om ${hond} op te halen.`, href };
       case 'aangekomen':
-        return { id, rol: 'eigenaar', tijd, icoon: 'home', titel: `${naam} staat voor de deur`, tekst: `Noem de ophaalcode ${b.ophaalcode}.`, href };
+        return { id, rol: 'eigenaar', tijd, icoon: 'home', titel: `${naam} staat voor de deur`, tekst: `Noem de code ${b.ophaalcode}.`, href };
       case 'bezig':
-        return { id, rol: 'eigenaar', tijd, icoon: 'walk', titel: 'De wandeling is begonnen', tekst: `${hond} is op pad met ${naam}.`, href };
+        return oppas
+          ? { id, rol: 'eigenaar', tijd, icoon: 'home', titel: 'De oppas is begonnen', tekst: `${hond} is in goede handen bij ${naam}. Fijne avond!`, href }
+          : { id, rol: 'eigenaar', tijd, icoon: 'walk', titel: 'De wandeling is begonnen', tekst: `${hond} is op pad met ${naam}.`, href };
       case 'afgerond':
-        return b.soort === 'wandeling'
-          ? { id, rol: 'eigenaar', tijd, icoon: 'home', titel: `${hond} is weer thuis`, tekst: 'Bekijk het wandelrapport.', href: `/rapport/${b.id}` }
+        return b.soort === 'betaald'
+          ? oppas
+            ? { id, rol: 'eigenaar', tijd, icoon: 'home', titel: 'De oppas is klaar', tekst: `Bekijk hoe het ging met ${hond}.`, href: `/rapport/${b.id}` }
+            : { id, rol: 'eigenaar', tijd, icoon: 'home', titel: `${hond} is weer thuis`, tekst: 'Bekijk het wandelrapport.', href: `/rapport/${b.id}` }
           : null;
       default:
         return null;

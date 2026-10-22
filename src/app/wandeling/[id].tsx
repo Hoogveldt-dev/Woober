@@ -13,7 +13,7 @@ import { boekingOpKaart } from '../../lib/kaartLagen';
 import { annuleringskosten, euro } from '../../lib/prijs';
 import { deelPad, formatAfstand, lengte } from '../../lib/route';
 import { resterendeRitMin, verstrekenMin, wandelVoortgang } from '../../lib/simulatie';
-import { momentTekst } from '../../lib/tijd';
+import { duurTekst, klokTekst, momentTekst, tijdTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
@@ -31,10 +31,10 @@ function Zoekbalk() {
   );
 }
 
-function Ophaalcode({ code }: { code: string }) {
+function Ophaalcode({ code, label = 'Ophaalcode' }: { code: string; label?: string }) {
   return (
     <View style={s.code}>
-      <Text style={s.codeLabel}>Ophaalcode</Text>
+      <Text style={s.codeLabel}>{label}</Text>
       <View style={s.codeCijfers}>
         {code.split('').map((c, i) => (
           <View key={i} style={s.codeVak}>
@@ -51,7 +51,7 @@ export default function Wandeling() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(300);
-  const { boekingen, uitlater, hondenVan, annuleer, startNu, versnel, rondKennismakingAf, voegToe, zetConcept } = useApp();
+  const { boekingen, uitlater, hondenVan, annuleer, startNu, versnel, rondKennismakingAf, voegToe, zetConcept, verleng, beeindig } = useApp();
   const [bladHoogte, setBladHoogte] = useState(360);
   const [incident, setIncident] = useState(false);
   const [bevestigAnnuleren, setBevestigAnnuleren] = useState(false);
@@ -60,7 +60,7 @@ export default function Wandeling() {
   const u = b ? uitlater(b.uitlaterId) : undefined;
 
   useEffect(() => {
-    if (b?.status === 'afgerond' && b.soort === 'wandeling') {
+    if (b?.status === 'afgerond' && b.soort === 'betaald') {
       const t = setTimeout(() => router.replace({ pathname: '/rapport/[id]', params: { id: b.id } }), 1800);
       return () => clearTimeout(t);
     }
@@ -73,6 +73,8 @@ export default function Wandeling() {
   const laag = boekingOpKaart(b, nu, u, honden[0]?.kleur ?? ['#F6D28B', '#D8A13D']);
   const kosten = annuleringskosten(b, nu);
   const kennismaking = b.soort === 'kennismaking';
+  const oppas = b.dienst === 'oppas';
+  const codeLabel = oppas ? 'Code bij de deur' : 'Ophaalcode';
 
   const terug = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const chat = () => router.push({ pathname: '/chat/[id]', params: { id: u.id } });
@@ -98,7 +100,9 @@ export default function Wandeling() {
       bevestigAnnuleren ? (
         <View style={s.bevestig}>
           <Text style={s.bevestigTekst}>
-            {kosten > 0 ? `${u.voornaam} is al onderweg of de wandeling begint binnen 2 uur. Je betaalt ${euro(kosten)} annuleringskosten.` : 'Annuleren is nu nog gratis.'}
+            {kosten > 0
+              ? `${u.voornaam} is al onderweg of de ${oppas ? 'oppas' : 'wandeling'} begint binnen 2 uur. Je betaalt ${euro(kosten)} annuleringskosten.`
+              : 'Annuleren is nu nog gratis.'}
           </Text>
           <Knop titel="Ja, annuleren" variant="gevaar" onPress={() => annuleer(b.id)} />
           <Knop titel="Toch niet" variant="tekst" onPress={() => setBevestigAnnuleren(false)} />
@@ -120,7 +124,7 @@ export default function Wandeling() {
           <Zoekbalk />
           {uitlaterKaart}
           <Text style={s.regel}>
-            {momentTekst(b.moment, nu)}, {kennismaking ? '15 minuten' : `${b.duur} minuten`}, {hondNamen}
+            {momentTekst(b.moment, nu)}, {kennismaking ? '15 minuten' : oppas ? `oppas ${duurTekst(b.duur)}` : `${b.duur} minuten`}, {hondNamen}
           </Text>
           {annuleerKnop}
         </>
@@ -129,10 +133,10 @@ export default function Wandeling() {
     case 'gepland':
       inhoud = (
         <>
-          <Text style={s.titel}>{kennismaking ? 'Kennismaking gepland' : 'Wandeling gepland'}</Text>
+          <Text style={s.titel}>{kennismaking ? 'Kennismaking gepland' : oppas ? 'Oppas gepland' : 'Wandeling gepland'}</Text>
           <Text style={s.sub}>
             {momentTekst(b.moment, nu)} met {u.voornaam}
-            {kennismaking ? ', bij jou thuis' : `, ${b.duur} minuten`}
+            {kennismaking ? ', bij jou thuis' : `, ${duurTekst(b.duur)}`}
           </Text>
           {uitlaterKaart}
           {kennismaking ? (
@@ -151,7 +155,7 @@ export default function Wandeling() {
           <View style={s.etaRij}>
             <View style={{ flex: 1 }}>
               <Text style={s.titel}>{u.voornaam} is onderweg</Text>
-              <Text style={s.sub}>Om {hondNamen} op te halen</Text>
+              <Text style={s.sub}>{oppas ? `Om op ${hondNamen} te passen` : `Om ${hondNamen} op te halen`}</Text>
             </View>
             <View style={s.eta}>
               <Text style={s.etaGetal}>{min}</Text>
@@ -159,8 +163,10 @@ export default function Wandeling() {
             </View>
           </View>
           {uitlaterKaart}
-          <Ophaalcode code={b.ophaalcode} />
-          <Text style={s.hulp}>Geef je hond alleen mee aan iemand die deze code van jou heeft gekregen.</Text>
+          <Ophaalcode code={b.ophaalcode} label={codeLabel} />
+          <Text style={s.hulp}>
+            {oppas ? 'Laat alleen iemand binnen die deze code van jou heeft gekregen.' : 'Geef je hond alleen mee aan iemand die deze code van jou heeft gekregen.'}
+          </Text>
           <View style={s.demoRij}>
             <Knop titel="Sneller (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
           </View>
@@ -173,9 +179,15 @@ export default function Wandeling() {
       inhoud = (
         <>
           <Text style={s.titel}>{u.voornaam} staat voor de deur</Text>
-          <Text style={s.sub}>{kennismaking ? 'Tijd om kennis te maken.' : `Geef ${hondNamen} mee en noem de ophaalcode.`}</Text>
+          <Text style={s.sub}>
+            {kennismaking
+              ? 'Tijd om kennis te maken.'
+              : oppas
+                ? `Laat ${u.voornaam} binnen, noem de code en vertel waar het eten en de riem liggen.`
+                : `Geef ${hondNamen} mee en noem de ophaalcode.`}
+          </Text>
           {uitlaterKaart}
-          <Ophaalcode code={b.ophaalcode} />
+          <Ophaalcode code={b.ophaalcode} label={codeLabel} />
           {annuleerKnop}
         </>
       );
@@ -184,6 +196,44 @@ export default function Wandeling() {
       const v = wandelVoortgang(b, nu);
       const gelopen = lengte(deelPad(b.wandelroute, v));
       const minuten = Math.min(b.duur, Math.floor(verstrekenMin(b, nu)));
+      if (oppas) {
+        const eind = (b.gestart ?? nu) + b.duur * 60000;
+        inhoud = (
+          <>
+            <View style={s.etaRij}>
+              <HondenStapel honden={honden} grootte={44} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.titel}>
+                  {hondNamen} in goede handen bij {u.voornaam}
+                </Text>
+                <Text style={s.sub}>Oppas tot {tijdTekst(eind)}. Geniet van je avond!</Text>
+              </View>
+            </View>
+            <View style={s.voortgang}>
+              <View style={[s.voortgangVulling, { width: `${Math.round(v * 100)}%` }]} />
+            </View>
+            <View style={s.tegels}>
+              <Tegel klein waarde={klokTekst(minuten)} label={`van ${duurTekst(b.duur)}`} />
+              <Tegel klein waarde={tijdTekst(eind)} label="tot" />
+              <Tegel klein waarde={String(b.gebeurtenissen.filter((g) => g.soort === 'foto').length)} label="foto's" />
+            </View>
+            <ScrollView style={{ maxHeight: 170 }}>
+              <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.basisDuur ?? b.duur} oppas={b.dienst === 'oppas'} />
+            </ScrollView>
+            <View style={s.knoppen}>
+              <Knop titel="Bericht" variant="secundair" icoon="chatbubble" stijl={{ flex: 1 }} onPress={chat} />
+              <Knop titel="Verlengen" variant="secundair" icoon="add-circle" stijl={{ flex: 1 }} onPress={() => verleng(b.id)} />
+            </View>
+            <Knop titel="Ik ben thuis" icoon="home" stijl={{ marginTop: ruimte(3) }} onPress={() => beeindig(b.id)} />
+            <View style={s.demoRij}>
+              <Knop titel="Incident melden" variant="tekst" icoon="alert-circle" tekstKleur={kleuren.nope} onPress={() => setIncident(true)} />
+              <Knop titel="Half uur verder (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
+            </View>
+            <Text style={s.hulp}>Verlengen gaat per uur. Ben je eerder thuis, dan betaal je de geboekte tijd.</Text>
+          </>
+        );
+        break;
+      }
       inhoud = (
         <>
           <View style={s.etaRij}>
@@ -202,7 +252,7 @@ export default function Wandeling() {
             <Tegel waarde={String(b.gebeurtenissen.filter((g) => g.soort === 'foto').length)} label="foto's" />
           </View>
           <ScrollView style={{ maxHeight: 210 }}>
-            <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.duur} />
+            <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.basisDuur ?? b.duur} oppas={b.dienst === 'oppas'} />
           </ScrollView>
           <View style={s.knoppen}>
             <Knop titel="Bericht" variant="secundair" icoon="chatbubble" stijl={{ flex: 1 }} onPress={chat} />
@@ -219,12 +269,21 @@ export default function Wandeling() {
       inhoud = kennismaking ? (
         <>
           <Text style={s.titel}>Kennismaking afgerond</Text>
-          <Text style={s.sub}>Klikte het? Dan kun je nu wandelingen boeken bij {u.voornaam}.</Text>
+          <Text style={s.sub}>
+            Klikte het? Dan kun je nu {u.diensten.length > 1 ? 'uitlaten en oppas' : u.diensten[0] === 'oppas' ? 'oppas' : 'wandelingen'} boeken bij {u.voornaam}.
+          </Text>
           <Knop
-            titel={`Eerste wandeling met ${u.voornaam}`}
+            titel={`Eerste afspraak met ${u.voornaam}`}
             icoon="paw"
             onPress={() => {
-              zetConcept({ hondIds: b.hondIds.slice(0, 1), duur: 30, moment: { type: 'nu' }, uitlaterId: u.id });
+              const dienst = u.diensten.includes('uitlaten') ? 'uitlaten' : 'oppas';
+              zetConcept({
+                dienst,
+                hondIds: dienst === 'oppas' ? b.hondIds : b.hondIds.slice(0, 1),
+                duur: dienst === 'oppas' ? 180 : 30,
+                moment: { type: 'nu' },
+                uitlaterId: u.id,
+              });
               router.replace('/boeken');
             }}
           />
@@ -232,9 +291,9 @@ export default function Wandeling() {
         </>
       ) : (
         <>
-          <Text style={s.titel}>{hondNamen} {honden.length > 1 ? 'zijn' : 'is'} weer thuis</Text>
-          <Text style={s.sub}>Het wandelrapport wordt geopend.</Text>
-          <Knop titel="Bekijk wandelrapport" icoon="document-text" onPress={() => router.replace({ pathname: '/rapport/[id]', params: { id: b.id } })} />
+          <Text style={s.titel}>{oppas ? 'De oppas is klaar' : `${hondNamen} ${honden.length > 1 ? 'zijn' : 'is'} weer thuis`}</Text>
+          <Text style={s.sub}>{oppas ? 'Het oppasrapport wordt geopend.' : 'Het wandelrapport wordt geopend.'}</Text>
+          <Knop titel={oppas ? 'Bekijk oppasrapport' : 'Bekijk wandelrapport'} icoon="document-text" onPress={() => router.replace({ pathname: '/rapport/[id]', params: { id: b.id } })} />
         </>
       );
       break;
@@ -254,7 +313,7 @@ export default function Wandeling() {
             titel="Andere uitlater zoeken"
             icoon="search"
             onPress={() => {
-              zetConcept({ hondIds: b.hondIds, duur: b.duur, moment: { type: 'nu' }, uitlaterId: null });
+              zetConcept({ dienst: b.dienst, hondIds: b.hondIds, duur: b.duur, moment: { type: 'nu' }, uitlaterId: null });
               router.replace('/boeken');
             }}
           />
@@ -271,7 +330,7 @@ export default function Wandeling() {
         {b.status === 'bezig' ? (
           <View style={s.livePil}>
             <View style={s.liveStip} />
-            <Text style={s.liveTekst}>LIVE</Text>
+            <Text style={s.liveTekst}>{oppas ? 'OPPAS LIVE' : 'LIVE'}</Text>
           </View>
         ) : null}
         <RondeKnop icoon="shield-checkmark" label="Veiligheid en hulp" kleur={kleuren.primair} onPress={() => router.push('/veiligheid')} />
@@ -323,7 +382,7 @@ const s = StyleSheet.create({
   voortgangVulling: { height: 6, backgroundColor: kleuren.primair },
   tegels: { flexDirection: 'row', gap: ruimte(2), marginBottom: ruimte(2) },
   knoppen: { flexDirection: 'row', gap: ruimte(3), marginTop: ruimte(3) },
-  demoRij: { alignItems: 'center' },
+  demoRij: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' },
   bevestig: { marginTop: ruimte(2), padding: ruimte(3), borderRadius: radius.midden, backgroundColor: kleuren.foutVlak, gap: ruimte(2) },
   bevestigTekst: { fontSize: 14, color: kleuren.tekst, lineHeight: 20 },
   incidentBanner: { position: 'absolute', left: ruimte(4), right: ruimte(4) },

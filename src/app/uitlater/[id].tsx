@@ -34,7 +34,16 @@ export default function UitlaterProfiel() {
   const kentJe = bekend.includes(u.id);
 
   const boek = () => {
-    zetConcept({ hondIds: concept?.hondIds ?? honden.slice(0, 1).map((h) => h.id), duur: concept?.duur ?? 30, moment: concept?.moment ?? { type: 'nu' }, uitlaterId: u.id });
+    // Biedt deze persoon de dienst uit het concept niet aan, dan de dienst die wel kan
+    const dienst = concept && u.diensten.includes(concept.dienst) ? concept.dienst : u.diensten[0];
+    const zelfde = concept?.dienst === dienst;
+    zetConcept({
+      dienst,
+      hondIds: zelfde && concept ? concept.hondIds : (dienst === 'oppas' ? honden : honden.slice(0, 1)).map((h) => h.id),
+      duur: zelfde && concept ? concept.duur : dienst === 'oppas' ? 180 : 30,
+      moment: concept?.moment ?? { type: 'nu' },
+      uitlaterId: u.id,
+    });
     router.push('/boeken');
   };
 
@@ -61,12 +70,14 @@ export default function UitlaterProfiel() {
             {kentJe ? <Badge tekst="JULLIE KENNEN ELKAAR" icoon="heart" kleur={kleuren.primair} /> : null}
             {u.professioneel ? <Badge tekst="KVK" icoon="briefcase" kleur={kleuren.info} /> : null}
             {u.online ? <Badge tekst="NU ONLINE" icoon="radio-button-on" /> : null}
+            {u.diensten.includes('uitlaten') ? <Badge tekst="UITLATEN" icoon="walk" kleur={kleuren.tekst} /> : null}
+            {u.diensten.includes('oppas') ? <Badge tekst="OPPAS AAN HUIS" icoon="home" kleur={kleuren.tekst} /> : null}
           </View>
         </View>
 
         <View style={s.tegels}>
           <Tegel waarde={u.beoordeling.toFixed(1).replace('.', ',')} label={`${u.aantalBeoordelingen} reviews`} />
-          <Tegel waarde={String(u.aantalWandelingen)} label="wandelingen" />
+          <Tegel waarde={String(u.aantalWandelingen)} label="keer geboekt" />
           <Tegel waarde={u.reageertBinnen} label="reageert binnen" />
         </View>
 
@@ -84,9 +95,8 @@ export default function UitlaterProfiel() {
 
         <Sectie>Eigen tarief</Sectie>
         <Blok>
-          {DUREN.map((d) => (
-            <Rij key={d} label={`${d} minuten`} waarde={euro(u.tarieven[d])} />
-          ))}
+          {u.diensten.includes('uitlaten') ? DUREN.map((d) => <Rij key={d} label={`Uitlaten, ${d} minuten`} waarde={euro(u.tarieven[d])} />) : null}
+          {u.diensten.includes('oppas') ? <Rij label="Oppas aan huis, per uur" waarde={euro(u.oppasPerUur)} /> : null}
           <Rij label="Per extra hond" waarde={euro(u.toeslagExtraHond)} />
         </Blok>
         <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(3), marginBottom: ruimte(5) }]}>Servicekosten van Woober zie je bij het boeken.</Text>

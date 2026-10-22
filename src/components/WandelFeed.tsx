@@ -12,6 +12,9 @@ const TEKST: Record<WandelGebeurtenis['soort'], string> = {
   plas: 'Plasje gedaan',
   poep: 'Poep gedaan en opgeruimd',
   water: 'Water gedronken',
+  eten: 'Eten gegeven',
+  spelen: 'Gespeeld',
+  slapen: 'Slaapt',
   notitie: 'Notitie',
   einde: 'Weer thuis',
   incident: 'Incident gemeld',
@@ -21,7 +24,19 @@ const TEKST: Record<WandelGebeurtenis['soort'], string> = {
  * Foto's en gebeurtenissen van een wandeling, nieuwste bovenaan.
  * Met start en duur tonen we de tijd op de klok van de wandeling (in de demo loopt de tijd sneller).
  */
-export function WandelFeed({ gebeurtenissen, compact, start, duur }: { gebeurtenissen: WandelGebeurtenis[]; compact?: boolean; start?: number; duur?: number }) {
+export function WandelFeed({
+  gebeurtenissen,
+  compact,
+  start,
+  duur,
+  oppas,
+}: {
+  gebeurtenissen: WandelGebeurtenis[];
+  compact?: boolean;
+  start?: number;
+  duur?: number;
+  oppas?: boolean;
+}) {
   const tijdVan = (g: WandelGebeurtenis) => (start && duur ? start + g.voortgang * duur * 60000 : g.tijd);
   const fotos = gebeurtenissen.filter((g) => g.soort === 'foto' && g.kleur);
   const lijst = [...gebeurtenissen].reverse().slice(0, compact ? 3 : undefined);
@@ -43,7 +58,11 @@ export function WandelFeed({ gebeurtenissen, compact, start, duur }: { gebeurten
               <MaterialCommunityIcons name={icoon.naam} size={16} color={icoon.kleur} />
             </View>
             <Text style={s.tekst} numberOfLines={compact ? 1 : 3}>
-              {g.soort === 'foto' || g.soort === 'notitie' || g.soort === 'einde' || g.soort === 'incident' ? (g.tekst ?? TEKST[g.soort]) : TEKST[g.soort]}
+              {g.soort === 'start' && oppas
+                ? 'Oppas gestart'
+                : g.soort === 'foto' || g.soort === 'notitie' || g.soort === 'einde' || g.soort === 'incident'
+                  ? (g.tekst ?? (g.soort === 'einde' && oppas ? 'Oppas afgerond' : TEKST[g.soort]))
+                  : TEKST[g.soort]}
             </Text>
             <Text style={s.tijd}>{tijdTekst(tijdVan(g))}</Text>
           </View>

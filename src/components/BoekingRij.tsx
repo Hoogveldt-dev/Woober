@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { euro } from '../lib/prijs';
-import { momentTekst } from '../lib/tijd';
+import { duurTekst, momentTekst } from '../lib/tijd';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Boeking } from '../types';
 import { PersoonAvatar } from './avatars';
@@ -41,13 +41,13 @@ export function BoekingRij({
       <PersoonAvatar naam={naam} kleur={kleur} grootte={48} />
       <View style={{ flex: 1 }}>
         <Text style={s.titel} numberOfLines={1}>
-          {kennismaking ? `Kennismaking met ${naam}` : `${honden} met ${naam}`}
+          {kennismaking ? `Kennismaking met ${naam}` : b.dienst === 'oppas' ? `Oppas voor ${honden}, ${naam}` : `${honden} met ${naam}`}
         </Text>
         <Text style={s.sub} numberOfLines={1}>
           {b.status === 'afgerond' || b.status === 'geannuleerd'
             ? momentTekst({ type: 'later', tijdstip: b.gestart ?? b.statusSinds })
             : momentTekst(b.moment)}
-          {kennismaking ? '' : `, ${b.duur} min`}
+          {kennismaking ? '' : `, ${duurTekst(b.duur)}`}
         </Text>
         <View style={s.statusRij}>
           <View style={[s.stip, { backgroundColor: status.kleur }]} />

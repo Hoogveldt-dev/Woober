@@ -6,7 +6,7 @@ import { BoekingRij } from '../../components/BoekingRij';
 import { gedeeldeStijl, Leeg, Sectie } from '../../components/blokken';
 import { Knop, Kop } from '../../components/ui';
 import { euro } from '../../lib/prijs';
-import { dagenTekst } from '../../lib/tijd';
+import { dagenTekst, duurTekst } from '../../lib/tijd';
 import { LOPEND, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 import type { Boeking } from '../../types';
@@ -26,7 +26,7 @@ export default function Activiteit() {
   const actieveSeries = series.filter((s) => s.actief);
 
   const open = (b: Boeking) =>
-    b.status === 'afgerond' && b.soort === 'wandeling'
+    b.status === 'afgerond' && b.soort === 'betaald'
       ? router.push({ pathname: '/rapport/[id]', params: { id: b.id } })
       : router.push({ pathname: '/wandeling/[id]', params: { id: b.id } });
 
@@ -76,7 +76,7 @@ export default function Activiteit() {
 
         {actieveSeries.length > 0 ? (
           <>
-            <Sectie>Vaste wandelingen</Sectie>
+            <Sectie>Vaste afspraken</Sectie>
             {actieveSeries.map((serie) => {
               const u = uitlater(serie.uitlaterId);
               if (!u) return null;
@@ -86,10 +86,10 @@ export default function Activiteit() {
                   <PersoonAvatar naam={u.voornaam} kleur={u.kleur} grootte={44} />
                   <View style={{ flex: 1 }}>
                     <Text style={s.serieTitel}>
-                      {namen} met {u.voornaam}
+                      {serie.dienst === 'oppas' ? 'Oppas' : 'Uitlaten'}: {namen} met {u.voornaam}
                     </Text>
                     <Text style={s.serieSub}>
-                      {dagenTekst(serie.dagen)} om {serie.tijd}, {serie.duur} min, {euro(serie.prijs.totaal)} per keer
+                      {dagenTekst(serie.dagen)} om {serie.tijd}, {duurTekst(serie.duur)}, {euro(serie.prijs.totaal)} per keer
                     </Text>
                   </View>
                   <Knop titel="Stoppen" variant="tekst" onPress={() => stopSerie(serie.id)} />
@@ -103,7 +103,7 @@ export default function Activiteit() {
           <>
             <Sectie>Eerder</Sectie>
             {eerder.map(rij)}
-            <Text style={s.totaal}>Totaal uitgegeven aan wandelingen: {euro(totaalUitgegeven)}</Text>
+            <Text style={s.totaal}>Totaal uitgegeven aan uitlaten en oppas: {euro(totaalUitgegeven)}</Text>
           </>
         ) : null}
       </ScrollView>

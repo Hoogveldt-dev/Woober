@@ -3,7 +3,7 @@ import type { Boeking } from '../types';
 /** Afgeronde opdrachten van de uitlater, nieuwste eerst */
 export function afgerondeOpdrachten(boekingen: Boeking[]): Boeking[] {
   return boekingen
-    .filter((b) => b.mijnRol === 'uitlater' && b.status === 'afgerond' && b.soort === 'wandeling')
+    .filter((b) => b.mijnRol === 'uitlater' && b.status === 'afgerond' && b.soort === 'betaald')
     .sort((a, b) => (b.beeindigd ?? 0) - (a.beeindigd ?? 0));
 }
 

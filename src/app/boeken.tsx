@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,15 +7,17 @@ import { HondAvatar, PersoonAvatar } from '../components/avatars';
 import { Segment, Sterren } from '../components/blokken';
 import { Kaart, type KaartMarker } from '../components/Kaart';
 import { Badge, Chip, Knop, Label } from '../components/ui';
-import { DUREN, euro } from '../lib/prijs';
+import { DUREN, euro, euroKort, OPPAS_DUREN } from '../lib/prijs';
 import { formatAfstand } from '../lib/route';
-import { DAGEN_KORT, dagVan, tijdstipOp } from '../lib/tijd';
+import { DAGEN_KORT, dagVan, duurTekst, tijdstipOp, tijdTekst } from '../lib/tijd';
 import { uitlaterOpties, type Sortering, type UitlaterOptie } from '../lib/zoeken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
-import type { Dag, Duur, Moment } from '../types';
+import type { Dag, Dienst, Moment } from '../types';
 
 const TIJDEN = ['07:30', '09:00', '10:30', '12:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'];
+/** Oppas vooral 's avonds, maar ook overdag als je een dag weg bent */
+const OPPAS_TIJDEN = ['09:00', '13:00', '17:00', '18:00', '19:00', '19:30', '20:00', '21:00'];
 const VERVOER_TEKST = { lopend: 'lopend', fiets: 'op de fiets', auto: 'met de auto' } as const;
 
 function dagLabel(i: number, nu: number) {
@@ -25,7 +27,7 @@ function dagLabel(i: number, nu: number) {
   return `${DAGEN_KORT[dagVan(d)]} ${d.getDate()}`;
 }
 
-function OptieRij({ o, gekozen, onKies, onInfo }: { o: UitlaterOptie; gekozen: boolean; onKies: () => void; onInfo: () => void }) {
+function OptieRij({ o, gekozen, onKies, onInfo, dienst }: { o: UitlaterOptie; gekozen: boolean; onKies: () => void; onInfo: () => void; dienst: Dienst }) {
   return (
     <Pressable
       onPress={onKies}
@@ -48,6 +50,7 @@ function OptieRij({ o, gekozen, onKies, onInfo }: { o: UitlaterOptie; gekozen: b
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
         <Text style={s.prijs}>{euro(o.prijs.totaal)}</Text>
+        {dienst === 'oppas' ? <Text style={s.perUur}>{euroKort(o.u.oppasPerUur)} per uur</Text> : null}
         <Pressable onPress={onInfo} hitSlop={10} accessibilityRole="button" accessibilityLabel={`Profiel van ${o.u.voornaam}`}>
           <Ionicons name="information-circle-outline" size={22} color={kleuren.gedempt} />
         </Pressable>
@@ -61,25 +64,29 @@ export default function Boeken() {
   const { concept, zetConcept, honden, gebruiker, uitlaters, bekend, geblokkeerd } = useApp();
   const [nu] = useState(() => Date.now());
 
+  const [dienst, setDienst] = useState<Dienst>(concept?.dienst ?? 'uitlaten');
+  const tijdenLijst = dienst === 'oppas' ? OPPAS_TIJDEN : TIJDEN;
+
   const beginMoment = (): Moment => {
     const m = concept?.moment ?? { type: 'nu' };
     if (m.type === 'later' && m.tijdstip < nu) {
-      const vrij = TIJDEN.map((t) => tijdstipOp(0, t, nu)).find((t) => t > nu + 30 * 60000);
-      return { type: 'later', tijdstip: vrij ?? tijdstipOp(1, '09:00', nu) };
+      const lijst = concept?.dienst === 'oppas' ? OPPAS_TIJDEN.filter((t) => t >= '17:00') : TIJDEN;
+      const vrij = lijst.map((t) => tijdstipOp(0, t, nu)).find((t) => t > nu + 30 * 60000);
+      return { type: 'later', tijdstip: vrij ?? tijdstipOp(1, lijst[0], nu) };
     }
     return m;
   };
 
   const [hondIds, setHondIds] = useState<string[]>(concept?.hondIds.length ? concept.hondIds : honden.slice(0, 1).map((h) => h.id));
-  const [duur, setDuur] = useState<Duur>(concept?.duur ?? 30);
+  const [duur, setDuur] = useState<number>(concept?.duur ?? 30);
   const [moment, setMoment] = useState<Moment>(beginMoment);
   const [sortering, setSortering] = useState<Sortering>('afstand');
   const [gekozen, setGekozen] = useState<string | null>(concept?.uitlaterId ?? null);
 
-  const huidigConcept = { hondIds, duur, moment, uitlaterId: gekozen };
+  const huidigConcept = { dienst, hondIds, duur, moment, uitlaterId: gekozen };
   const opties = useMemo(
-    () => (gebruiker ? uitlaterOpties(uitlaters, gebruiker.thuis, { hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering) : []),
-    [uitlaters, gebruiker, hondIds, duur, moment, bekend, geblokkeerd, sortering],
+    () => (gebruiker ? uitlaterOpties(uitlaters, gebruiker.thuis, { dienst, hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering) : []),
+    [uitlaters, gebruiker, dienst, hondIds, duur, moment, bekend, geblokkeerd, sortering],
   );
   if (!gebruiker) return null;
 
@@ -88,7 +95,23 @@ export default function Boeken() {
 
   const laterDag = moment.type === 'later' ? Math.round((new Date(moment.tijdstip).setHours(0, 0, 0, 0) - new Date(nu).setHours(0, 0, 0, 0)) / 86400000) : 0;
   const laterTijd = moment.type === 'later' ? `${String(new Date(moment.tijdstip).getHours()).padStart(2, '0')}:${String(new Date(moment.tijdstip).getMinutes()).padStart(2, '0')}` : '';
-  const tijdenVoorDag = (dag: number) => TIJDEN.filter((t) => tijdstipOp(dag, t, nu) > nu + 30 * 60000);
+  const tijdenVoorDag = (dag: number) => tijdenLijst.filter((t) => tijdstipOp(dag, t, nu) > nu + 30 * 60000);
+  const oppas = dienst === 'oppas';
+  const wie = oppas ? 'oppas' : 'uitlater';
+  const startTijd = moment.type === 'nu' ? nu : moment.type === 'later' ? moment.tijdstip : tijdstipOp(0, moment.tijd, nu);
+
+  const wisselDienst = (d: Dienst) => {
+    if (d === dienst) return;
+    setDienst(d);
+    setDuur(d === 'oppas' ? 180 : 30);
+    if (d === 'oppas') setHondIds(honden.map((h) => h.id));
+    setGekozen(null);
+    if (moment.type === 'later') {
+      const lijst = d === 'oppas' ? OPPAS_TIJDEN : TIJDEN;
+      const vrij = lijst.map((t) => tijdstipOp(0, t, nu)).find((t) => t > nu + 30 * 60000);
+      setMoment({ type: 'later', tijdstip: vrij ?? tijdstipOp(1, lijst[0], nu) });
+    }
+  };
 
   const wisselHond = (id: string) => setHondIds((ids) => (ids.includes(id) ? (ids.length > 1 ? ids.filter((x) => x !== id) : ids) : [...ids, id]));
 
@@ -118,11 +141,21 @@ export default function Boeken() {
 
   return (
     <View style={s.scherm}>
+      <Stack.Screen options={{ title: oppas ? 'Kies een oppas' : 'Kies een uitlater' }} />
       <View style={s.kaart}>
         <Kaart markers={kaartMarkers} focus={[gebruiker.thuis, ...beschikbaar.slice(0, 5).map((o) => o.u.positie)]} maxZoom={0.9} />
       </View>
 
       <ScrollView contentContainerStyle={s.inhoud}>
+        <Segment
+          opties={[
+            { waarde: 'uitlaten', label: 'Uitlaten' },
+            { waarde: 'oppas', label: 'Oppas aan huis' },
+          ]}
+          waarde={dienst}
+          onChange={wisselDienst}
+        />
+        <View style={{ height: ruimte(5) }} />
         {honden.length > 1 ? (
           <>
             <Label>Welke honden</Label>
@@ -152,7 +185,7 @@ export default function Boeken() {
               const dag = tijdenVoorDag(0).length ? 0 : 1;
               setMoment({ type: 'later', tijdstip: tijdstipOp(dag, tijdenVoorDag(dag)[0] ?? '09:00', nu) });
             }
-            if (t === 'wekelijks') setMoment({ type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' });
+            if (t === 'wekelijks') setMoment(oppas ? { type: 'wekelijks', dagen: [4], tijd: '19:00' } : { type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' });
           }}
         />
 
@@ -200,7 +233,7 @@ export default function Boeken() {
               })}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRij}>
-              {TIJDEN.map((t) => (
+              {tijdenLijst.map((t) => (
                 <Chip key={t} label={t} actief={moment.tijd === t} onPress={() => setMoment({ ...moment, tijd: t })} />
               ))}
             </ScrollView>
@@ -209,7 +242,16 @@ export default function Boeken() {
 
         <View style={{ height: ruimte(4) }} />
         <Label>Hoe lang</Label>
-        <Segment opties={DUREN.map((d) => ({ waarde: d, label: `${d} min` }))} waarde={duur} onChange={setDuur} />
+        <Segment<number>
+          opties={(oppas ? OPPAS_DUREN : DUREN).map((d) => ({ waarde: d, label: duurTekst(d) }))}
+          waarde={duur}
+          onChange={setDuur}
+        />
+        {oppas ? (
+          <Text style={s.tot}>
+            Tot ongeveer {tijdTekst(startTijd + duur * 60000)}. Later thuis? Je kunt in de app verlengen.
+          </Text>
+        ) : null}
 
         <View style={s.sorteerRij}>
           <Text style={s.aantal}>{beschikbaar.length} beschikbaar</Text>
@@ -228,17 +270,20 @@ export default function Boeken() {
               gekozen={o.u.id === gekozen}
               onKies={() => setGekozen(o.u.id)}
               onInfo={() => router.push({ pathname: '/uitlater/[id]', params: { id: o.u.id } })}
+              dienst={dienst}
             />
           ))}
         </View>
         <Text style={s.uitleg}>
-          Prijzen zijn inclusief servicekosten. Elke uitlater bepaalt zelf het tarief. Voor de eerste wandeling met een nieuwe uitlater plan je eerst een gratis kennismaking.
+          {oppas
+            ? 'Je ziet alleen mensen die oppas aan huis aanbieden. Prijzen zijn inclusief servicekosten; elke oppas bepaalt zelf het uurtarief. Bij iemand nieuw plan je eerst een gratis kennismaking.'
+            : 'Prijzen zijn inclusief servicekosten. Elke uitlater bepaalt zelf het tarief. Voor de eerste wandeling met een nieuwe uitlater plan je eerst een gratis kennismaking.'}
         </Text>
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={s.balk}>
         <Knop
-          titel={!keuze ? 'Kies een uitlater' : keuze.bekend ? `Verder met ${keuze.u.voornaam}, ${euro(keuze.prijs.totaal)}` : `Eerst kennismaken met ${keuze.u.voornaam}`}
+          titel={!keuze ? `Kies een ${wie}` : keuze.bekend ? `Verder met ${keuze.u.voornaam}, ${euro(keuze.prijs.totaal)}` : `Eerst kennismaken met ${keuze.u.voornaam}`}
           icoon={keuze && !keuze.bekend ? 'hand-left' : undefined}
           uitgeschakeld={!keuze}
           onPress={verder}
@@ -265,6 +310,8 @@ const s = StyleSheet.create({
   naam: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
   optieSub: { fontSize: 13, color: kleuren.gedempt },
   prijs: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
+  perUur: { fontSize: 11, color: kleuren.gedempt, marginTop: -4 },
+  tot: { fontSize: 13, color: kleuren.gedempt, marginTop: ruimte(2) },
   uitleg: { fontSize: 12, color: kleuren.gedempt, lineHeight: 17, marginTop: ruimte(4), textAlign: 'center' },
   balk: { paddingHorizontal: ruimte(5), paddingTop: ruimte(3), paddingBottom: ruimte(3), borderTopWidth: 1, borderTopColor: kleuren.rand, backgroundColor: '#fff' },
 });

@@ -1,6 +1,6 @@
 # Woober
 
-Zusje van Woofer: hondeneigenaren boeken in Uber-stijl een uitlater uit de buurt en volgen de wandeling live. Lancering in Nederland via App Store, Google Play en web. Het plan staat in @PLAN.md.
+Zusje van Woofer: hondeneigenaren boeken in Uber-stijl een uitlater of een oppas aan huis uit de buurt en volgen het live. Uitlaten en oppas zijn twee diensten in dezelfde app (`Dienst` in `src/types.ts`). Lancering in Nederland via App Store, Google Play en web. Het plan staat in @PLAN.md.
 
 Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app/`).
 

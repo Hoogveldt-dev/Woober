@@ -15,7 +15,7 @@ export default function Account() {
   const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, boekingen } = useApp();
   const [bevestig, setBevestig] = useState(false);
   if (!gebruiker) return null;
-  const aantal = boekingen.filter((b) => b.mijnRol === 'eigenaar' && b.status === 'afgerond' && b.soort === 'wandeling').length;
+  const aantal = boekingen.filter((b) => b.mijnRol === 'eigenaar' && b.status === 'afgerond' && b.soort === 'betaald').length;
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
@@ -64,7 +64,12 @@ export default function Account() {
 
         <Sectie>Woober</Sectie>
         <Blok>
-          <MenuRij icoon="bicycle" titel="Zelf honden uitlaten" sub={mijnProfiel ? 'Wissel naar uitlatermodus' : 'Maak een uitlaatprofiel en verdien bij'} onPress={() => wisselRol('uitlater')} />
+          <MenuRij
+            icoon="bicycle"
+            titel="Zelf uitlaten of oppassen"
+            sub={mijnProfiel ? 'Wissel naar werkmodus' : 'Maak een profiel en verdien bij'}
+            onPress={() => wisselRol('uitlater')}
+          />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="document-text" titel="Voorwaarden en privacy" sub="Volgt in de echte app" onPress={() => {}} />
         </Blok>

@@ -12,10 +12,15 @@ import { Chip } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { routeTussen } from '../../lib/route';
 import { reistijdMin, resterendeRitMin, verstrekenMin } from '../../lib/simulatie';
-import { begroeting } from '../../lib/tijd';
+import { begroeting, duurTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
-import type { BoekConcept } from '../../types';
+import type { BoekConcept, Dienst } from '../../types';
+
+const DIENSTEN: { id: Dienst; titel: string; sub: string; icoon: 'dog-service' | 'sofa' }[] = [
+  { id: 'uitlaten', titel: 'Uitlaten', sub: '30 tot 60 minuten', icoon: 'dog-service' },
+  { id: 'oppas', titel: 'Oppas', sub: 'bij jou thuis', icoon: 'sofa' },
+];
 
 export default function Uitlaten() {
   const router = useRouter();
@@ -23,6 +28,7 @@ export default function Uitlaten() {
   const nu = useNu(400);
   const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater } = useApp();
   const [bladHoogte, setBladHoogte] = useState(330);
+  const [dienst, setDienst] = useState<Dienst>('uitlaten');
 
   const thuis = gebruiker?.thuis;
   const eta = useMemo(() => {
@@ -35,12 +41,21 @@ export default function Uitlaten() {
 
   const actief = actieveBoeking;
   const actieveUitlater = actief ? uitlater(actief.uitlaterId) : undefined;
-  const online = uitlaters.filter((u) => u.online && !geblokkeerd.includes(u.id));
-  const mijnUitlaters = uitlaters.filter((u) => bekend.includes(u.id) && !geblokkeerd.includes(u.id));
+  const online = uitlaters.filter((u) => u.online && !geblokkeerd.includes(u.id) && u.diensten.includes(dienst));
+  const mijnUitlaters = uitlaters.filter((u) => bekend.includes(u.id) && !geblokkeerd.includes(u.id) && u.diensten.includes(dienst));
+  const oppas = dienst === 'oppas';
   const hondNamen = honden.map((h) => h.naam).join(' en ');
 
   const start = (deel: Partial<BoekConcept>) => {
-    zetConcept({ hondIds: honden.slice(0, 1).map((h) => h.id), duur: 30, moment: { type: 'nu' }, uitlaterId: null, ...deel });
+    // Bij oppas gaan standaard alle honden mee; bij uitlaten de eerste
+    zetConcept({
+      dienst,
+      hondIds: (oppas ? honden : honden.slice(0, 1)).map((h) => h.id),
+      duur: oppas ? 180 : 30,
+      moment: { type: 'nu' },
+      uitlaterId: null,
+      ...deel,
+    });
     router.push('/boeken');
   };
 
@@ -84,7 +99,10 @@ export default function Uitlaten() {
         statusTekst = `${actieveUitlater.voornaam} staat voor de deur`;
         break;
       case 'bezig':
-        statusTekst = `Aan het wandelen, ${Math.min(actief.duur, Math.floor(verstrekenMin(actief, nu)))} van ${actief.duur} min`;
+        statusTekst =
+          actief.dienst === 'oppas'
+            ? `Oppas bezig, ${duurTekst(Math.max(1, Math.min(actief.duur, Math.floor(verstrekenMin(actief, nu)))))} van ${duurTekst(actief.duur)}`
+            : `Aan het wandelen, ${Math.min(actief.duur, Math.floor(verstrekenMin(actief, nu)))} van ${actief.duur} min`;
         break;
     }
   }
@@ -118,31 +136,64 @@ export default function Uitlaten() {
           {begroeting(nu)}, {gebruiker.voornaam}
         </Text>
 
+        <View style={s.diensten}>
+          {DIENSTEN.map((d) => {
+            const gekozen = d.id === dienst;
+            return (
+              <Pressable
+                key={d.id}
+                onPress={() => setDienst(d.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: gekozen }}
+                style={[s.dienst, gekozen && s.dienstGekozen]}
+              >
+                <MaterialCommunityIcons name={d.icoon} size={30} color={gekozen ? kleuren.primair : kleuren.gedempt} />
+                <View>
+                  <Text style={[s.dienstTitel, gekozen && { color: kleuren.primair }]}>{d.titel}</Text>
+                  <Text style={s.dienstSub}>{d.sub}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <Pressable onPress={() => start({})} accessibilityRole="button" style={({ pressed }) => [s.zoek, pressed && { backgroundColor: kleuren.rand }]}>
           <MaterialCommunityIcons name="paw" size={22} color={kleuren.primair} />
           <Text style={s.zoekTekst} numberOfLines={1}>
-            Wie laat {honden.length > 1 ? 'je honden' : hondNamen} uit?
+            {oppas ? `Wie past op ${honden.length > 1 ? 'je honden' : hondNamen}?` : `Wie laat ${honden.length > 1 ? 'je honden' : hondNamen} uit?`}
           </Text>
           <View style={s.nuPil}>
             <Ionicons name="time" size={14} color={kleuren.tekst} />
             <Text style={s.nuTekst}>Nu</Text>
           </View>
         </Pressable>
+        {oppas ? <Text style={s.belofte}>Spontaan een avondje weg? Binnen een kwartier is er iemand bij je hond.</Text> : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.snelRij}>
-          <Chip label="Nu, 30 min" icoon="flash" actief={false} onPress={() => start({ duur: 30 })} />
-          <Chip label="Nu, 60 min" actief={false} onPress={() => start({ duur: 60 })} />
-          <Chip label="Later vandaag" icoon="calendar" actief={false} onPress={() => start({ moment: { type: 'later', tijdstip: 0 } })} />
-          <Chip label="Elke week" icoon="repeat" actief={false} onPress={() => start({ moment: { type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' } })} />
+          {oppas ? (
+            <>
+              <Chip label="Nu, 3 uur" icoon="flash" actief={false} onPress={() => start({ duur: 180 })} />
+              <Chip label="Nu, 4 uur" actief={false} onPress={() => start({ duur: 240 })} />
+              <Chip label="Vanavond" icoon="moon" actief={false} onPress={() => start({ moment: { type: 'later', tijdstip: 0 } })} />
+              <Chip label="Elke vrijdag" icoon="repeat" actief={false} onPress={() => start({ moment: { type: 'wekelijks', dagen: [4], tijd: '19:00' } })} />
+            </>
+          ) : (
+            <>
+              <Chip label="Nu, 30 min" icoon="flash" actief={false} onPress={() => start({ duur: 30 })} />
+              <Chip label="Nu, 60 min" actief={false} onPress={() => start({ duur: 60 })} />
+              <Chip label="Later vandaag" icoon="calendar" actief={false} onPress={() => start({ moment: { type: 'later', tijdstip: 0 } })} />
+              <Chip label="Elke week" icoon="repeat" actief={false} onPress={() => start({ moment: { type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' } })} />
+            </>
+          )}
         </ScrollView>
 
         {mijnUitlaters.length > 0 ? (
           <>
-            <Text style={s.kopje}>Jouw uitlaters</Text>
+            <Text style={s.kopje}>Ken je al</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.mijnRij}>
               {mijnUitlaters.map((u) => (
                 <Pressable key={u.id} onPress={() => start({ uitlaterId: u.id })} accessibilityRole="button" style={s.mijnKaart}>
-                  <PersoonAvatar naam={u.voornaam} kleur={u.kleur} grootte={48} />
+                  <PersoonAvatar naam={u.voornaam} kleur={u.kleur} grootte={44} />
                   <View>
                     <Text style={s.mijnNaam}>{u.voornaam}</Text>
                     <Sterren waarde={u.beoordeling} grootte={12} />
@@ -156,7 +207,9 @@ export default function Uitlaten() {
 
         <View style={s.voet}>
           <View style={s.stip} />
-          <Text style={s.voetTekst}>{online.length} uitlaters online bij jou in de buurt</Text>
+          <Text style={s.voetTekst}>
+            {online.length} {oppas ? (online.length === 1 ? 'oppas' : 'oppassen') : online.length === 1 ? 'uitlater' : 'uitlaters'} online bij jou in de buurt
+          </Text>
         </View>
       </Blad>
     </View>
@@ -172,6 +225,21 @@ const s = StyleSheet.create({
   actiefTitel: { color: '#fff', fontSize: 16, fontWeight: '800' },
   actiefSub: { color: '#fff', opacity: 0.9, fontSize: 13, marginTop: 1 },
   groet: { fontSize: 22, fontWeight: '800', color: kleuren.tekst, letterSpacing: -0.4, marginBottom: ruimte(3) },
+  diensten: { flexDirection: 'row', gap: ruimte(3), marginBottom: ruimte(3) },
+  dienst: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ruimte(3),
+    padding: ruimte(3),
+    borderRadius: radius.midden,
+    borderWidth: 2,
+    borderColor: kleuren.rand,
+  },
+  dienstGekozen: { borderColor: kleuren.primair, backgroundColor: kleuren.primairVlak },
+  dienstTitel: { fontSize: 16, fontWeight: '800', color: kleuren.tekst },
+  dienstSub: { fontSize: 12, color: kleuren.gedempt, marginTop: 1 },
+  belofte: { fontSize: 13, color: kleuren.gedempt, marginTop: ruimte(2) },
   zoek: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,5 +1,5 @@
-import { PARK_INGANG, PARK_PAD, STRATEN } from '../data/stad';
-import type { Duur, Punt } from '../types';
+import { PARK_INGANG, PARK_PAD, STRATEN, XS, YS } from '../data/stad';
+import type { Punt } from '../types';
 
 export function afstand(a: Punt, b: Punt): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -195,13 +195,28 @@ const PARK_LUS = gladmaken(PARK_PAD, 8);
 export const PARK_LUS_GLAD = PARK_LUS;
 
 /** Wandelroute vanaf huis: naar het Stadspark, een of twee rondjes om de vijver, en terug */
-export function wandelroute(thuis: Punt, duur: Duur): Punt[] {
+export function wandelroute(thuis: Punt, duur: number): Punt[] {
   const heen = routeTussen(thuis, PARK_INGANG);
   const terug = [...heen].reverse();
   const rondjes = duur >= 60 ? 2 : 1;
   const lus: Punt[] = [];
   for (let i = 0; i < rondjes; i++) lus.push(...PARK_LUS);
   return ontdubbel([...heen, ...lus, ...terug]);
+}
+
+/** Kort plasrondje om het blok, voor tijdens de oppas */
+export function blokRondje(thuis: Punt): Punt[] {
+  const { punt, a, b } = opStraat(thuis);
+  if (a.y === b.y) {
+    const [links, rechts] = a.x < b.x ? [a, b] : [b, a];
+    const j = YS.indexOf(a.y);
+    const y = j > 0 ? YS[j - 1] : YS[j + 1];
+    return ontdubbel([thuis, punt, rechts, { x: rechts.x, y }, { x: links.x, y }, links, punt, thuis]);
+  }
+  const [boven, onder] = a.y < b.y ? [a, b] : [b, a];
+  const i = XS.indexOf(a.x);
+  const x = i > 0 ? XS[i - 1] : XS[i + 1];
+  return ontdubbel([thuis, punt, onder, { x, y: onder.y }, { x, y: boven.y }, boven, punt, thuis]);
 }
 
 /** Middelpunt en zoom zodat alle punten in beeld zijn */

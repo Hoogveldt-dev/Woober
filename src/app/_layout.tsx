@@ -41,7 +41,7 @@ function Navigatie() {
       </Stack.Protected>
 
       <Stack.Protected guard={aangemeld && rol === 'uitlater' && mijnProfiel === null} redirectTo={startpunt}>
-        <Stack.Screen name="uitlater-aanmaken" options={{ headerShown: true, title: 'Jouw uitlaatprofiel' }} />
+        <Stack.Screen name="uitlater-aanmaken" options={{ headerShown: true, title: 'Jouw profiel' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={eigenaarKlaar} redirectTo={startpunt}>
@@ -51,7 +51,7 @@ function Navigatie() {
         <Stack.Screen name="kennismaking" options={{ headerShown: true, title: 'Kennismaken' }} />
         <Stack.Screen name="uitlater/[id]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="wandeling/[id]" />
-        <Stack.Screen name="rapport/[id]" options={{ headerShown: true, title: 'Wandelrapport' }} />
+        <Stack.Screen name="rapport/[id]" options={{ headerShown: true, title: 'Rapport' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={uitlaterKlaar} redirectTo={startpunt}>
@@ -63,7 +63,7 @@ function Navigatie() {
       <Stack.Protected guard={eigenaarKlaar || uitlaterKlaar} redirectTo={startpunt}>
         <Stack.Screen name="chat/[id]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="hond/[id]" options={{ headerShown: true, title: 'Hond' }} />
-        <Stack.Screen name="profiel-uitlater" options={{ headerShown: true, title: 'Uitlaatprofiel' }} />
+        <Stack.Screen name="profiel-uitlater" options={{ headerShown: true, title: 'Jouw profiel' }} />
         <Stack.Screen name="veiligheid" options={{ headerShown: true, title: 'Veiligheid en hulp' }} />
       </Stack.Protected>
     </Stack>

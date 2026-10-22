@@ -68,8 +68,8 @@ export default function Aanmelden() {
       <ScrollView contentContainerStyle={gedeeldeStijl.inhoud} keyboardShouldPersistTaps="handled">
         <Label>Ik wil</Label>
         <View style={s.rollen}>
-          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Mijn hond laten uitlaten" tekst="Kies een uitlater in de buurt en volg de wandeling live." />
-          <RolKaart actief={rol === 'uitlater'} onPress={() => setRol('uitlater')} icoon="walk" titel="Honden uitlaten" tekst="Bepaal zelf je tarief, werkgebied en wanneer je werkt." />
+          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Hulp voor mijn hond" tekst="Uitlaten of oppas aan huis, door iemand uit de buurt." />
+          <RolKaart actief={rol === 'uitlater'} onPress={() => setRol('uitlater')} icoon="walk" titel="Uitlaten of oppassen" tekst="Bepaal zelf je tarief, werkgebied en wanneer je werkt." />
         </View>
         {toon(fouten.rol) ? <Text style={s.fout}>{fouten.rol}</Text> : null}
         <Text style={[gedeeldeStijl.hulp, { marginBottom: ruimte(5) }]}>Je kunt later altijd wisselen, of allebei doen.</Text>

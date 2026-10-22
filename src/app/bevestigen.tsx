@@ -3,10 +3,10 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HondenStapel, PersoonAvatar } from '../components/avatars';
-import { Blok, gedeeldeStijl, Rij, Sterren } from '../components/blokken';
+import { Blok, gedeeldeStijl, Rij, Sterren, Vinkje } from '../components/blokken';
 import { Chip, Knop, Label, Melding, Veld } from '../components/ui';
 import { ANNULERINGSDEEL, berekenPrijs, euro, GRATIS_ANNULEREN_UUR } from '../lib/prijs';
-import { momentTekst } from '../lib/tijd';
+import { duurTekst, momentTekst, tijdTekst } from '../lib/tijd';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Betaalmethode, Sleutel } from '../types';
@@ -24,15 +24,30 @@ export default function Bevestigen() {
   const [sleutel, setSleutel] = useState<Sleutel>('thuis');
   const [notitie, setNotitie] = useState('');
   const [methode, setMethode] = useState<Betaalmethode>(betaalmethode);
+  const [camera, setCamera] = useState(false);
+  const [nu] = useState(() => Date.now());
 
   if (!concept || !u || !gebruiker) return <Redirect href="/" />;
 
   const gekozenHonden = honden.filter((h) => concept.hondIds.includes(h.id));
-  const prijs = berekenPrijs(u, concept.duur, gekozenHonden.length);
+  const oppas = concept.dienst === 'oppas';
+  const prijs = berekenPrijs(u, concept.dienst, concept.duur, gekozenHonden.length);
   const wekelijks = concept.moment.type === 'wekelijks';
+  const keer = oppas ? 'oppas' : 'wandeling';
+  const start = concept.moment.type === 'later' ? concept.moment.tijdstip : concept.moment.type === 'nu' ? nu : null;
 
   const verstuur = () => {
-    const id = vraagAan({ uitlaterId: u.id, hondIds: concept.hondIds, duur: concept.duur, moment: concept.moment, sleutel, notitie: notitie.trim(), betaalmethode: methode });
+    const id = vraagAan({
+      dienst: concept.dienst,
+      uitlaterId: u.id,
+      hondIds: concept.hondIds,
+      duur: concept.duur,
+      moment: concept.moment,
+      sleutel,
+      notitie: notitie.trim(),
+      betaalmethode: methode,
+      cameraInHuis: oppas ? camera : undefined,
+    });
     if (!id) return;
     router.dismissAll();
     router.push({ pathname: '/wandeling/[id]', params: { id } });
@@ -52,22 +67,36 @@ export default function Bevestigen() {
 
         <Blok>
           <Rij label="Wanneer" waarde={momentTekst(concept.moment)} />
-          <Rij label="Duur" waarde={`${concept.duur} minuten`} />
+          <Rij label="Dienst" waarde={oppas ? 'Oppas bij jou thuis' : 'Uitlaten'} />
+          <Rij label="Duur" waarde={oppas && start ? `${duurTekst(concept.duur)}, tot ${tijdTekst(start + concept.duur * 60000)}` : duurTekst(concept.duur)} />
           <Rij label="Honden" waarde={gekozenHonden.map((h) => h.naam).join(', ')} />
-          <Rij label="Ophalen op" waarde={gebruiker.adres} />
+          <Rij label={oppas ? 'Adres' : 'Ophalen op'} waarde={gebruiker.adres} />
         </Blok>
 
         <Label>Sleutel en overdracht</Label>
         <View style={gedeeldeStijl.rij}>
-          <Chip label="Ik ben thuis" icoon="home" actief={sleutel === 'thuis'} onPress={() => setSleutel('thuis')} />
+          <Chip label={oppas ? 'Ik doe zelf open' : 'Ik ben thuis'} icoon="home" actief={sleutel === 'thuis'} onPress={() => setSleutel('thuis')} />
           <Chip label="Sleutelkastje" icoon="key" actief={sleutel === 'kastje'} onPress={() => setSleutel('kastje')} />
           <Chip label={`${u.voornaam} heeft al een sleutel`} actief={sleutel === 'overhandigd'} onPress={() => setSleutel('overhandigd')} />
         </View>
         <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2), marginBottom: ruimte(4) }]}>
           {sleutel === 'kastje'
             ? 'Deel de code van het kastje via de chat, pas nadat de boeking is bevestigd.'
-            : 'Bij de deur noem je een ophaalcode van 4 cijfers. Zo weet je zeker dat de juiste persoon je hond meeneemt.'}
+            : oppas
+              ? 'Bij de deur noem je een code van 4 cijfers. Zo weet je zeker dat de juiste persoon binnenkomt.'
+              : 'Bij de deur noem je een ophaalcode van 4 cijfers. Zo weet je zeker dat de juiste persoon je hond meeneemt.'}
         </Text>
+
+        {oppas ? (
+          <>
+            <Vinkje aan={camera} onPress={() => setCamera((c) => !c)}>
+              Er hangen camera&apos;s in huis
+            </Vinkje>
+            <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(1), marginBottom: ruimte(4) }]}>
+              {u.voornaam} ziet dit vooraf. Iemand filmen zonder dat die het weet mag niet.
+            </Text>
+          </>
+        ) : null}
 
         <Veld
           label={`Bericht voor ${u.voornaam}`}
@@ -75,7 +104,7 @@ export default function Bevestigen() {
           onChangeText={setNotitie}
           multiline
           maxLength={300}
-          placeholder="Bijv. tuigje hangt aan de kapstok, graag even langs het losloopgebied"
+          placeholder={oppas ? 'Bijv. eten om 20:00, plasrondje rond 21:00, Moos slaapt in de bench' : 'Bijv. tuigje hangt aan de kapstok, graag even langs het losloopgebied'}
         />
 
         <Label>Betalen</Label>
@@ -89,9 +118,12 @@ export default function Bevestigen() {
           ))}
         </View>
 
-        <Label>{wekelijks ? 'Prijs per wandeling' : 'Prijs'}</Label>
+        <Label>{wekelijks ? `Prijs per ${keer}` : 'Prijs'}</Label>
         <Blok>
-          <Rij label={`Tarief ${u.voornaam}, ${concept.duur} min`} waarde={euro(prijs.tarief)} />
+          <Rij
+            label={oppas ? `${u.voornaam}, ${duurTekst(concept.duur)} à ${euro(u.oppasPerUur)} per uur` : `Tarief ${u.voornaam}, ${concept.duur} min`}
+            waarde={euro(prijs.tarief)}
+          />
           {prijs.toeslag > 0 ? <Rij label={`Extra hond${gekozenHonden.length > 2 ? 'en' : ''}`} waarde={euro(prijs.toeslag)} /> : null}
           <Rij label="Servicekosten Woober" waarde={euro(prijs.servicekosten)} />
           <Rij label="Totaal" waarde={euro(prijs.totaal)} sterk />
@@ -99,19 +131,21 @@ export default function Bevestigen() {
 
         <Melding type="info">
           {wekelijks
-            ? `${u.voornaam} bevestigt de vaste wandeling. Je betaalt telkens pas na afloop van een wandeling.`
+            ? `${u.voornaam} bevestigt de vaste ${keer}. Je betaalt telkens pas na afloop.`
             : methode === 'ideal'
-              ? 'Met iDEAL betaal je direct. Annuleer je op tijd, dan krijg je alles terug. Een fooi kan achteraf, die gaat volledig naar de uitlater.'
-              : 'We reserveren het bedrag nu en schrijven het pas af na de wandeling. Een fooi kan achteraf, die gaat volledig naar de uitlater.'}
+              ? `Met iDEAL betaal je direct. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur achteraf.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
+              : `We reserveren het bedrag nu en schrijven het pas af na afloop.${oppas ? ' Verleng je, dan komt het extra uur erbij.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
         </Melding>
         <Melding type="goed">
-          {u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die schade tijdens het uitlaten dekt.
+          {oppas
+            ? `${u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die ook schade in huis dekt.`
+            : `${u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die schade tijdens het uitlaten dekt.`}
         </Melding>
         <Text style={s.voorwaarden}>
           Gratis annuleren tot {GRATIS_ANNULEREN_UUR} uur van tevoren, of zolang {u.voornaam} nog niet onderweg is. Daarna krijgt {u.voornaam} {Math.round(ANNULERINGSDEEL * 100)}% van het tarief.
         </Text>
 
-        <Knop titel={wekelijks ? 'Vaste wandeling aanvragen' : 'Aanvraag versturen'} icoon="paw" onPress={verstuur} stijl={{ marginTop: ruimte(4) }} />
+        <Knop titel={wekelijks ? `Vaste ${keer} aanvragen` : oppas ? 'Oppas aanvragen' : 'Aanvraag versturen'} icoon="paw" onPress={verstuur} stijl={{ marginTop: ruimte(4) }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

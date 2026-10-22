@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { berekenPrijs, DUREN, euro } from '../lib/prijs';
 import { DAGDELEN, DAGEN_KORT } from '../lib/tijd';
 import { kleuren, radius, ruimte } from '../theme';
-import type { Beschikbaarheid, Dag, Dagdeel, Duur, Uitlater, Vervoer } from '../types';
+import type { Beschikbaarheid, Dag, Dagdeel, Dienst, Uitlater, Vervoer, WandelDuur } from '../types';
 import { gedeeldeStijl } from './blokken';
 import { Chip, Knop, Label, Melding, Veld } from './ui';
 
@@ -25,11 +25,13 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   const [professioneel, setProfessioneel] = useState(begin.professioneel);
   const [bedrijfsnaam, setBedrijfsnaam] = useState(begin.bedrijfsnaam ?? '');
   const [vervoer, setVervoer] = useState<Vervoer>(begin.vervoer);
-  const [tarieven, setTarieven] = useState<Record<Duur, string>>({
+  const [tarieven, setTarieven] = useState<Record<WandelDuur, string>>({
     30: naarInvoer(begin.tarieven[30]),
     45: naarInvoer(begin.tarieven[45]),
     60: naarInvoer(begin.tarieven[60]),
   });
+  const [diensten, setDiensten] = useState<Dienst[]>(begin.diensten);
+  const [oppasTarief, setOppasTarief] = useState(naarInvoer(begin.oppasPerUur || 1100));
   const [toeslag, setToeslag] = useState(naarInvoer(begin.toeslagExtraHond));
   const [maxHonden, setMaxHonden] = useState(begin.maxHonden);
   const [werkgebied, setWerkgebied] = useState(begin.werkgebiedKm);
@@ -37,10 +39,15 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   const [geprobeerd, setGeprobeerd] = useState(false);
 
   const centen = { 30: naarCenten(tarieven[30]), 45: naarCenten(tarieven[45]), 60: naarCenten(tarieven[60]) };
+  const oppasCenten = naarCenten(oppasTarief);
+  const uitlaten = diensten.includes('uitlaten');
+  const oppas = diensten.includes('oppas');
   const toeslagCenten = Number(toeslag.replace(',', '.')) >= 0 ? Math.round(Number(toeslag.replace(',', '.')) * 100) : null;
   const fouten = {
     bio: bio.trim().length < 20 ? 'Vertel in minstens 20 tekens iets over jezelf.' : null,
-    tarief: DUREN.every((d) => centen[d] !== null) ? null : 'Vul per duur een tarief in tussen €5 en €100.',
+    diensten: diensten.length > 0 ? null : 'Kies minstens één dienst.',
+    tarief: !uitlaten || DUREN.every((d) => centen[d] !== null) ? null : 'Vul per duur een tarief in tussen €5 en €100.',
+    oppas: !oppas || oppasCenten !== null ? null : 'Vul een uurtarief in tussen €5 en €100.',
     toeslag: toeslagCenten !== null && Number.isFinite(toeslagCenten) ? null : 'Vul een bedrag in, of 0.',
     bedrijf: professioneel && bedrijfsnaam.trim().length < 2 ? 'Vul de naam van je bedrijf in.' : null,
     rooster: Object.values(rooster).some((d) => d.length > 0) ? null : 'Kies minstens één dagdeel.',
@@ -48,22 +55,33 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   const geldig = Object.values(fouten).every((f) => f === null);
   const toon = (f: string | null) => (geprobeerd ? f : null);
 
-  const voorbeeld = centen[30] !== null && toeslagCenten !== null ? berekenPrijs({ tarieven: { 30: centen[30], 45: 0, 60: 0 }, toeslagExtraHond: toeslagCenten }, 30, 1) : null;
+  const voorbeeld =
+    centen[30] !== null && toeslagCenten !== null
+      ? berekenPrijs({ tarieven: { 30: centen[30], 45: 0, 60: 0 }, oppasPerUur: 0, toeslagExtraHond: toeslagCenten }, 'uitlaten', 30, 1)
+      : null;
+  const oppasVoorbeeld =
+    oppasCenten !== null && toeslagCenten !== null
+      ? berekenPrijs({ tarieven: { 30: 0, 45: 0, 60: 0 }, oppasPerUur: oppasCenten, toeslagExtraHond: toeslagCenten }, 'oppas', 180, 1)
+      : null;
+  const wisselDienst = (d: Dienst) => setDiensten((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
 
   const wissel = (dag: Dag, deel: Dagdeel) =>
     setRooster((r) => ({ ...r, [dag]: r[dag].includes(deel) ? r[dag].filter((x) => x !== deel) : [...r[dag], deel] }));
 
   const bewaar = () => {
     setGeprobeerd(true);
-    if (!geldig || centen[30] === null || centen[45] === null || centen[60] === null || toeslagCenten === null) return;
+    if (!geldig || toeslagCenten === null) return;
     onBewaar({
       ...begin,
+      diensten,
+      oppasPerUur: oppas && oppasCenten !== null ? oppasCenten : 0,
       bio: bio.trim(),
       ervaring: ervaring.trim(),
       professioneel,
       bedrijfsnaam: professioneel ? bedrijfsnaam.trim() : undefined,
       vervoer,
-      tarieven: { 30: centen[30], 45: centen[45], 60: centen[60] },
+      // Tarieven voor uitlaten blijven bewaard, ook als de dienst even uit staat
+      tarieven: { 30: centen[30] ?? begin.tarieven[30], 45: centen[45] ?? begin.tarieven[45], 60: centen[60] ?? begin.tarieven[60] },
       toeslagExtraHond: toeslagCenten,
       maxHonden,
       werkgebiedKm: werkgebied,
@@ -74,7 +92,20 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={gedeeldeStijl.inhoud} keyboardShouldPersistTaps="handled">
-        <Melding type="info">Jij bepaalt je tarief, je werkgebied en wanneer je werkt. Woober wijst geen wandelingen toe; eigenaren kiezen jou en jij beslist of je ja zegt.</Melding>
+        <Melding type="info">Jij bepaalt je tarief, je werkgebied en wanneer je werkt. Woober wijst niets toe; eigenaren kiezen jou en jij beslist of je ja zegt.</Melding>
+
+        <View style={{ height: ruimte(3) }} />
+        <Label>Wat bied je aan?</Label>
+        <View style={gedeeldeStijl.rij}>
+          <Chip label="Uitlaten" icoon="walk" actief={uitlaten} onPress={() => wisselDienst('uitlaten')} />
+          <Chip label="Oppas aan huis" icoon="home" actief={oppas} onPress={() => wisselDienst('oppas')} />
+        </View>
+        {toon(fouten.diensten) ? <Text style={s.fout}>{fouten.diensten}</Text> : null}
+        {oppas ? (
+          <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2) }]}>
+            Bij oppas ben je een paar uur bij de eigenaar thuis, vaak &apos;s avonds. Je laat de hond tussendoor even uit.
+          </Text>
+        ) : null}
 
         <View style={{ height: ruimte(3) }} />
         <Veld label="Over jou" value={bio} onChangeText={setBio} multiline maxLength={400} placeholder="Wie ben je en waarom laat je graag honden uit?" fout={toon(fouten.bio)} />
@@ -99,29 +130,53 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
           <Chip label="Auto of bus" icoon="car" actief={vervoer === 'auto'} onPress={() => setVervoer('auto')} />
         </View>
 
-        <View style={{ height: ruimte(5) }} />
-        <Label>Jouw tarief per wandeling</Label>
-        <View style={s.tarieven}>
-          {DUREN.map((d) => (
-            <View key={d} style={s.tarief}>
-              <Text style={s.tariefDuur}>{d} min</Text>
+        {uitlaten ? (
+          <>
+            <View style={{ height: ruimte(5) }} />
+            <Label>Jouw tarief per wandeling</Label>
+            <View style={s.tarieven}>
+              {DUREN.map((d) => (
+                <View key={d} style={s.tarief}>
+                  <Text style={s.tariefDuur}>{d} min</Text>
+                  <View style={s.tariefInvoer}>
+                    <Text style={s.euroTeken}>€</Text>
+                    <TextInput
+                      value={tarieven[d]}
+                      onChangeText={(t) => setTarieven((x) => ({ ...x, [d]: t }))}
+                      keyboardType="decimal-pad"
+                      style={s.tariefVeld}
+                      accessibilityLabel={`Tarief ${d} minuten`}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+            {toon(fouten.tarief) ? <Text style={s.fout}>{fouten.tarief}</Text> : null}
+          </>
+        ) : null}
+
+        {oppas ? (
+          <>
+            <View style={{ height: ruimte(5) }} />
+            <Label>Jouw uurtarief voor oppas</Label>
+            <View style={[s.tarief, { flex: 0, width: 140 }]}>
+              <Text style={s.tariefDuur}>per uur</Text>
               <View style={s.tariefInvoer}>
                 <Text style={s.euroTeken}>€</Text>
-                <TextInput
-                  value={tarieven[d]}
-                  onChangeText={(t) => setTarieven((x) => ({ ...x, [d]: t }))}
-                  keyboardType="decimal-pad"
-                  style={s.tariefVeld}
-                  accessibilityLabel={`Tarief ${d} minuten`}
-                />
+                <TextInput value={oppasTarief} onChangeText={setOppasTarief} keyboardType="decimal-pad" style={s.tariefVeld} accessibilityLabel="Uurtarief oppas" />
               </View>
             </View>
-          ))}
-        </View>
-        {toon(fouten.tarief) ? <Text style={s.fout}>{fouten.tarief}</Text> : null}
+            {toon(fouten.oppas) ? <Text style={s.fout}>{fouten.oppas}</Text> : null}
+            {oppasVoorbeeld ? (
+              <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2) }]}>
+                Een avond van 3 uur: de eigenaar betaalt {euro(oppasVoorbeeld.totaal)}, jij ontvangt {euro(oppasVoorbeeld.uitbetaling)}.
+              </Text>
+            ) : null}
+          </>
+        ) : null}
         <View style={{ height: ruimte(3) }} />
         <Veld label="Toeslag per extra hond" value={toeslag} onChangeText={setToeslag} keyboardType="decimal-pad" hulp="Voor een tweede hond uit hetzelfde huishouden." fout={toon(fouten.toeslag)} />
-        {voorbeeld ? (
+        {voorbeeld && uitlaten ? (
           <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(2), marginBottom: ruimte(4) }]}>
             Bij 30 minuten betaalt de eigenaar {euro(voorbeeld.totaal)} (inclusief servicekosten) en ontvang jij {euro(voorbeeld.uitbetaling)} na aftrek van commissie.
           </Text>

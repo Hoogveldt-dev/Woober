@@ -14,7 +14,7 @@ import { boekingOpKaart } from '../../lib/kaartLagen';
 import { euro } from '../../lib/prijs';
 import { deelPad, formatAfstand, lengte } from '../../lib/route';
 import { resterendeRitMin, ritVoortgang, verstrekenMin, wandelVoortgang } from '../../lib/simulatie';
-import { leeftijdTekst, momentTekst } from '../../lib/tijd';
+import { duurTekst, leeftijdTekst, momentTekst, tijdTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
@@ -43,6 +43,7 @@ export default function Opdracht() {
   const honden = k.honden;
   const hondNamen = honden.map((h) => h.naam).join(' en ');
   const kennismaking = b.soort === 'kennismaking';
+  const oppas = b.dienst === 'oppas';
   const laag = boekingOpKaart(b, nu, mijnProfiel, honden[0].kleur, { ophaalSoort: 'klant', uitlaterAlsIk: true, toonPlan: true });
   const terug = () => (router.canGoBack() ? router.back() : router.replace('/werk'));
   const chat = () => router.push({ pathname: '/chat/[id]', params: { id: k.id } });
@@ -80,7 +81,9 @@ export default function Opdracht() {
     case 'gepland':
       inhoud = (
         <>
-          <Text style={s.titel}>{kennismaking ? 'Kennismaking' : 'Wandeling'} {momentTekst(b.moment, nu)}</Text>
+          <Text style={s.titel}>
+            {kennismaking ? 'Kennismaking' : oppas ? `Oppas ${duurTekst(b.duur)}` : 'Wandeling'} {momentTekst(b.moment, nu)}
+          </Text>
           <Text style={s.sub}>
             {k.voornaam}, {b.adres}
           </Text>
@@ -134,8 +137,12 @@ export default function Opdracht() {
         </>
       ) : (
         <>
-          <Text style={s.titel}>Vraag {k.voornaam} om de ophaalcode</Text>
-          <Text style={s.sub}>Zo weet {k.voornaam} zeker dat de juiste persoon {hondNamen} meeneemt.</Text>
+          <Text style={s.titel}>Vraag {k.voornaam} om de code</Text>
+          <Text style={s.sub}>
+            {oppas
+              ? `Zo weet ${k.voornaam} zeker dat de juiste persoon binnenkomt. Vraag ook naar eten, riem en huisregels.`
+              : `Zo weet ${k.voornaam} zeker dat de juiste persoon ${hondNamen} meeneemt.`}
+          </Text>
           <TextInput
             value={code}
             onChangeText={(t) => {
@@ -152,7 +159,7 @@ export default function Opdracht() {
           {codeFout ? <Text style={s.fout}>Deze code klopt niet. Vraag het nog een keer.</Text> : null}
           <Text style={s.klein}>Demo: {k.voornaam} zegt {b.ophaalcode}</Text>
           <Knop
-            titel="Start wandeling"
+            titel={oppas ? 'Start oppas' : 'Start wandeling'}
             icoon="walk"
             uitgeschakeld={code.length !== 4}
             stijl={{ marginTop: ruimte(3) }}
@@ -168,6 +175,64 @@ export default function Opdracht() {
       const min = Math.floor(verstrekenMin(b, nu));
       const gelopen = lengte(deelPad(b.wandelroute, v));
       const resterend = Math.max(0, b.duur - min);
+      if (oppas) {
+        const eind = (b.gestart ?? nu) + b.duur * 60000;
+        inhoud = (
+          <>
+            <View style={s.etaRij}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.titel}>Oppassen op {hondNamen}</Text>
+                <Text style={s.sub}>{resterend > 0 ? `Tot ${tijdTekst(eind)}, nog ${duurTekst(resterend)}` : `${k.voornaam} kan elk moment thuiskomen`}</Text>
+              </View>
+              <View style={s.eta}>
+                <Text style={s.etaGetal}>
+                  {Math.floor(min / 60)}:{String(min % 60).padStart(2, '0')}
+                </Text>
+                <Text style={s.etaEenheid}>uur</Text>
+              </View>
+            </View>
+            <View style={[s.acties, { marginTop: ruimte(3) }]}>
+              <ActieKnop icoon="camera" titel="Foto" kleur={kleuren.primair} onPress={() => voegToe(b.id, 'foto', `${hondNamen} heeft het naar de zin`)} />
+              <ActieKnop icoon="food-drumstick" titel="Eten" kleur="#E8783C" onPress={() => voegToe(b.id, 'eten')} />
+              <ActieKnop icoon="water" titel="Plas" kleur="#E2B714" onPress={() => voegToe(b.id, 'plas')} />
+              <ActieKnop icoon="sleep" titel="Slaapt" kleur="#6A7FDB" onPress={() => voegToe(b.id, 'slapen')} />
+              <ActieKnop icoon="note-text" titel="Notitie" onPress={() => setNotitie('')} />
+            </View>
+            {notitie !== null ? (
+              <View style={s.notitieRij}>
+                <TextInput value={notitie} onChangeText={setNotitie} placeholder="Bijv. blafte even bij de deurbel" placeholderTextColor="#A1A1AA" style={s.notitieInvoer} autoFocus />
+                <Pressable
+                  onPress={() => {
+                    if (notitie.trim()) voegToe(b.id, 'notitie', notitie.trim());
+                    setNotitie(null);
+                  }}
+                  style={s.notitieKnop}
+                  accessibilityLabel="Notitie toevoegen"
+                >
+                  <Ionicons name="send" size={18} color="#fff" />
+                </Pressable>
+              </View>
+            ) : null}
+            <ScrollView style={{ maxHeight: 120 }}>
+              <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.basisDuur ?? b.duur} oppas={b.dienst === 'oppas'} />
+            </ScrollView>
+            {bevestigEinde ? (
+              <View style={s.bevestig}>
+                <Text style={s.bevestigTekst}>Is {k.voornaam} weer thuis? De geboekte tijd wordt betaald, ook als het eerder klaar is.</Text>
+                <Knop titel="Ja, oppas afronden" onPress={() => beeindig(b.id)} />
+                <Knop titel="Nog niet" variant="tekst" onPress={() => setBevestigEinde(false)} />
+              </View>
+            ) : (
+              <Knop titel={`${k.voornaam} is thuis`} icoon="home" stijl={{ marginTop: ruimte(3) }} onPress={() => setBevestigEinde(true)} />
+            )}
+            <View style={s.tekstKnoppen}>
+              <Knop titel="Incident melden" variant="tekst" icoon="alert-circle" tekstKleur={kleuren.nope} onPress={() => setIncident(true)} />
+              <Knop titel="Half uur verder (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
+            </View>
+          </>
+        );
+        break;
+      }
       inhoud = (
         <>
           <View style={s.etaRij}>
@@ -207,7 +272,7 @@ export default function Opdracht() {
             </View>
           ) : null}
           <ScrollView style={{ maxHeight: 120 }}>
-            <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.duur} />
+            <WandelFeed gebeurtenissen={b.gebeurtenissen} compact start={b.gestart} duur={b.basisDuur ?? b.duur} oppas={b.dienst === 'oppas'} />
           </ScrollView>
           {bevestigEinde ? (
             <View style={s.bevestig}>
@@ -237,12 +302,16 @@ export default function Opdracht() {
           {!kennismaking ? (
             <>
               <Text style={s.sub}>
-                {hondNamen} is weer thuis. Je ontvangt {euro(b.prijs.uitbetaling + b.fooi)}, via Stripe op je rekening.
+                {oppas ? `${k.voornaam} is weer thuis.` : `${hondNamen} is weer thuis.`} Je ontvangt {euro(b.prijs.uitbetaling + b.fooi)}, via Stripe op je rekening.
               </Text>
               <View style={s.tegels}>
-                <Tegel waarde={`${Math.round(verstrekenMin(b, nu))} min`} label="duur" />
-                <Tegel waarde={formatAfstand(lengte(deelPad(b.wandelroute, b.gebeurtenissen.find((g) => g.soort === 'einde')?.voortgang ?? 1)))} label="afstand" />
-                <Tegel waarde={euro(b.prijs.uitbetaling)} label="verdiend" />
+                <Tegel klein waarde={duurTekst(Math.max(1, Math.round(verstrekenMin(b, nu))))} label="duur" />
+                {oppas ? (
+                  <Tegel klein waarde={duurTekst(b.duur)} label="geboekt" />
+                ) : (
+                  <Tegel klein waarde={formatAfstand(lengte(deelPad(b.wandelroute, b.gebeurtenissen.find((g) => g.soort === 'einde')?.voortgang ?? 1)))} label="afstand" />
+                )}
+                <Tegel klein waarde={euro(b.prijs.uitbetaling)} label="verdiend" />
               </View>
             </>
           ) : (
@@ -350,6 +419,7 @@ const s = StyleSheet.create({
   notitieInvoer: { flex: 1, backgroundColor: kleuren.vlak, borderRadius: radius.rond, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: kleuren.tekst },
   notitieKnop: { width: 42, height: 42, borderRadius: 21, backgroundColor: kleuren.primair, alignItems: 'center', justifyContent: 'center' },
   knoppen: { flexDirection: 'row', gap: ruimte(3), marginTop: ruimte(3) },
+  tekstKnoppen: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   bevestig: { marginTop: ruimte(2), padding: ruimte(3), borderRadius: radius.midden, backgroundColor: kleuren.vlak, gap: ruimte(2) },
   bevestigTekst: { fontSize: 14, color: kleuren.tekst, lineHeight: 20 },
   review: { borderWidth: 1, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Blok, gedeeldeStijl, Rij, Sectie } from '../../components/blokken';
 import { Kop, Melding } from '../../components/ui';
 import { COMMISSIE_PERCENTAGE, euro } from '../../lib/prijs';
-import { DAGEN_KORT, dagTekst, dagVan, tijdTekst } from '../../lib/tijd';
+import { DAGEN_KORT, dagTekst, dagVan, duurTekst, tijdTekst } from '../../lib/tijd';
 import { afgerondeOpdrachten, verdiend, verdiendOp } from '../../lib/verdiensten';
 import { useApp } from '../../state/AppContext';
 import { kleuren, ruimte } from '../../theme';
@@ -58,14 +58,14 @@ export default function Verdiensten() {
           Na elke wandeling zet Woober je geld klaar; Stripe maakt het over naar je eigen rekening, meestal binnen een paar werkdagen. Je bent zelf verantwoordelijk voor de belastingaangifte van je inkomsten.
         </Melding>
 
-        <Sectie>Afgeronde wandelingen</Sectie>
+        <Sectie>Afgerond</Sectie>
         <Blok>
           {opdrachten.map((b) => {
             const k = klant(b.klantId);
             return (
               <Rij
                 key={b.id}
-                label={`${dagTekst(b.beeindigd ?? 0, nu)} ${tijdTekst(b.gestart ?? 0)}, ${k?.honden.map((h) => h.naam).join(' en ')} (${b.duur} min)${b.fooi ? ', met fooi' : ''}`}
+                label={`${dagTekst(b.beeindigd ?? 0, nu)} ${tijdTekst(b.gestart ?? 0)}, ${k?.honden.map((h) => h.naam).join(' en ')} (${b.dienst === 'oppas' ? 'oppas ' : ''}${duurTekst(b.duur)})${b.fooi ? ', met fooi' : ''}`}
                 waarde={euro(verdiend(b))}
               />
             );

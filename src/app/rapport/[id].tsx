@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HondenStapel, PersoonAvatar } from '../../components/avatars';
@@ -6,11 +6,11 @@ import { Blok, gedeeldeStijl, Rij, Sectie, SterrenKiezer, Tegel } from '../../co
 import { Kaart } from '../../components/Kaart';
 import { Chip, Knop, Melding, Veld } from '../../components/ui';
 import { WandelFeed } from '../../components/WandelFeed';
-import { REVIEW_TAGS_UITLATER } from '../../data/uitlaters';
+import { REVIEW_TAGS_OPPAS, REVIEW_TAGS_UITLATER } from '../../data/uitlaters';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { euro } from '../../lib/prijs';
 import { formatAfstand, lengte } from '../../lib/route';
-import { dagTekst, tijdTekst } from '../../lib/tijd';
+import { dagTekst, duurTekst, tijdTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
@@ -36,9 +36,11 @@ export default function Rapport() {
   const tel = (soort: string) => b.gebeurtenissen.filter((g) => g.soort === soort).length;
   const einde = b.gebeurtenissen.find((g) => g.soort === 'einde');
   const duurMin = b.duur;
+  const oppas = b.dienst === 'oppas';
 
   return (
     <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={{ paddingBottom: ruimte(12) }}>
+      <Stack.Screen options={{ title: oppas ? 'Oppasrapport' : 'Wandelrapport' }} />
       <View style={s.kaart}>
         <Kaart markers={laag.markers} routes={laag.routes} focus={laag.focus} maxZoom={0.8} vast />
       </View>
@@ -46,7 +48,9 @@ export default function Rapport() {
         <View style={s.kop}>
           <HondenStapel honden={honden} grootte={48} />
           <View style={{ flex: 1 }}>
-            <Text style={gedeeldeStijl.titel}>Wandeling met {u.voornaam}</Text>
+            <Text style={gedeeldeStijl.titel}>
+              {oppas ? 'Oppas' : 'Wandeling'} met {u.voornaam}
+            </Text>
             <Text style={gedeeldeStijl.sub}>
               {hondNamen}, {dagTekst(b.gestart ?? b.statusSinds)} om {tijdTekst(b.gestart ?? b.statusSinds)}
             </Text>
@@ -54,10 +58,21 @@ export default function Rapport() {
         </View>
 
         <View style={s.tegels}>
-          <Tegel klein waarde={`${duurMin} min`} label="duur" />
-          <Tegel klein waarde={formatAfstand(lengte(b.wandelroute))} label="afstand" />
-          <Tegel klein waarde={String(tel('plas'))} label="plasjes" />
-          <Tegel klein waarde={String(tel('poep'))} label="poepjes" />
+          {oppas ? (
+            <>
+              <Tegel klein waarde={duurTekst(duurMin)} label="geboekt" />
+              <Tegel klein waarde={String(tel('eten'))} label="maaltijd" />
+              <Tegel klein waarde={String(tel('plas'))} label="plasrondje" />
+              <Tegel klein waarde={String(tel('foto'))} label="foto's" />
+            </>
+          ) : (
+            <>
+              <Tegel klein waarde={`${duurMin} min`} label="duur" />
+              <Tegel klein waarde={formatAfstand(lengte(b.wandelroute))} label="afstand" />
+              <Tegel klein waarde={String(tel('plas'))} label="plasjes" />
+              <Tegel klein waarde={String(tel('poep'))} label="poepjes" />
+            </>
+          )}
         </View>
 
         {einde?.tekst ? (
@@ -71,12 +86,12 @@ export default function Rapport() {
         ) : null}
 
         <Sectie>Verloop</Sectie>
-        <WandelFeed gebeurtenissen={b.gebeurtenissen} start={b.gestart} duur={b.duur} />
+        <WandelFeed gebeurtenissen={b.gebeurtenissen} start={b.gestart} duur={b.basisDuur ?? b.duur} oppas={b.dienst === 'oppas'} />
 
         <View style={{ height: ruimte(4) }} />
         <Sectie>Betaling</Sectie>
         <Blok>
-          <Rij label={`Tarief ${u.voornaam}`} waarde={euro(b.prijs.tarief)} />
+          <Rij label={oppas ? `${u.voornaam}, ${duurTekst(b.duur)} oppas` : `Tarief ${u.voornaam}`} waarde={euro(b.prijs.tarief)} />
           {b.prijs.toeslag > 0 ? <Rij label="Extra hond" waarde={euro(b.prijs.toeslag)} /> : null}
           <Rij label="Servicekosten" waarde={euro(b.prijs.servicekosten)} />
           {b.fooi > 0 ? <Rij label="Fooi" waarde={euro(b.fooi)} /> : null}
@@ -103,12 +118,14 @@ export default function Rapport() {
           <Melding type="goed">Je gaf {u.voornaam} {b.beoordelingDoorMij.sterren} van de 5 sterren. Dank je wel!</Melding>
         ) : (
           <View style={s.review}>
-            <Text style={s.reviewVraag}>Hoe was de wandeling met {u.voornaam}?</Text>
+            <Text style={s.reviewVraag}>
+              Hoe was {oppas ? 'de oppas' : 'de wandeling'} met {u.voornaam}?
+            </Text>
             <SterrenKiezer waarde={sterren} onChange={setSterren} />
             {sterren > 0 ? (
               <>
                 <View style={[gedeeldeStijl.rij, { justifyContent: 'center', marginBottom: ruimte(3) }]}>
-                  {REVIEW_TAGS_UITLATER.map((t) => (
+                  {(oppas ? REVIEW_TAGS_OPPAS : REVIEW_TAGS_UITLATER).map((t) => (
                     <Chip key={t} label={t} actief={tags.includes(t)} onPress={() => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]))} />
                   ))}
                 </View>
@@ -127,17 +144,23 @@ export default function Rapport() {
             titel={`Opnieuw boeken bij ${u.voornaam}`}
             icoon="paw"
             onPress={() => {
-              zetConcept({ hondIds: b.hondIds, duur: b.duur, moment: { type: 'nu' }, uitlaterId: u.id });
+              zetConcept({ dienst: b.dienst, hondIds: b.hondIds, duur: b.duur, moment: { type: 'nu' }, uitlaterId: u.id });
               router.push('/boeken');
             }}
           />
           {!b.serieId ? (
             <Knop
-              titel="Maak er een vaste wandeling van"
+              titel={oppas ? 'Maak er een vaste oppasavond van' : 'Maak er een vaste wandeling van'}
               variant="secundair"
               icoon="repeat"
               onPress={() => {
-                zetConcept({ hondIds: b.hondIds, duur: b.duur, moment: { type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' }, uitlaterId: u.id });
+                zetConcept({
+                  dienst: b.dienst,
+                  hondIds: b.hondIds,
+                  duur: b.duur,
+                  moment: oppas ? { type: 'wekelijks', dagen: [4], tijd: '19:00' } : { type: 'wekelijks', dagen: [0, 2, 4], tijd: '12:30' },
+                  uitlaterId: u.id,
+                });
                 router.push('/boeken');
               }}
             />

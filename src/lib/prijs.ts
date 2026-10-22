@@ -1,4 +1,4 @@
-import type { Boeking, Duur, PrijsOpbouw, Uitlater } from '../types';
+import type { Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
 
 /**
  * Verdienmodel (zie PLAN.md). De uitlater kiest zelf het tarief; Woober rekent daarbovenop
@@ -14,10 +14,24 @@ export const GRATIS_ANNULEREN_UUR = 2;
 /** Daarna, of als de uitlater al onderweg is, krijgt de uitlater dit deel van het tarief */
 export const ANNULERINGSDEEL = 0.5;
 
-export const DUREN: Duur[] = [30, 45, 60];
+export const DUREN: WandelDuur[] = [30, 45, 60];
+export const OPPAS_DUREN: OppasDuur[] = [120, 180, 240, 300];
+/** Verlengen van oppas gaat per uur */
+export const VERLENG_MINUTEN = 60;
 
-export function berekenPrijs(uitlater: Pick<Uitlater, 'tarieven' | 'toeslagExtraHond'>, duur: Duur, aantalHonden: number): PrijsOpbouw {
-  const tarief = uitlater.tarieven[duur];
+/** Tarief van de uitlater zelf, zonder toeslag: per wandelduur, of uurtarief maal aantal uren bij oppas */
+export function tariefVoor(uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur'>, dienst: Dienst, duur: number): number {
+  if (dienst === 'oppas') return Math.round((uitlater.oppasPerUur * duur) / 60);
+  return uitlater.tarieven[duur as WandelDuur] ?? 0;
+}
+
+export function berekenPrijs(
+  uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur' | 'toeslagExtraHond'>,
+  dienst: Dienst,
+  duur: number,
+  aantalHonden: number,
+): PrijsOpbouw {
+  const tarief = tariefVoor(uitlater, dienst, duur);
   const toeslag = Math.max(0, aantalHonden - 1) * uitlater.toeslagExtraHond;
   const basis = tarief + toeslag;
   const servicekosten = Math.max(SERVICEKOSTEN_MINIMUM, Math.round(basis * SERVICEKOSTEN_PERCENTAGE));

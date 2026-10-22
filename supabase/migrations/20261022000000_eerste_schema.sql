@@ -12,9 +12,12 @@
 
 -- Soorten -------------------------------------------------------------------
 
-create type public.boeking_soort as enum ('wandeling', 'kennismaking');
+-- Wat je boekt, zoals ritsoorten bij Uber
+create type public.dienst as enum ('uitlaten', 'oppas');
+-- Een betaalde boeking (uitlaten of oppas) of een gratis kennismaking
+create type public.boeking_soort as enum ('betaald', 'kennismaking');
 create type public.boeking_status as enum ('aangevraagd', 'gepland', 'onderweg', 'aangekomen', 'bezig', 'afgerond', 'geannuleerd', 'geweigerd');
-create type public.gebeurtenis_soort as enum ('start', 'foto', 'plas', 'poep', 'water', 'notitie', 'einde', 'incident');
+create type public.gebeurtenis_soort as enum ('start', 'foto', 'plas', 'poep', 'water', 'eten', 'spelen', 'slapen', 'notitie', 'einde', 'incident');
 create type public.vervoer as enum ('lopend', 'fiets', 'auto');
 create type public.sleutel as enum ('thuis', 'kastje', 'overhandigd');
 create type public.betaalmethode as enum ('ideal', 'applepay', 'kaart');
@@ -65,6 +68,9 @@ create table public.uitlaters (
   ervaring text not null default '' check (char_length(ervaring) <= 300),
   professioneel boolean not null default false,
   bedrijfsnaam text,
+  diensten public.dienst[] not null default '{uitlaten}' check (array_length(diensten, 1) >= 1),
+  -- Uurtarief voor oppas aan huis in centen; 0 als die dienst niet wordt aangeboden
+  oppas_per_uur integer not null default 0 check (oppas_per_uur = 0 or oppas_per_uur between 500 and 10000),
   tarief_30 integer not null check (tarief_30 between 500 and 10000),
   tarief_45 integer not null check (tarief_45 between 500 and 10000),
   tarief_60 integer not null check (tarief_60 between 500 and 10000),
@@ -101,8 +107,9 @@ create table public.series (
   id uuid primary key default gen_random_uuid(),
   eigenaar_id uuid not null references public.profielen (id) on delete cascade,
   uitlater_id uuid not null references public.uitlaters (id) on delete cascade,
+  dienst public.dienst not null default 'uitlaten',
   hond_ids uuid[] not null,
-  duur smallint not null check (duur in (30, 45, 60)),
+  duur smallint not null check (duur in (30, 45, 60, 120, 180, 240, 300)),
   dagen smallint[] not null check (array_length(dagen, 1) between 1 and 7),
   tijd time not null,
   actief boolean not null default true,
@@ -111,16 +118,20 @@ create table public.series (
 
 create table public.boekingen (
   id uuid primary key default gen_random_uuid(),
-  soort public.boeking_soort not null default 'wandeling',
+  soort public.boeking_soort not null default 'betaald',
+  dienst public.dienst not null default 'uitlaten',
   eigenaar_id uuid not null references public.profielen (id) on delete cascade,
   uitlater_id uuid not null references public.uitlaters (id) on delete cascade,
   hond_ids uuid[] not null check (array_length(hond_ids, 1) between 1 and 8),
-  duur smallint not null check (duur in (30, 45, 60)),
+  -- Minuten: 30, 45 of 60 voor uitlaten; bij oppas hele uren, ook na verlengen
+  duur smallint not null check (duur in (30, 45, 60) or (duur % 60 = 0 and duur between 60 and 720)),
   -- null betekent: zo snel mogelijk
   moment timestamptz,
   serie_id uuid references public.series (id) on delete set null,
   sleutel public.sleutel not null default 'thuis',
   notitie text not null default '' check (char_length(notitie) <= 300),
+  -- Bij oppas: de eigenaar meldt vooraf dat er camera's in huis hangen
+  camera_in_huis boolean not null default false,
   betaalmethode public.betaalmethode not null default 'ideal',
   -- Bedragen in centen, berekend door vraag_wandeling_aan()
   tarief integer not null default 0,
@@ -146,7 +157,7 @@ create table public.ophaalcodes (
   code text not null check (code ~ '^[0-9]{4}$')
 );
 
--- Alleen tijdens een wandeling, en na 30 dagen verwijderd (zie onderaan).
+-- Alleen tijdens een wandeling of het plasrondje bij oppas, en na 30 dagen verwijderd (zie onderaan).
 create table public.wandel_posities (
   id bigint generated always as identity primary key,
   boeking_id uuid not null references public.boekingen (id) on delete cascade,
@@ -254,8 +265,20 @@ $$;
 
 -- Acties op boekingen ---------------------------------------------------------
 
+-- Tarief van de uitlater zelf: per wandelduur, of uurtarief maal aantal uren bij oppas (zelfde regel als src/lib/prijs.ts)
+create or replace function public.tarief_voor(u public.uitlaters, p_dienst public.dienst, p_duur integer)
+returns integer language sql immutable as $$
+  select case
+    when p_dienst = 'oppas' then round(u.oppas_per_uur * p_duur / 60.0)::integer
+    when p_duur = 30 then u.tarief_30
+    when p_duur = 45 then u.tarief_45
+    when p_duur = 60 then u.tarief_60
+  end;
+$$;
+
 -- Woober-tarieven: zelfde waarden als src/lib/prijs.ts
-create or replace function public.vraag_wandeling_aan(
+create or replace function public.vraag_boeking_aan(
+  p_dienst public.dienst,
   p_uitlater uuid,
   p_honden uuid[],
   p_duur smallint,
@@ -263,6 +286,7 @@ create or replace function public.vraag_wandeling_aan(
   p_sleutel public.sleutel,
   p_notitie text,
   p_betaalmethode public.betaalmethode,
+  p_camera_in_huis boolean default false,
   p_serie uuid default null
 ) returns uuid language plpgsql security definer set search_path = '' as $$
 declare
@@ -275,6 +299,10 @@ begin
   select * into u from public.uitlaters where id = p_uitlater;
   if not found or not public.mag_uitlaten(u) then raise exception 'Deze uitlater kan nu geen boekingen aannemen'; end if;
   if public.is_geblokkeerd(ik, p_uitlater) then raise exception 'Niet mogelijk'; end if;
+  if not (p_dienst = any (u.diensten)) then raise exception 'Deze persoon biedt deze dienst niet aan'; end if;
+  if (p_dienst = 'uitlaten' and p_duur not in (30, 45, 60)) or (p_dienst = 'oppas' and p_duur not in (120, 180, 240, 300)) then
+    raise exception 'Ongeldige duur';
+  end if;
   if not public.kent_elkaar(ik, p_uitlater) then raise exception 'Plan eerst een kennismaking'; end if;
   if array_length(p_honden, 1) > u.max_honden then raise exception 'Te veel honden voor deze uitlater'; end if;
   if exists (select 1 from unnest(p_honden) h where not exists (select 1 from public.honden where id = h and eigenaar_id = ik)) then
@@ -282,13 +310,13 @@ begin
   end if;
   if p_moment is null and not u.online then raise exception 'Deze uitlater is nu niet online'; end if;
 
-  basis := case p_duur when 30 then u.tarief_30 when 45 then u.tarief_45 when 60 then u.tarief_60 end
-           + (array_length(p_honden, 1) - 1) * u.toeslag_extra_hond;
+  basis := public.tarief_voor(u, p_dienst, p_duur) + (array_length(p_honden, 1) - 1) * u.toeslag_extra_hond;
   if basis is null then raise exception 'Ongeldige duur'; end if;
 
-  insert into public.boekingen (eigenaar_id, uitlater_id, hond_ids, duur, moment, serie_id, sleutel, notitie, betaalmethode,
-                                tarief, toeslag, servicekosten, commissie)
-  values (ik, p_uitlater, p_honden, p_duur, p_moment, p_serie, p_sleutel, left(coalesce(p_notitie, ''), 300), p_betaalmethode,
+  insert into public.boekingen (dienst, eigenaar_id, uitlater_id, hond_ids, duur, moment, serie_id, sleutel, notitie, camera_in_huis,
+                                betaalmethode, tarief, toeslag, servicekosten, commissie)
+  values (p_dienst, ik, p_uitlater, p_honden, p_duur, p_moment, p_serie, p_sleutel, left(coalesce(p_notitie, ''), 300),
+          p_dienst = 'oppas' and coalesce(p_camera_in_huis, false), p_betaalmethode,
           basis - (array_length(p_honden, 1) - 1) * u.toeslag_extra_hond,
           (array_length(p_honden, 1) - 1) * u.toeslag_extra_hond,
           greatest(99, round(basis * 0.10)),
@@ -316,6 +344,31 @@ begin
 end;
 $$;
 
+-- Oppas een uur verlengen. In de echte app bevestigt de oppas dit eerst; in dit concept gaat het direct.
+create or replace function public.verleng_oppas(p_boeking uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  b public.boekingen;
+  u public.uitlaters;
+  basis integer;
+begin
+  select * into b from public.boekingen where id = p_boeking for update;
+  if not found or b.eigenaar_id is distinct from (select auth.uid()) or b.dienst <> 'oppas'
+     or b.status not in ('gepland', 'onderweg', 'aangekomen', 'bezig') then
+    raise exception 'Deze stap kan nu niet';
+  end if;
+  if b.duur + 60 > 720 then raise exception 'Langer dan 12 uur kan niet'; end if;
+  select * into u from public.uitlaters where id = b.uitlater_id;
+  basis := public.tarief_voor(u, 'oppas', b.duur + 60) + b.toeslag;
+  update public.boekingen
+  set duur = b.duur + 60,
+      tarief = basis - b.toeslag,
+      servicekosten = greatest(99, round(basis * 0.10)),
+      commissie = round(basis * 0.10)
+  where id = p_boeking;
+end;
+$$;
+
 -- Toegestane overgangen. Weigeren en afzeggen door de uitlater hebben geen gevolgen en worden niet geteld.
 create or replace function public.wijzig_status(p_boeking uuid, p_naar public.boeking_status)
 returns void language plpgsql security definer set search_path = '' as $$
@@ -339,6 +392,9 @@ begin
   elsif ben_uitlater and b.soort = 'kennismaking' and b.status in ('gepland', 'aangekomen') and p_naar = 'afgerond' then
     null;
   elsif ben_uitlater and b.status = 'bezig' and p_naar = 'afgerond' then
+    null;
+  elsif not ben_uitlater and b.dienst = 'oppas' and b.status = 'bezig' and p_naar = 'afgerond' then
+    -- "Ik ben thuis": de eigenaar rondt de oppas af; de geboekte tijd wordt betaald
     null;
   elsif not ben_uitlater and b.status in ('aangevraagd', 'gepland', 'onderweg', 'aangekomen') and p_naar = 'geannuleerd' then
     -- Gratis tot 2 uur van tevoren of zolang de uitlater niet onderweg is; daarna 50% van het tarief voor de uitlater
@@ -425,10 +481,10 @@ create policy "eigen uitlaatprofiel maken" on public.uitlaters for insert to aut
 create policy "eigen uitlaatprofiel wijzigen" on public.uitlaters for update to authenticated using (id = (select auth.uid()));
 -- Verificatievelden zijn alleen door Woober te zetten.
 revoke insert, update on public.uitlaters from authenticated;
-grant insert (id, wijk, bio, ervaring, professioneel, bedrijfsnaam, tarief_30, tarief_45, tarief_60, toeslag_extra_hond,
-              max_honden, werkgebied_km, vervoer, beschikbaarheid) on public.uitlaters to authenticated;
-grant update (wijk, bio, ervaring, professioneel, bedrijfsnaam, tarief_30, tarief_45, tarief_60, toeslag_extra_hond,
-              max_honden, werkgebied_km, vervoer, beschikbaarheid, online, lat, lng) on public.uitlaters to authenticated;
+grant insert (id, wijk, bio, ervaring, professioneel, bedrijfsnaam, diensten, oppas_per_uur, tarief_30, tarief_45, tarief_60,
+              toeslag_extra_hond, max_honden, werkgebied_km, vervoer, beschikbaarheid) on public.uitlaters to authenticated;
+grant update (wijk, bio, ervaring, professioneel, bedrijfsnaam, diensten, oppas_per_uur, tarief_30, tarief_45, tarief_60,
+              toeslag_extra_hond, max_honden, werkgebied_km, vervoer, beschikbaarheid, online, lat, lng) on public.uitlaters to authenticated;
 
 create policy "eigen prive" on public.uitlaters_prive for select to authenticated using (id = (select auth.uid()));
 create policy "eigen kvk" on public.uitlaters_prive for update to authenticated using (id = (select auth.uid()));
@@ -466,7 +522,7 @@ create policy "review na betaalde wandeling" on public.reviews for insert to aut
   auteur_id = (select auth.uid())
   and exists (
     select 1 from public.boekingen b
-    where b.id = boeking_id and b.status = 'afgerond' and b.soort = 'wandeling'
+    where b.id = boeking_id and b.status = 'afgerond' and b.soort = 'betaald'
       and ((b.eigenaar_id = auteur_id and b.uitlater_id = ontvanger_id) or (b.uitlater_id = auteur_id and b.eigenaar_id = ontvanger_id))
   )
 );
@@ -485,7 +541,8 @@ create policy "incident melden" on public.incidenten for insert to authenticated
   with check (melder_id = (select auth.uid()) and public.is_deelnemer(boeking_id));
 create policy "incidenten lezen" on public.incidenten for select to authenticated using (public.is_deelnemer(boeking_id));
 
-grant execute on function public.vraag_wandeling_aan, public.vraag_kennismaking_aan, public.wijzig_status, public.start_wandeling to authenticated;
+grant execute on function public.vraag_boeking_aan, public.vraag_kennismaking_aan, public.wijzig_status, public.start_wandeling,
+  public.verleng_oppas to authenticated;
 
 -- Live meekijken via Supabase Realtime (alleen voor deelnemers, door de RLS hierboven).
 -- alter publication supabase_realtime add table public.boekingen, public.wandel_posities, public.wandel_gebeurtenissen, public.berichten;

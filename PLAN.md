@@ -4,7 +4,12 @@ Oktober 2026 · versie 0.1 · hoort bij de klikbare demo in deze repository
 
 ## In het kort
 
-Woober is het zusje van Woofer. Woofer brengt fokkers bij elkaar; Woober brengt hondeneigenaren en uitlaters bij elkaar, op de manier waarop Uber en Lyft een rit regelen: je opent de app, ziet uitlaters in de buurt op de kaart, boekt er een, volgt de wandeling live en betaalt en beoordeelt in de app.
+Woober is het zusje van Woofer. Woofer brengt fokkers bij elkaar; Woober brengt hondeneigenaren en hondenmensen uit de buurt bij elkaar, op de manier waarop Uber en Lyft een rit regelen: je opent de app, ziet wie er in de buurt is, boekt, volgt het live en betaalt en beoordeelt in de app.
+
+Woober heeft twee diensten, zoals Uber verschillende ritsoorten heeft. Zelfde app, zelfde systeem, andere selectie:
+
+- **Uitlaten**: een wandeling van 30, 45 of 60 minuten, met live route.
+- **Oppas aan huis**: iemand komt bij je thuis op je hond passen, 2 tot 5 uur, te verlengen. Spontaan een avondje weg? Eén tik en de oppas is onderweg.
 
 Zelfde huisstijl als Woofer (kleuren, verloop, knoppen, lettertype, toon), maar een eigen merk, een eigen repository en straks een eigen database.
 
@@ -15,8 +20,10 @@ Zelfde huisstijl als Woofer (kleuren, verloop, knoppen, lettertype, toon), maar 
 | Uber of Lyft | Woober | Waarom zo |
 | --- | --- | --- |
 | Kaart met auto's in de buurt | Kaart met uitlaters die online zijn, met reistijd | Direct zien dat er iemand beschikbaar is |
-| "Waar wil je heen?" | "Wie laat Luna uit?" met snelkeuzes (nu 30 min, nu 60 min, later, elke week) | Boeken in twee tikken |
-| Kies UberX, Comfort, XL | Kies een uitlater uit een lijst, met eigen prijs, beoordeling en reistijd | Eigenaar kiest; geen automatische toewijzing |
+| Rit, Eten, Pakketje bovenin | **Uitlaten** of **Oppas** bovenin het startscherm | Eén app, de selectie past zich aan |
+| "Waar wil je heen?" | "Wie laat Luna uit?" of "Wie past op Luna?" met snelkeuzes (nu, vanavond, elke week) | Boeken in twee tikken |
+| Kies UberX, Comfort, XL | Kies een uitlater of oppas uit een lijst, met eigen prijs, beoordeling en reistijd | Eigenaar kiest; geen automatische toewijzing |
+| Rit verlengen of tussenstop | Oppas met een uur verlengen | Later thuis zonder gedoe |
 | Prijs vooraf | Prijs vooraf, maar het tarief komt van de uitlater | Platform bepaalt de vergoeding niet |
 | Chauffeur is onderweg, live op de kaart | Uitlater is onderweg, met aftellende minuten | Zelfde gevoel van zekerheid |
 | Pincode bij instappen | Ophaalcode van 4 cijfers bij de deur | Hond gaat alleen mee met de juiste persoon |
@@ -32,6 +39,7 @@ De markt is niet leeg: Pawshake doet dit landelijk en er zijn veel lokale uitlaa
 1. **Nu uitlaten**: binnen een kwartier iemand aan de deur, zoals een taxi. Pawshake werkt met aanvragen vooraf.
 2. **Live meekijken**: route, foto's en een wandelrapport na afloop, standaard bij elke wandeling.
 3. **Vaste wekelijkse wandeling**: één keer instellen, daarna loopt het vanzelf, met dezelfde uitlater.
+4. **Oppas op afroep**: geen pension of logeeradres, maar iemand bij jou thuis, binnen een kwartier, met foto's en een plasrondje dat je live ziet. Ook vast in te plannen, bijvoorbeeld elke vrijdagavond.
 
 Start in één stad (voorstel: Nijmegen, gelijk aan de Woofer-pilot). Eerst uitlaters werven, dan eigenaren.
 
@@ -50,14 +58,26 @@ Eén account kan beide rollen hebben, zoals iemand die zelf een hond heeft en oo
 7. Live: aanvraag verstuurd, uitlater onderweg met aftellende minuten, ophaalcode, wandeling live met route en foto's, noodknop.
 8. Wandelrapport: route, duur, afstand, plas en poep, foto's, notitie van de uitlater, betaling, fooi en beoordeling. Daarna opnieuw boeken of er een vaste wandeling van maken.
 
-### Uitlater
+### Eigenaar die een oppas boekt
 
-1. Aanmelden als uitlater en profiel invullen: over jou, ervaring, particulier of bedrijf met KvK, vervoer, **eigen tarief** per duur, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
+Zelfde stappen als uitlaten, met deze verschillen:
+
+1. Op het startscherm tik je **Oppas**. Kaart, lijst en snelkeuzes laten dan alleen mensen zien die oppas aanbieden ("Nu, 3 uur", "Vanavond", "Elke vrijdag").
+2. Je kiest 2, 3, 4 of 5 uur; de app toont tot hoe laat dat is. Standaard gaan al je honden mee.
+3. De prijs is het uurtarief van de oppas maal het aantal uren, plus toeslag per extra hond en servicekosten.
+4. Bij bevestigen meld je of er camera's in huis hangen, en schrijf je instructies (eten, plasrondje, bench).
+5. Bij de deur noem je de code; daarna zie je live: foto's, eten, spelen, slapen, en het plasrondje om het blok op de kaart.
+6. Later thuis? **Verlengen** met een uur. Eerder thuis? **Ik ben thuis** rondt af; de geboekte tijd wordt betaald.
+7. Oppasrapport met notitie, betaling, fooi en beoordeling.
+
+### Uitlater of oppas
+
+1. Aanmelden en profiel invullen: welke diensten (uitlaten, oppas of allebei), over jou, ervaring, particulier of bedrijf met KvK, vervoer, **eigen tarief** per wandelduur en **eigen uurtarief** voor oppas, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
 2. Verificatie: identiteit, aansprakelijkheidsverzekering en uitbetaalrekening verplicht; VOG optioneel. Pas daarna online.
 3. Online gaan met de grote knop op de kaart. Verzoeken uit de buurt verschijnen als kaart onderin, met hond, afstand, moment, duur en wat je ontvangt.
 4. Accepteren of weigeren. Weigeren heeft geen gevolgen en wordt niet geteld.
 5. Onderweg naar de eigenaar, "Ik ben er", ophaalcode invullen, wandeling starten.
-6. Tijdens de wandeling: foto, plas, poep, water en notitie met één tik; noodknop; beëindigen.
+6. Tijdens de wandeling: foto, plas, poep, water en notitie met één tik; noodknop; beëindigen. Tijdens oppas: foto, eten, plas, slapen en notitie; afronden met "Eigenaar is thuis".
 7. Afronden: verdiensten zien en de eigenaar beoordelen. Overzicht per week onder Verdiensten.
 
 ### Status van een boeking
@@ -71,7 +91,7 @@ stateDiagram-v2
     gepland --> onderweg: tijd om te vertrekken
     onderweg --> aangekomen: "Ik ben er"
     aangekomen --> bezig: juiste ophaalcode
-    bezig --> afgerond: uitlater beëindigt
+    bezig --> afgerond: uitlater beëindigt, of eigenaar is thuis (oppas)
     gepland --> afgerond: kennismaking gehad
     aangevraagd --> geannuleerd
     gepland --> geannuleerd
@@ -88,13 +108,13 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Welkom met snelle demo als eigenaar of uitlater | `src/app/welkom.tsx` |
 | Aanmelden met rolkeuze | `src/app/aanmelden.tsx` |
 | Hondenprofiel | `src/components/HondFormulier.tsx`, `src/app/hond-aanmaken.tsx`, `src/app/hond/[id].tsx` |
-| Startscherm eigenaar met kaart | `src/app/(tabs)/index.tsx` |
-| Uitlater kiezen (de "Kies je rit"-stap) | `src/app/boeken.tsx`, `src/lib/zoeken.ts` |
+| Startscherm eigenaar met kaart en keuze Uitlaten of Oppas | `src/app/(tabs)/index.tsx` |
+| Uitlater of oppas kiezen (de "Kies je rit"-stap) | `src/app/boeken.tsx`, `src/lib/zoeken.ts` |
 | Profiel van een uitlater | `src/app/uitlater/[id].tsx` |
 | Kennismaking aanvragen | `src/app/kennismaking.tsx` |
 | Bevestigen en betalen | `src/app/bevestigen.tsx` |
-| Live volgen, ophaalcode, noodknop | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
-| Wandelrapport, fooi, beoordeling | `src/app/rapport/[id].tsx` |
+| Live volgen, ophaalcode, noodknop; bij oppas ook verlengen en "Ik ben thuis" | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
+| Wandel- of oppasrapport, fooi, beoordeling | `src/app/rapport/[id].tsx` |
 | Activiteit en vaste wandelingen | `src/app/(tabs)/activiteit.tsx` |
 | Chat met signalering van betalen buiten de app | `src/app/chat/[id].tsx` |
 | Melden en blokkeren | `src/components/MeldenBlad.tsx` |
@@ -112,12 +132,13 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 In de demo, aan te passen in `src/lib/prijs.ts`:
 
 - De uitlater kiest een tarief per 30, 45 en 60 minuten en een toeslag per extra hond.
+- Voor oppas kiest de oppas een **uurtarief**; de prijs is uurtarief maal aantal uren. Verlengen gaat per uur. Eerder klaar betekent toch de geboekte tijd betalen.
 - De eigenaar betaalt daarbovenop **10% servicekosten** (minimaal €0,99).
 - Woober houdt **10% commissie** in op de uitbetaling aan de uitlater.
 - Fooi gaat volledig naar de uitlater.
 - Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is. Daarna krijgt de uitlater 50% van het tarief.
 
-Voorbeeld: Sanne vraagt €12 voor 30 minuten. De eigenaar betaalt €13,20, Sanne ontvangt €10,80, Woober houdt €2,40 over, waarvan de Stripe-kosten nog af gaan. Of het percentage aan beide kanten blijft, of alleen bij de eigenaar of alleen bij de uitlater, is een open vraag.
+Voorbeeld: Sanne vraagt €12 voor 30 minuten. De eigenaar betaalt €13,20, Sanne ontvangt €10,80, Woober houdt €2,40 over, waarvan de Stripe-kosten nog af gaan. Oppas bij Sanne voor 3 uur à €11 met twee honden: €33 plus €5 toeslag, de eigenaar betaalt €41,80. Of het percentage aan beide kanten blijft, of alleen bij de eigenaar of alleen bij de uitlater, is een open vraag.
 
 Let op bij betalen: kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
 
@@ -135,7 +156,14 @@ De Wet platformwerk (implementatie van Richtlijn (EU) 2024/2831, beoogd per 1 ja
 
 Verder: meldingen en schorsingen beoordeelt altijd een mens, met uitleg en de mogelijkheid om te reageren. Reviews alleen na een betaalde wandeling. Adres pas zichtbaar na accepteren. Locatie alleen tijdens de wandeling, na 30 dagen weg.
 
-Twee punten blijven voor een arbeidsrechtspecialist: het rechtsvermoeden bij een uurtarief onder €38 (uitlaattarieven liggen daar meestal onder; tussen wie wordt dan een arbeidsovereenkomst vermoed?) en of de "Nu"-knop met snelle reactie als sturing kan worden gezien.
+Drie punten blijven voor een arbeidsrechtspecialist: het rechtsvermoeden bij een uurtarief onder €38 (uitlaattarieven liggen daar meestal onder, en bij oppas staat het uurtarief er letterlijk; tussen wie wordt dan een arbeidsovereenkomst vermoed?), of de "Nu"-knop met snelle reactie als sturing kan worden gezien, en of oppas aan huis (en mogelijk uitlaten) onder de Regeling dienstverlening aan huis valt, waarbij de eigenaar als particuliere opdrachtgever lichtere werkgeversplichten heeft.
+
+### Extra bij oppas aan huis
+
+- **Iemand in je huis**: daarom altijd eerst een kennismaking, de code bij de deur, en huisregels in het bericht.
+- **Camera's**: de eigenaar meldt vooraf of er camera's hangen. Iemand filmen zonder dat die het weet mag niet; de oppas ziet het vóór de afspraak.
+- **Verzekering**: de aansprakelijkheidsverzekering van de oppas moet ook schade in het huis dekken, niet alleen schade door de hond. Navragen bij verzekeraars; mogelijk een collectieve polis via Woober.
+- **Locatie**: alleen tijdens het plasrondje om het blok; binnen is de positie gewoon het adres.
 
 ## Van demo naar MVP
 
@@ -150,12 +178,15 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Betaling getoond | Stripe Connect: account per uitlater, platformvergoeding per boeking, webhooks via een Supabase Edge Function |
 | Verificatie afvinken | Stripe Identity voor ID, polis uploaden naar een privé-bucket, controle door een medewerker |
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
+| Verlengen gaat direct (`verleng_oppas()`) | De oppas bevestigt eerst in de app; bij kaart en Apple Pay wordt de reservering opgehoogd, bij iDEAL volgt een tweede betaling |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
 | Melden en blokkeren lokaal | Moderatiescherm voor het team (eerst Supabase Studio, later een eigen beheerpagina) |
 
-Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 36 controles). Belangrijkste regels:
+Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 47 controles). Belangrijkste regels:
 
-- Prijzen berekent de database uit het tarief van de uitlater; de app stuurt nooit een bedrag mee.
+- Prijzen berekent de database uit het tarief van de uitlater (`tarief_voor()`); de app stuurt nooit een bedrag mee.
+- Een dienst boeken kan alleen bij iemand die die dienst aanbiedt; oppas alleen in hele uren.
+- Verlengen kan alleen de eigenaar, en alleen bij oppas.
 - Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
 - Verificatievelden kan alleen Woober zetten (kolomrechten).
 - Een eerste wandeling kan pas na een afgeronde kennismaking; boeken bij een geblokkeerde gebruiker kan niet.
@@ -175,7 +206,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 ## Bewust nog niet in de demo
 
 - Groepswandelingen met honden van verschillende eigenaren
-- Oppas aan huis en logeeropvang
+- Logeeropvang bij de oppas thuis en overnachten (oppas tot in de nacht kan wel, tot 5 uur, te verlengen)
 - Direct boeken zonder acceptatie
 - Abonnement voor uitlaters
 - Koppeling met Woofer, zoals hetzelfde hondenprofiel
@@ -183,7 +214,9 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 
 ## Open vragen
 
-- [ ] Servicekosten en commissie: beide 10%, of alles bij één kant?
+- [ ] Servicekosten en commissie: beide 10%, of alles bij één kant? Ook bij oppas, waar de bedragen hoger zijn?
+- [ ] Oppas: minimaal 2 uur? Nachtoppas (blijven slapen) toevoegen, en zo ja met een vast nachttarief?
+- [ ] Verlengen: mag de oppas weigeren, en wat als de eigenaar dan niet op tijd thuis is?
 - [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.
 - [ ] Verzekering per uitlater of collectief via Woober?
 - [ ] Alleen particuliere uitlaters, of ook bedrijven met KvK? De demo laat beide zien.

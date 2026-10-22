@@ -11,7 +11,7 @@ import { Badge, Knop, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { euro } from '../../lib/prijs';
 import { formatAfstand, lengte, routeTussen } from '../../lib/route';
-import { leeftijdTekst, momentTekst } from '../../lib/tijd';
+import { duurTekst, leeftijdTekst, momentTekst, totTekst } from '../../lib/tijd';
 import { verdiendOp } from '../../lib/verdiensten';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
@@ -96,7 +96,11 @@ export default function Werk() {
       </>
     );
   } else if (actieveOpdracht && opdrachtKlant) {
-    const tekst = { onderweg: `Onderweg naar ${opdrachtKlant.voornaam}`, aangekomen: `Je bent bij ${opdrachtKlant.voornaam}`, bezig: 'Wandeling bezig' } as Record<string, string>;
+    const tekst = {
+      onderweg: `Onderweg naar ${opdrachtKlant.voornaam}`,
+      aangekomen: `Je bent bij ${opdrachtKlant.voornaam}`,
+      bezig: actieveOpdracht.dienst === 'oppas' ? 'Oppas bezig' : 'Wandeling bezig',
+    } as Record<string, string>;
     inhoud = (
       <Pressable onPress={() => router.push({ pathname: '/opdracht/[id]', params: { id: actieveOpdracht.id } })} accessibilityRole="button">
         <LinearGradient colors={kleuren.verloop} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.actief}>
@@ -113,11 +117,15 @@ export default function Werk() {
     const honden = verzoekKlant.honden;
     const afstand = lengte(routeTussen(ik, openVerzoek.ophaalPunt));
     const kennismaking = openVerzoek.soort === 'kennismaking';
+    const oppas = openVerzoek.dienst === 'oppas';
     inhoud = (
       <>
         <View style={s.verzoekKop}>
-          <Badge tekst={kennismaking ? 'KENNISMAKING' : 'NIEUW VERZOEK'} icoon="notifications" kleur={kleuren.primair} />
-          <Text style={s.verzoekAfstand}>{formatAfstand(afstand)} van je af</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            <Badge tekst={kennismaking ? 'KENNISMAKING' : 'NIEUW VERZOEK'} icoon="notifications" kleur={kleuren.primair} />
+            {!kennismaking ? <Badge tekst={oppas ? 'OPPAS AAN HUIS' : 'UITLATEN'} icoon={oppas ? 'home' : 'walk'} kleur={kleuren.tekst} /> : null}
+          </View>
+          <Text style={s.verzoekAfstand}>{formatAfstand(afstand)}</Text>
         </View>
         <View style={s.verzoekHond}>
           <HondenStapel honden={honden} grootte={52} />
@@ -140,8 +148,11 @@ export default function Werk() {
           </View>
           {!kennismaking ? (
             <View style={s.feit}>
-              <MaterialCommunityIcons name="walk" size={15} color={kleuren.tekst} />
-              <Text style={s.feitTekst}>{openVerzoek.duur} min</Text>
+              <MaterialCommunityIcons name={oppas ? 'sofa' : 'walk'} size={15} color={kleuren.tekst} />
+              <Text style={s.feitTekst}>
+                {duurTekst(openVerzoek.duur)}
+                {oppas ? `, ${totTekst(openVerzoek.moment.type === 'later' ? openVerzoek.moment.tijdstip : nu, openVerzoek.duur)}` : ''}
+              </Text>
             </View>
           ) : null}
           <View style={s.feit}>

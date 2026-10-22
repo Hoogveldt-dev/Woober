@@ -33,7 +33,8 @@ function beschikbaarOp(u: Uitlater, concept: BoekConcept): string | null {
  */
 export function uitlaterOpties(uitlaters: Uitlater[], thuis: Punt, concept: BoekConcept, bekend: string[], geblokkeerd: string[], sortering: Sortering): UitlaterOptie[] {
   const lijst = uitlaters
-    .filter((u) => !geblokkeerd.includes(u.id))
+    // Andere selectie per dienst, zoals ritsoorten bij Uber: alleen wie deze dienst aanbiedt
+    .filter((u) => !geblokkeerd.includes(u.id) && u.diensten.includes(concept.dienst))
     .map((u): UitlaterOptie => {
       const route = routeTussen(u.positie, thuis);
       const afstandM = lengte(route);
@@ -46,7 +47,7 @@ export function uitlaterOpties(uitlaters: Uitlater[], thuis: Punt, concept: Boek
         afstandM,
         beschikbaar: reden === null,
         reden: reden ?? undefined,
-        prijs: berekenPrijs(u, concept.duur, Math.max(1, concept.hondIds.length)),
+        prijs: berekenPrijs(u, concept.dienst, concept.duur, Math.max(1, concept.hondIds.length)),
         bekend: bekend.includes(u.id),
       };
     });
