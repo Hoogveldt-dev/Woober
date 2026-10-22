@@ -32,7 +32,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "test:db": "node supabase/tests/rls.test.mjs"
+    "test:db": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON supabase/tests/rls.test.mjs"
   },
   "private": true
 }

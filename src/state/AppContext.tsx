@@ -533,8 +533,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const b = s.boekingen.find((x) => x.id === id);
         if (!b) return s;
         const kosten = b.mijnRol === 'eigenaar' ? annuleringskosten(b, Date.now()) : 0;
-        // Gratis geannuleerd: gebruikt tegoed komt terug
-        const terug = b.mijnRol === 'eigenaar' && kosten === 0 ? b.prijs.korting : 0;
+        // Gebruikt tegoed komt altijd terug; eventuele annuleringskosten worden apart afgerekend
+        const terug = b.mijnRol === 'eigenaar' ? b.prijs.korting : 0;
         return {
           ...s,
           tegoed: s.tegoed + terug,
@@ -1029,7 +1029,9 @@ function stapEigenaar(s: AppState, b: Boeking, nu: number, extra: Boeking[]): Bo
         const notitie = notities[s.boekingen.indexOf(b) % notities.length].replace('{hond}', hond);
         nieuw.push({ id: nieuwId('g'), soort: 'einde', tijd: nu, voortgang: b.dienst === 'oppas' ? sv : 1, tekst: notitie });
         const serie = b.serieId ? s.series.find((x) => x.id === b.serieId) : undefined;
-        if (serie?.actief) {
+        const u = uitlaterUit(s, b.uitlaterId);
+        if (serie?.actief && u) {
+          const moment: Moment = { type: 'later', tijdstip: volgendeKeer(serie.dagen, serie.tijd, nu + 3600000) };
           extra.push(
             basisBoeking({
               ...b,
@@ -1037,8 +1039,9 @@ function stapEigenaar(s: AppState, b: Boeking, nu: number, extra: Boeking[]): Bo
               status: 'gepland',
               statusSinds: nu,
               aangemaakt: nu,
-              moment: { type: 'later', tijdstip: volgendeKeer(serie.dagen, serie.tijd, nu + 3600000) },
-              prijs: serie.prijs,
+              moment,
+              // Elke keer de prijs van het moment van inplannen, zoals vraag_boeking_aan() in de database
+              prijs: berekenPrijs(u, b.dienst, b.duur, b.hondIds.length, modelVoor(s.verdienmodelId), prijsExtra(s, b.dienst, moment, nu)),
               ophaalcode: maakOphaalcode(),
               routeNaarOphaal: [],
               wandelroute: [],

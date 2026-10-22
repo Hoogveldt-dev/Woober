@@ -23,6 +23,7 @@ Controles: `npm run typecheck`, `npx expo lint` en `npm run test:db` (databasesc
 - **De tijd loopt 30 keer sneller**, dus een wandeling van 30 minuten duurt een minuut. Oppas loopt 120 keer sneller: 3 uur duurt anderhalve minuut. Met **Sneller (demo)** spring je 5 minuten vooruit, bij oppas een half uur. Instelbaar in `src/lib/simulatie.ts`.
 - **De kaart is een verzonnen wijk** aan de Waal, getekend met SVG. Zo werkt alles zonder kaartsleutels, ook op het web. Routes lopen over de straten; wandelingen gaan rond de vijver in het Stadspark.
 - **De ophaalcode** zie je als eigenaar in de app; als uitlater staat de code in de demo onder het invulveld.
+- **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Onder Account, Verdienmodel (demo) wissel je naar Groei of het Uber-model, boots je drukte na en zie je wat eigenaar, uitlater en Woober krijgen. Actiecodes WOOBER5 en BUURT10 geven tegoed.
 
 ## Wat zit erin
 
@@ -36,6 +37,7 @@ Controles: `npm run typecheck`, `npx expo lint` en `npm run test:db` (databasesc
 | Live volgen met ophaalcode, route en foto's | Foto, plas, poep, water en notitie tijdens de wandeling |
 | Wandelrapport met fooi en beoordeling | Verdiensten per dag en per week |
 | Chat, melden, blokkeren en noodknop | Eigen tarief, werkgebied, rooster en verificatie |
+| Tegoed, actiecodes en Woober Plus | Commissie en drukte-bonus per fase zichtbaar |
 
 Een overzicht van schermen en bestanden staat in [PLAN.md](PLAN.md#wat-de-demo-laat-zien).
 

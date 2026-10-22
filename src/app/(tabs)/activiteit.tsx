@@ -15,7 +15,7 @@ const tijdVan = (b: Boeking) => (b.moment.type === 'later' ? b.moment.tijdstip :
 
 export default function Activiteit() {
   const router = useRouter();
-  const { boekingen, series, uitlater, hondenVan, stopSerie, honden } = useApp();
+  const { boekingen, series, uitlater, hondenVan, stopSerie, honden, prijsVoor } = useApp();
   const mijn = boekingen.filter((b) => b.mijnRol === 'eigenaar');
 
   const nuBezig = mijn.filter((b) => LOPEND.includes(b.status) || (b.status === 'aangevraagd' && b.moment.type === 'nu'));
@@ -80,6 +80,7 @@ export default function Activiteit() {
             {actieveSeries.map((serie) => {
               const u = uitlater(serie.uitlaterId);
               if (!u) return null;
+              const prijs = prijsVoor(u, serie.dienst, serie.duur, serie.hondIds.length, { type: 'wekelijks', dagen: serie.dagen, tijd: serie.tijd });
               const namen = honden.filter((h) => serie.hondIds.includes(h.id)).map((h) => h.naam).join(' en ');
               return (
                 <View key={serie.id} style={s.serie}>
@@ -89,7 +90,7 @@ export default function Activiteit() {
                       {serie.dienst === 'oppas' ? 'Oppas' : 'Uitlaten'}: {namen} met {u.voornaam}
                     </Text>
                     <Text style={s.serieSub}>
-                      {dagenTekst(serie.dagen)} om {serie.tijd}, {duurTekst(serie.duur)}, {euro(serie.prijs.totaal)} per keer
+                      {dagenTekst(serie.dagen)} om {serie.tijd}, {duurTekst(serie.duur)}, {euro(prijs.totaal)} per keer
                     </Text>
                   </View>
                   <Knop titel="Stoppen" variant="tekst" onPress={() => stopSerie(serie.id)} />

@@ -53,7 +53,7 @@ export default function Verdiensten() {
         <Blok>
           <Rij label="Jouw tarieven" waarde={euro(bruto)} />
           {drukteBonus > 0 ? <Rij label="Drukte-bonus" waarde={euro(drukteBonus)} /> : null}
-          <Rij label="Commissie Woober" waarde={`-${euro(commissie)}`} />
+          <Rij label="Commissie Woober" waarde={commissie > 0 ? `-${euro(commissie)}` : euro(0)} />
           <Rij label="Fooien (100% voor jou)" waarde={euro(fooien)} />
           <Rij label="Uitbetaald" waarde={euro(week)} sterk />
         </Blok>

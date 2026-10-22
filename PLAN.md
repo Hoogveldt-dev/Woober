@@ -31,6 +31,10 @@ Zelfde huisstijl als Woofer (kleuren, verloop, knoppen, lettertype, toon), maar 
 | Betalen in de app, fooi, sterren | Idem, fooi gaat volledig naar de uitlater | Geen contant geld, geen gedoe |
 | Chauffeursapp: online gaan, verzoek accepteren | Uitlatermodus: online gaan, verzoek accepteren of weigeren | Weigeren heeft geen gevolgen |
 | Acceptatiegraad, deactivatie door algoritme | **Bewust niet** | Raakt twee criteria van de Wet platformwerk |
+| Service fee en booking fee | Servicekosten en boekingskosten voor de eigenaar, commissie bij de uitlater | Tijdens de lancering alles gratis |
+| Surge pricing | Drukte-toeslag, standaard uit; het grootste deel gaat naar de uitlater | Zie [Prijs en verdienmodel](#prijs-en-verdienmodel) |
+| Uber One | Woober Plus: vast bedrag per maand, geen servicekosten | Binding van vaste klanten |
+| Promo's en uitnodigen | Tegoed, actiecodes en een uitnodigingscode | Woober betaalt, de uitlater krijgt het volle bedrag |
 
 ## Positionering
 
@@ -64,7 +68,7 @@ Zelfde stappen als uitlaten, met deze verschillen:
 
 1. Op het startscherm tik je **Oppas**. Kaart, lijst en snelkeuzes laten dan alleen mensen zien die oppas aanbieden ("Nu, 3 uur", "Vanavond", "Elke vrijdag").
 2. Je kiest 2, 3, 4 of 5 uur; de app toont tot hoe laat dat is. Standaard gaan al je honden mee.
-3. De prijs is het uurtarief van de oppas maal het aantal uren, plus toeslag per extra hond en servicekosten.
+3. De prijs is het uurtarief van de oppas maal het aantal uren, plus toeslag per extra hond en, afhankelijk van de fase, servicekosten.
 4. Bij bevestigen meld je of er camera's in huis hangen, en schrijf je instructies (eten, plasrondje, bench).
 5. Bij de deur noem je de code; daarna zie je live: foto's, eten, spelen, slapen, en het plasrondje om het blok op de kaart.
 6. Later thuis? **Verlengen** met een uur. Eerder thuis? **Ik ben thuis** rondt af; de geboekte tijd wordt betaald.
@@ -123,24 +127,71 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Uitlater: verdiensten, opdrachten, profiel, verificatie | `src/app/werk/*`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
 | Veiligheid en hulp | `src/app/veiligheid.tsx` |
 | Kaart van de demowijk met routes | `src/components/Kaart.tsx`, `src/data/stad.ts`, `src/lib/route.ts` |
-| Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts` |
+| Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts`, `src/components/PrijsRegels.tsx` |
+| Verdienmodel: fases, drukte, Woober Plus, tegoed | `src/lib/verdienmodel.ts`, demoscherm `src/app/verdienmodel.tsx` (Account, Verdienmodel) |
 | Simulatie van de andere kant | `src/lib/simulatie.ts`, `src/state/AppContext.tsx` |
 | Databaseschema met RLS (concept) | `supabase/migrations/`, test: `npm run test:db` |
 
 ## Prijs en verdienmodel
 
-In de demo, aan te passen in `src/lib/prijs.ts`:
+We beginnen zonder winst om gebruikers binnen te halen. Het Uber-achtige verdienmodel staat al volledig klaar, in de app en in de database, en gaat aan door een ander model in te plannen. Er hoeft dan niets meer gebouwd te worden.
 
-- De uitlater kiest een tarief per 30, 45 en 60 minuten en een toeslag per extra hond.
-- Voor oppas kiest de oppas een **uurtarief**; de prijs is uurtarief maal aantal uren. Verlengen gaat per uur. Eerder klaar betekent toch de geboekte tijd betalen.
-- De eigenaar betaalt daarbovenop **10% servicekosten** (minimaal €0,99).
-- Woober houdt **10% commissie** in op de uitbetaling aan de uitlater.
+### Wat altijd geldt
+
+- De uitlater kiest een tarief per 30, 45 en 60 minuten en een toeslag per extra hond. Voor oppas kiest de oppas een **uurtarief**; de prijs is uurtarief maal aantal uren. Verlengen gaat per uur; eerder klaar betekent de geboekte tijd betalen.
+- De eigenaar ziet vóór het boeken de volledige prijs, met alle kosten.
 - Fooi gaat volledig naar de uitlater.
-- Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is. Daarna krijgt de uitlater 50% van het tarief.
+- Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is. Daarna krijgt de uitlater 50% van het tarief. Gebruikt tegoed komt altijd terug.
+- Elke boeking bewaart het model en de volledige prijsopbouw. Een nieuw model werkt nooit terug; verlengen rekent met de opbouw van de boeking. Een vaste wandeling krijgt elke keer de prijs van het moment waarop die keer wordt ingepland.
 
-Voorbeeld: Sanne vraagt €12 voor 30 minuten. De eigenaar betaalt €13,20, Sanne ontvangt €10,80, Woober houdt €2,40 over, waarvan de Stripe-kosten nog af gaan. Oppas bij Sanne voor 3 uur à €11 met twee honden: €33 plus €5 toeslag, de eigenaar betaalt €41,80. Of het percentage aan beide kanten blijft, of alleen bij de eigenaar of alleen bij de uitlater, is een open vraag.
+### De knoppen en drie fases
 
-Let op bij betalen: kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
+Alle knoppen staan op één plek: `src/lib/verdienmodel.ts` in de app, de tabel `verdienmodellen` in de database. In de demo wissel je onder Account, Verdienmodel (demo).
+
+| Knop | Bij Uber | Lancering | Groei | Uber-model |
+| --- | --- | --- | --- | --- |
+| Servicekosten eigenaar, als deel van tarief en drukte | Service fee | Geen | 5%, min. €0,49 | 10%, min. €0,99, max. €5 |
+| Boekingskosten per boeking | Booking fee | Geen | Geen | €0,49 |
+| Commissie op de uitbetaling | Service fee chauffeur | Geen | 10% | 20% |
+| Drukte-toeslag | Surge | Uit | Uit | Tot 1,5x, 75% naar de uitlater |
+| Woober Plus, geen servicekosten | Uber One | Uit | €4,99 per maand | €4,99 per maand |
+| Welkomsttegoed | Korting eerste rit | Geen | €5 | Geen |
+| Uitnodigingstegoed, voor allebei | Referral | Geen | €5 | €5 |
+| Actiecodes | Promo codes | Kan altijd | Kan altijd | Kan altijd |
+
+Voorbeelden met Sanne (€12 voor 30 minuten, €11 per uur oppas), één hond. Per fase: wat de eigenaar betaalt, wat Sanne ontvangt en wat Woober houdt vóór de kosten van de betaalprovider.
+
+| | Lancering | Groei | Uber-model | Uber-model bij drukte 1,5x |
+| --- | --- | --- | --- | --- |
+| 30 minuten uitlaten | €12,00 / €12,00 / €0 | €12,60 / €10,80 / €1,80 | €13,69 / €9,60 / €4,09 | €20,29 / €13,20 / €7,09 |
+| 3 uur oppas | €33,00 / €33,00 / €0 | €34,65 / €29,70 / €4,95 | €36,79 / €26,40 / €10,39 | €54,94 / €36,30 / €18,64 |
+
+Met Woober Plus betaalt de eigenaar in het Uber-model €12,49 voor dezelfde wandeling; Plus loont dan vanaf 5 wandelingen per maand. Tijdens de lancering betaalt Woober de transactiekosten zelf en elk tegoed: dat is de prijs van gratis, en staat zichtbaar in het grootboek.
+
+### Zo staat het klaar in de database
+
+Migratie `supabase/migrations/20261022010000_verdienmodel.sql`:
+
+- `verdienmodellen` en `verdienmodel_planning`: wisselen van fase is een regel inplannen met `geldig_vanaf`. Nooit met terugwerkende kracht; een ingepland model ligt vast. Een hogere commissie kan pas 15 dagen na aankondiging ingaan (zie hieronder); de database dwingt dat af. Gunstiger voor uitlaters kan direct.
+- `bereken_prijs()`: de enige plek waar de database een prijs uitrekent, met dezelfde regels en afronding als `berekenPrijs()` in de app. De test vergelijkt 900 prijzen tussen app en database.
+- Bij elke boeking: model, drukte-factor, drukte, deel voor de uitlater, servicekosten, Plus, boekingskosten, tegoed en commissie; `totaal` en `uitbetaling` rekent de database zelf uit.
+- `druktefactoren`: per gebied (postcode van 4 cijfers), dienst en tijdvak. Een serverproces zet ze uit openstaande aanvragen en het aantal uitlaters dat online is met een werkgebied daar; nooit uit hun posities.
+- `abonnementen` (Woober Plus, opzeggen loopt tot het einde van de maand), `tegoed_mutaties` (saldo is de som), `promocodes` (niet op te vragen, alleen te verzilveren) en `uitnodigingen` (beloning na de eerste afgeronde wandeling van de nieuwe gebruiker).
+- `grootboek`: elke afgeronde boeking, annulering met kosten en fooi als regels voor eigenaar, uitlater en Woober (servicekosten, boekingskosten, commissie, drukte, tegoed) die samen op nul uitkomen. Alleen voor Woober; blijft bewaard als een account wordt verwijderd, zonder persoon.
+
+### Betalen met Stripe Connect
+
+- De eigenaar betaalt het totaal aan Woober; na afronden gaat `uitbetaling` naar het Connect-account van de uitlater. Gebruik losse betalingen en overboekingen (separate charges and transfers), geen destination charges: bij tegoed legt Woober bij, en dan is de platformvergoeding negatief.
+- Kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
+- Woober Plus via Stripe Billing; de webhook maakt de regel in `abonnementen`.
+- Het grootboek is de basis voor de afstemming met Stripe en voor de boekhouding.
+
+### Een fase wisselen
+
+1. Kies een bestaand model of maak een nieuw model aan in `verdienmodellen`.
+2. Kondig het aan bij uitlaters (in de app en per e-mail) en plan het in, bij een hogere commissie minstens 15 dagen vooruit.
+3. Eigenaren zien de nieuwe prijs gewoon vooraf bij het boeken; wie een vaste wandeling heeft, krijgt vooraf een bericht.
+4. Bestaande boekingen houden hun prijs.
 
 ## Juridische keuzes in de code
 
@@ -148,11 +199,17 @@ De Wet platformwerk (implementatie van Richtlijn (EU) 2024/2831, beoogd per 1 ja
 
 | Criterium | Hoe Woober het vermijdt | Waar in de code |
 | --- | --- | --- |
-| Platform bepaalt de vergoeding | Uitlater kiest het tarief; Woober rekent alleen servicekosten en commissie | `UitlaterFormulier.tsx`, `prijs.ts`, `vraag_wandeling_aan()` |
+| Platform bepaalt de vergoeding | Uitlater kiest het tarief; Woober rekent alleen servicekosten en commissie (tijdens de lancering niets) | `UitlaterFormulier.tsx`, `prijs.ts`, `bereken_prijs()` |
 | Platform wijst werk toe | Eigenaar kiest de uitlater; sorteren alleen op de keuze van de eigenaar | `boeken.tsx`, `zoeken.ts` |
 | Toezicht op het werk | Route alleen zichtbaar voor de eigenaar tijdens de wandeling; niet gebruikt voor beoordeling | `kaartLagen.ts`, `veiligheid.tsx` |
 | Beperken van weigeren, ook via sancties | Weigeren en afzeggen zonder gevolgen; er wordt geen acceptatiegraad bijgehouden | `weiger()` in `AppContext.tsx`, `wijzig_status()` |
 | Richtlijnen opleggen | Alleen veiligheid en wettelijke regels (ophaalcode, aanlijnen, opruimplicht, maximum aantal honden) | `veiligheid.tsx` |
+
+Bij het verdienmodel:
+
+- **Drukte-toeslag**: Woober bepaalt de hoogte van die toeslag, terwijl het tarief van de uitlater de basis blijft. Daarom staat drukte alleen aan in het Uber-model, gaat het grootste deel naar de uitlater en is het per model uit te zetten. Laat dit toetsen voordat het aangaat.
+- **P2B-verordening (EU) 2019/1150**: uitlaters zijn zakelijke gebruikers. Een wijziging in de voorwaarden, zoals een hogere commissie, minstens 15 dagen vooraf aankondigen. Ook duidelijk maken waarop de lijst is gesorteerd (alleen op de keuze van de eigenaar) en wat Woober inhoudt (`verdiensten.tsx`).
+- **Consumentenrecht**: de eigenaar ziet de totaalprijs met alle kosten vóór het boeken, inclusief drukte en boekingskosten (`PrijsRegels.tsx`).
 
 Verder: meldingen en schorsingen beoordeelt altijd een mens, met uitleg en de mogelijkheid om te reageren. Reviews alleen na een betaalde wandeling. Adres pas zichtbaar na accepteren. Locatie alleen tijdens de wandeling, na 30 dagen weg.
 
@@ -175,16 +232,20 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Andere kant nagespeeld (`simulatie.ts`) | Echte gebruikers; statuswijzigingen via de databasefuncties (`wijzig_status`, `start_wandeling`) |
 | Eigen SVG-kaart (`Kaart.tsx`) | `react-native-maps` of `expo-maps`; de props (markers, routes, focus) blijven gelijk, `Punt` wordt breedte- en lengtegraad |
 | Positie berekend uit de tijd | `expo-location` met achtergrondtaak, alleen tijdens `bezig`; posities via Supabase Realtime naar de eigenaar |
-| Betaling getoond | Stripe Connect: account per uitlater, platformvergoeding per boeking, webhooks via een Supabase Edge Function |
+| Betaling getoond | Stripe Connect: account per uitlater, losse betalingen en overboekingen, webhooks via een Supabase Edge Function (zie [Betalen met Stripe Connect](#betalen-met-stripe-connect)) |
+| Verdienmodel in het geheugen, te wisselen in de demo | Tabel `verdienmodellen` met planning; alleen het team plant een fase in |
+| Drukte nagebootst in `verdienmodel.ts` | Serverproces (Edge Function of `pg_cron`) vult `druktefactoren` |
 | Verificatie afvinken | Stripe Identity voor ID, polis uploaden naar een privé-bucket, controle door een medewerker |
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
 | Verlengen gaat direct (`verleng_oppas()`) | De oppas bevestigt eerst in de app; bij kaart en Apple Pay wordt de reservering opgehoogd, bij iDEAL volgt een tweede betaling |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
 | Melden en blokkeren lokaal | Moderatiescherm voor het team (eerst Supabase Studio, later een eigen beheerpagina) |
 
-Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 47 controles). Belangrijkste regels:
+Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 88 controles). Belangrijkste regels:
 
-- Prijzen berekent de database uit het tarief van de uitlater (`tarief_voor()`); de app stuurt nooit een bedrag mee.
+- Prijzen berekent de database uit het tarief van de uitlater (`tarief_voor()`) en het verdienmodel dat geldt (`bereken_prijs()`); de app stuurt nooit een bedrag mee. App en database rekenen tot op de cent hetzelfde.
+- Een hogere commissie gaat pas 15 dagen na aankondiging in; een ingepland model ligt vast.
+- Tegoed, actiecodes, Plus en grootboek veranderen alleen via databasefuncties of door Woober; het grootboek komt per boeking op nul uit.
 - Een dienst boeken kan alleen bij iemand die die dienst aanbiedt; oppas alleen in hele uren.
 - Verlengen kan alleen de eigenaar, en alleen bij oppas.
 - Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
@@ -198,7 +259,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 2. Accounts, honden en uitlaatprofielen echt opslaan; demo-modus behouden voor presentaties.
 3. Boeken en statusovergangen via de databasefuncties, met Realtime.
 4. Echte kaart en locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer).
-5. Stripe Connect en iDEAL; eerst in testmodus.
+5. Stripe Connect en iDEAL; eerst in testmodus. Het grootboek afstemmen met de Stripe-uitbetalingen. Fase lancering actief.
 6. Pushmeldingen.
 7. Foto's, moderatie, account verwijderen inclusief data.
 8. Besloten test met een handvol uitlaters en eigenaren in de pilotstad.
@@ -209,12 +270,18 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - Logeeropvang bij de oppas thuis en overnachten (oppas tot in de nacht kan wel, tot 5 uur, te verlengen)
 - Direct boeken zonder acceptatie
 - Abonnement voor uitlaters
+- Het serverproces dat drukte berekent (tabel en regels staan klaar)
 - Koppeling met Woofer, zoals hetzelfde hondenprofiel
 - Echte foto's, echte locatie, echte betalingen en pushmeldingen
 
 ## Open vragen
 
-- [ ] Servicekosten en commissie: beide 10%, of alles bij één kant? Ook bij oppas, waar de bedragen hoger zijn?
+- [ ] Wanneer van Lancering naar Groei en naar het Uber-model? Voorstel: op een aantal wandelingen per week in de pilotstad, niet op een datum.
+- [ ] Percentages in Groei en Uber-model: wat accepteren uitlaters en eigenaren? Bij oppas zijn de bedragen hoger; een maximum op de servicekosten staat klaar.
+- [ ] Drukte-toeslag aanzetten, en welk deel naar de uitlater?
+- [ ] Woober Plus via de eigen betaling (zoals Uber One) of via in-app aankoop van Apple en Google? Plus geeft korting op diensten buiten de app; laten bevestigen bij de review van de stores.
+- [ ] Btw over servicekosten, boekingskosten, commissie en Plus, en hoe dat werkt voor uitlaters onder de kleineondernemersregeling.
+- [ ] Misbruik van welkomst- en uitnodigingstegoed met meerdere accounts: controleren op betaalmiddel of telefoonnummer?
 - [ ] Oppas: minimaal 2 uur? Nachtoppas (blijven slapen) toevoegen, en zo ja met een vast nachttarief?
 - [ ] Verlengen: mag de oppas weigeren, en wat als de eigenaar dan niet op tijd thuis is?
 - [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.

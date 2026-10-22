@@ -22,6 +22,14 @@ export function tariefVoor(uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur'>,
   return uitlater.tarieven[duur as WandelDuur] ?? 0;
 }
 
+/**
+ * Deel van een bedrag in hele centen. Rekent met de breuk in tienduizendsten, zodat de afronding gelijk is aan
+ * round() op numeric in Postgres en de app nooit een cent anders uitkomt dan de database.
+ */
+export function deel(bedrag: number, breuk: number): number {
+  return Math.round((bedrag * Math.round(breuk * 10000)) / 10000);
+}
+
 export interface PrijsExtra {
   /** Drukte-factor, 1 = geen drukte */
   drukteFactor?: number;
@@ -44,15 +52,15 @@ export function berekenPrijs(
   const basis = tarief + toeslag;
 
   const drukteFactor = model.drukte.aan ? Math.max(1, Math.min(model.drukte.maxFactor, extra.drukteFactor ?? 1)) : 1;
-  const drukte = Math.round(basis * (drukteFactor - 1));
-  const drukteUitlater = Math.round(drukte * model.drukte.deelUitlater);
+  const drukte = deel(basis, drukteFactor - 1);
+  const drukteUitlater = deel(drukte, model.drukte.deelUitlater);
 
   let servicekosten = 0;
   const metPlus = Boolean(extra.plus) && model.plus.aan && model.servicekostenPercentage > 0;
   if (model.servicekostenPercentage > 0) {
-    servicekosten = Math.max(model.servicekostenMinimum, Math.round((basis + drukte) * model.servicekostenPercentage));
+    servicekosten = Math.max(model.servicekostenMinimum, deel(basis + drukte, model.servicekostenPercentage));
     if (model.servicekostenMaximum !== null) servicekosten = Math.min(model.servicekostenMaximum, servicekosten);
-    if (metPlus) servicekosten = Math.round(servicekosten * (1 - model.plus.servicekostenKorting));
+    if (metPlus) servicekosten = deel(servicekosten, 1 - model.plus.servicekostenKorting);
   }
   const boekingskosten = model.boekingskosten;
 
@@ -60,7 +68,7 @@ export function berekenPrijs(
   const korting = Math.max(0, Math.min(extra.tegoed ?? 0, zonderKorting));
   const totaal = zonderKorting - korting;
 
-  const commissie = Math.round((basis + drukteUitlater) * model.commissiePercentage);
+  const commissie = deel(basis + drukteUitlater, model.commissiePercentage);
   const uitbetaling = basis + drukteUitlater - commissie;
   return {
     modelId: model.id,
