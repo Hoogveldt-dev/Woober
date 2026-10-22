@@ -156,7 +156,7 @@ De Wet platformwerk (implementatie van Richtlijn (EU) 2024/2831, beoogd per 1 ja
 
 Verder: meldingen en schorsingen beoordeelt altijd een mens, met uitleg en de mogelijkheid om te reageren. Reviews alleen na een betaalde wandeling. Adres pas zichtbaar na accepteren. Locatie alleen tijdens de wandeling, na 30 dagen weg.
 
-Drie punten blijven voor een arbeidsrechtspecialist: het rechtsvermoeden bij een uurtarief onder €38 (uitlaattarieven liggen daar meestal onder, en bij oppas staat het uurtarief er letterlijk; tussen wie wordt dan een arbeidsovereenkomst vermoed?), of de "Nu"-knop met snelle reactie als sturing kan worden gezien, en of oppas aan huis (en mogelijk uitlaten) onder de Regeling dienstverlening aan huis valt, waarbij de eigenaar als particuliere opdrachtgever lichtere werkgeversplichten heeft.
+Twee punten blijven voor een arbeidsrechtspecialist: of de "Nu"-knop met snelle reactie als sturing kan worden gezien, en of oppas aan huis (en mogelijk uitlaten) onder de Regeling dienstverlening aan huis valt, waarbij de eigenaar als particuliere opdrachtgever lichtere werkgeversplichten heeft.
 
 ### Extra bij oppas aan huis
 
