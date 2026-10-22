@@ -274,3 +274,32 @@ export interface BoekConcept {
   moment: Moment;
   uitlaterId: string | null;
 }
+
+/** Plekken op de kaart voor hondeneigenaren en uitlaters */
+export type PlekSoort = 'losloop' | 'strand' | 'horeca';
+
+/** Review van een plek door een gebruiker. Eén per persoon per plek, aan te passen. */
+export interface PlekReview {
+  id: string;
+  /** Alleen de voornaam */
+  van: string;
+  sterren: number;
+  tekst: string;
+  /** Unix-tijd in ms */
+  datum: number;
+  /** Door de gebruiker zelf geschreven */
+  vanMij?: boolean;
+}
+
+export interface Plek {
+  id: string;
+  soort: PlekSoort;
+  naam: string;
+  punt: Punt;
+  omschrijving: string;
+  /** Korte feiten, zoals "Omheind" of "Waterbak bij de deur" */
+  kenmerken: string[];
+  /** Regels die per seizoen of tijdstip verschillen, zoals een strandverbod in de zomer */
+  regels?: string;
+  reviews: PlekReview[];
+}

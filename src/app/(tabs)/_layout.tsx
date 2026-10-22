@@ -18,6 +18,7 @@ export default function EigenaarTabs() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Uitlaten', tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color as string} size={size} /> }} />
+      <Tabs.Screen name="plekken" options={{ title: 'Plekken', tabBarIcon: ({ color, size }) => <Ionicons name="location" color={color as string} size={size} /> }} />
       <Tabs.Screen
         name="activiteit"
         options={{

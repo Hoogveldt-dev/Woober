@@ -15,16 +15,18 @@ import {
   XS,
   YS,
 } from '../data/stad';
+import { PLEK_SOORTEN } from '../lib/plekken';
 import { gladmaken, omvatting } from '../lib/route';
 import { kaartKleuren, kleuren, schaduw } from '../theme';
-import type { GebeurtenisSoort, Punt, Vervoer } from '../types';
+import type { GebeurtenisSoort, PlekSoort, Punt, Vervoer } from '../types';
 
 export type KaartMarker =
   | { id: string; soort: 'thuis' | 'klant'; punt: Punt; label?: string }
   | { id: string; soort: 'uitlater'; punt: Punt; naam: string; kleur: [string, string]; vervoer: Vervoer; bubbel?: string; actief?: boolean; onPress?: () => void }
   | { id: string; soort: 'hond'; punt: Punt; kleur: [string, string] }
   | { id: string; soort: 'ik'; punt: Punt }
-  | { id: string; soort: 'gebeurtenis'; punt: Punt; gebeurtenis: GebeurtenisSoort };
+  | { id: string; soort: 'gebeurtenis'; punt: Punt; gebeurtenis: GebeurtenisSoort }
+  | { id: string; soort: 'plek'; punt: Punt; naam: string; plekSoort: PlekSoort; actief?: boolean; onPress?: () => void };
 
 export interface KaartRoute {
   id: string;
@@ -310,6 +312,25 @@ function MarkerInhoud({ m }: { m: KaartMarker }) {
         </View>
       );
     }
+    case 'plek': {
+      const soort = PLEK_SOORTEN[m.plekSoort];
+      return (
+        <View style={s.midden}>
+          {m.actief ? (
+            <View style={s.bubbelVak}>
+              <View style={[s.bubbel, { backgroundColor: soort.kleur }]}>
+                <Text style={s.bubbelTekst} numberOfLines={1}>
+                  {m.naam}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+          <View style={[s.plek, schaduw, { backgroundColor: soort.kleur }, m.actief && s.plekActief]}>
+            <MaterialCommunityIcons name={soort.icoon} size={m.actief ? 20 : 16} color="#fff" />
+          </View>
+        </View>
+      );
+    }
   }
 }
 
@@ -424,8 +445,8 @@ export function Kaart({
             return (
               <View key={m.id} style={[s.marker, { left: pos.left, top: pos.top }]} pointerEvents="box-none">
                 <View style={s.anker} pointerEvents="box-none">
-                  {m.soort === 'uitlater' && m.onPress ? (
-                    <Pressable onPress={m.onPress} accessibilityRole="button" accessibilityLabel={`Uitlater ${m.naam}`}>
+                  {(m.soort === 'uitlater' || m.soort === 'plek') && m.onPress ? (
+                    <Pressable onPress={m.onPress} accessibilityRole="button" accessibilityLabel={m.soort === 'uitlater' ? `Uitlater ${m.naam}` : m.naam} hitSlop={6}>
                       {inhoud}
                     </Pressable>
                   ) : (
@@ -501,6 +522,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  plek: { width: 30, height: 30, borderRadius: 15, borderWidth: 2.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  plekActief: { width: 40, height: 40, borderRadius: 20, borderWidth: 3 },
   centreer: {
     position: 'absolute',
     right: 14,

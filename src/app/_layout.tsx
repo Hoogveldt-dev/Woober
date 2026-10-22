@@ -66,6 +66,7 @@ function Navigatie() {
         <Stack.Screen name="profiel-uitlater" options={{ headerShown: true, title: 'Jouw profiel' }} />
         <Stack.Screen name="veiligheid" options={{ headerShown: true, title: 'Veiligheid en hulp' }} />
         <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
+        <Stack.Screen name="plek/[id]" options={{ headerShown: true, title: '' }} />
       </Stack.Protected>
     </Stack>
   );

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
+import { maakDemoPlekken } from '../data/plekken';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
 import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
@@ -34,6 +35,7 @@ import type {
   Klant,
   PrijsOpbouw,
   Moment,
+  Plek,
   Punt,
   Rol,
   Serie,
@@ -72,6 +74,8 @@ interface AppState {
   /** Tegoed van de eigenaar in centen, betaald door Woober (welkomst, uitnodiging, actiecode) */
   tegoed: number;
   gebruikteCodes: string[];
+  /** Losloopgebieden, stranden en horeca met reviews van gebruikers */
+  plekken: Plek[];
 }
 
 export interface Aanvraag {
@@ -123,6 +127,9 @@ interface AppActies {
   blokkeer: (id: string) => void;
   meld: (id: string, reden: string) => void;
   sluitMelding: (id: string) => void;
+  /** Review van een plek schrijven of aanpassen; één per gebruiker per plek */
+  beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
+  verwijderPlekReview: (plekId: string) => void;
   accountVerwijderen: () => void;
 
   /** Het actieve verdienmodel */
@@ -169,6 +176,7 @@ const LEEG: AppState = {
   plus: false,
   tegoed: 0,
   gebruikteCodes: [],
+  plekken: maakDemoPlekken(),
 };
 
 /** Actiecodes in de demo. In de echte app: tabel promocodes, te verzilveren via verzilver_code(). */
@@ -796,6 +804,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [zet],
   );
 
+  // Plekken
+
+  const beoordeelPlek = useCallback(
+    (plekId: string, sterren: number, tekst: string) =>
+      setState((s) => ({
+        ...s,
+        plekken: s.plekken.map((p) =>
+          p.id === plekId
+            ? {
+                ...p,
+                reviews: [
+                  { id: `mijn-${plekId}`, van: s.gebruiker?.voornaam ?? 'Ik', sterren, tekst: tekst.trim(), datum: Date.now(), vanMij: true },
+                  ...p.reviews.filter((r) => !r.vanMij),
+                ],
+              }
+            : p,
+        ),
+      })),
+    [setState],
+  );
+  const verwijderPlekReview = useCallback(
+    (plekId: string) =>
+      zet('plekken', (ps) => ps.map((p) => (p.id === plekId ? { ...p, reviews: p.reviews.filter((r) => !r.vanMij) } : p))),
+    [zet],
+  );
+
   const accountVerwijderen = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
@@ -885,6 +919,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     blokkeer,
     meld,
     sluitMelding,
+    beoordeelPlek,
+    verwijderPlekReview,
     accountVerwijderen,
     uitlater,
     klant,

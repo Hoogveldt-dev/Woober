@@ -281,5 +281,28 @@ await db.exec(`insert into auth.users values ('${Y}'); insert into public.profie
 check('welkomsttegoed in de groeifase', (await saldo(Y)) === 500);
 const nul = (await woober(`select count(*)::int as n from (select boeking_id from public.grootboek group by boeking_id having sum(bedrag) <> 0) x`)).rows[0].n;
 check('grootboek komt per boeking op nul uit', nul === 0);
+// Plekken: Woober beheert de plekken, gebruikers schrijven reviews
+const PL = '66666666-6666-6666-6666-666666666666';
+check('gebruiker kan geen plek toevoegen', !!(await als(E, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('strand', 'Nep', 'Nijmegen', 51.85, 5.86)`)).fout);
+await db.exec(`insert into public.plekken (id, soort, naam, plaats, lat, lng) values ('${PL}', 'losloop', 'Hondenveld Stadspark', 'Nijmegen', 51.84, 5.87)`);
+check('plekken lezen', (await als(U, `select naam from public.plekken`)).rows?.length === 1);
+check('plek beoordelen', !(await als(E, `insert into public.plek_reviews (plek_id, auteur_id, sterren, tekst) values ('${PL}', '${E}', 5, 'Omheind en ruim')`)).fout);
+check('één review per plek', !!(await als(E, `insert into public.plek_reviews (plek_id, auteur_id, sterren) values ('${PL}', '${E}', 4)`)).fout);
+check('geen review op naam van een ander', !!(await als(U, `insert into public.plek_reviews (plek_id, auteur_id, sterren) values ('${PL}', '${E}', 1)`)).fout);
+check('sterren tussen 1 en 5', !!(await als(U, `insert into public.plek_reviews (plek_id, auteur_id, sterren) values ('${PL}', '${U}', 6)`)).fout);
+check('uitlater beoordeelt ook', !(await als(U, `insert into public.plek_reviews (plek_id, auteur_id, sterren) values ('${PL}', '${U}', 3)`)).fout);
+check('eigen review aanpassen', !(await als(E, `update public.plek_reviews set sterren = 4 where auteur_id = '${E}'`)).fout);
+const pl1 = await als(E, `update public.plek_reviews set sterren = 1 where auteur_id = '${U}' returning id`);
+check('review van een ander niet aan te passen', !pl1.fout && pl1.rows.length === 0, JSON.stringify(pl1));
+check('plek van review niet te verplaatsen', !!(await als(E, `update public.plek_reviews set plek_id = '${PL}' where auteur_id = '${E}'`)).fout);
+const pl2 = await als(U, `select gemiddelde::float as g, aantal from public.plek_scores where plek_id = '${PL}'`);
+check('gemiddelde per plek', pl2.rows?.[0]?.g === 3.5 && pl2.rows?.[0]?.aantal === 2, JSON.stringify(pl2));
+await als(X, `insert into public.plek_reviews (plek_id, auteur_id, sterren, tekst) values ('${PL}', '${X}', 1, 'Vreselijk')`);
+check('review van geblokkeerde gebruiker onzichtbaar', (await als(E, `select auteur_id from public.plek_reviews where auteur_id = '${X}'`)).rows?.length === 0);
+const plr = (await als(U, `select id from public.plek_reviews where auteur_id = '${X}'`)).rows?.[0]?.id;
+check('review melden', !(await als(U, `insert into public.meldingen (melder_id, gemeld_id, plek_review_id, reden) values ('${U}', '${X}', '${plr}', 'Ongepaste review van een plek')`)).fout);
+const pl3 = await als(U, `delete from public.plek_reviews where auteur_id = '${E}' returning id`);
+check('review van een ander niet te verwijderen', !pl3.fout && pl3.rows.length === 0, JSON.stringify(pl3));
+check('eigen review verwijderen', (await als(E, `delete from public.plek_reviews where auteur_id = '${E}' returning id`)).rows?.length === 1);
 console.log(`\n${ok} geslaagd, ${fout} mislukt`);
 process.exit(fout ? 1 : 0);
