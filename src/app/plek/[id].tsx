@@ -1,11 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
+import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { gedeeldeStijl, Sectie, Sterren, SterrenKiezer } from '../../components/blokken';
 import { Kaart } from '../../components/Kaart';
-import { Knop, Melding, Veld } from '../../components/ui';
+import { Badge, Knop, Melding, Veld } from '../../components/ui';
 import { PLEK_REVIEW_MAX, PLEK_SOORTEN, plekScore } from '../../lib/plekken';
 import { afstand, formatAfstand } from '../../lib/route';
 import { dagTekst } from '../../lib/tijd';
@@ -15,7 +15,8 @@ import type { Plek, PlekReview } from '../../types';
 
 export default function PlekScherm() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { plekken, gebruiker, rol } = useApp();
+  const router = useRouter();
+  const { plekken, gebruiker, rol, gemeld, meld, verwijderPlek } = useApp();
   const p = plekken.find((x) => x.id === id);
   if (!p) return <Redirect href={rol === 'uitlater' ? '/werk' : '/'} />;
 
@@ -43,8 +44,14 @@ export default function PlekScherm() {
           </View>
         </View>
         <Sterren waarde={score.gemiddelde} aantal={score.aantal} grootte={16} />
+        {p.toegevoegdDoor ? (
+          <View style={s.door}>
+            {!p.gecontroleerd ? <Badge tekst="Net toegevoegd" icoon="sparkles" kleur={kleuren.info} /> : null}
+            <Text style={s.doorTekst}>Toegevoegd door {p.vanMij ? 'jou' : p.toegevoegdDoor}</Text>
+          </View>
+        ) : null}
 
-        <Text style={s.tekst}>{p.omschrijving}</Text>
+        {p.omschrijving ? <Text style={s.tekst}>{p.omschrijving}</Text> : <View style={{ height: ruimte(3) }} />}
         <View style={s.kenmerken}>
           {p.kenmerken.map((k) => (
             <View key={k} style={s.kenmerk}>
@@ -63,6 +70,27 @@ export default function PlekScherm() {
         {p.reviews.map((r) => (
           <ReviewRij key={r.id} r={r} />
         ))}
+
+        {p.vanMij && !p.gecontroleerd ? (
+          <Knop
+            titel="Plek verwijderen"
+            variant="gevaar"
+            icoon="trash"
+            stijl={{ marginTop: ruimte(6) }}
+            onPress={() => {
+              router.back();
+              verwijderPlek(p.id);
+            }}
+          />
+        ) : null}
+        {p.toegevoegdDoor && !p.vanMij ? (
+          gemeld.includes(p.id) ? (
+            <Text style={[s.gemeld, { marginTop: ruimte(6) }]}>Gemeld. Een medewerker bekijkt deze plek.</Text>
+          ) : (
+            // Bijvoorbeeld een plek die niet bestaat, reclame of een woonadres; altijd beoordeeld door een mens
+            <Knop titel="Klopt deze plek niet? Melden" variant="tekst" icoon="flag-outline" stijl={{ marginTop: ruimte(6) }} onPress={() => meld(p.id, 'Plek klopt niet')} />
+          )
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,6 +185,8 @@ const s = StyleSheet.create({
   icoon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   soort: { fontSize: 14, color: kleuren.gedempt, marginTop: 2, fontWeight: '600' },
   tekst: { fontSize: 15, color: kleuren.tekst, lineHeight: 22, marginTop: ruimte(3), marginBottom: ruimte(3) },
+  door: { flexDirection: 'row', alignItems: 'center', gap: ruimte(2), marginTop: ruimte(2) },
+  doorTekst: { fontSize: 13, color: kleuren.gedempt, fontWeight: '600' },
   kenmerken: { flexDirection: 'row', flexWrap: 'wrap', gap: ruimte(2), marginBottom: ruimte(3) },
   kenmerk: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: kleuren.vlak, borderRadius: radius.rond, paddingHorizontal: 10, paddingVertical: 5 },
   kenmerkTekst: { fontSize: 13, fontWeight: '600', color: kleuren.tekst },

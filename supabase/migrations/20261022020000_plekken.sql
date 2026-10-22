@@ -1,11 +1,13 @@
 -- Woober: plekken voor honden (concept)
 --
--- Losloopgebieden, hondvriendelijke stranden en horeca op de kaart, met reviews van gebruikers.
--- Woober beheert de plekken zelf (service_role, nooit vanuit de app). Elke aangemelde gebruiker
--- mag één review per plek schrijven en die aanpassen of verwijderen. Een gemelde review
--- beoordeelt altijd een medewerker.
+-- Losloopgebieden, hondvriendelijke stranden, horeca en andere plekken op de kaart, met reviews van gebruikers.
+-- Woober zet plekken klaar (service_role, nooit vanuit de app) en gebruikers voegen er zelf aan toe.
+-- Een nieuwe plek van een gebruiker is meteen zichtbaar met de status 'nieuw'; een medewerker zet hem
+-- daarna op 'gecontroleerd' of 'verborgen'. Elke aangemelde gebruiker mag één review per plek schrijven
+-- en die aanpassen of verwijderen. Gemelde plekken en reviews beoordeelt altijd een medewerker.
 
-create type public.plek_soort as enum ('losloop', 'strand', 'horeca');
+create type public.plek_soort as enum ('losloop', 'strand', 'horeca', 'overig');
+create type public.plek_status as enum ('nieuw', 'gecontroleerd', 'verborgen');
 
 create table public.plekken (
   id uuid primary key default gen_random_uuid(),
@@ -18,9 +20,13 @@ create table public.plekken (
   plaats text not null,
   lat double precision not null check (lat between -90 and 90),
   lng double precision not null check (lng between -180 and 180),
+  -- Leeg bij plekken van Woober; blijft staan als het account verdwijnt, zonder naam
+  toegevoegd_door uuid default auth.uid() references public.profielen (id) on delete set null,
+  status public.plek_status not null default 'nieuw',
   aangemaakt timestamptz not null default now()
 );
 create index on public.plekken (soort);
+create index on public.plekken (toegevoegd_door, aangemaakt);
 
 create table public.plek_reviews (
   id uuid primary key default gen_random_uuid(),
@@ -50,14 +56,34 @@ $$;
 create trigger plek_review_gewijzigd before update on public.plek_reviews
   for each row execute function public.plek_review_gewijzigd();
 
--- Een melding kan ook over een review van een plek gaan
-alter table public.meldingen add column plek_review_id uuid references public.plek_reviews (id) on delete set null;
+-- Een melding kan ook over een plek of een review van een plek gaan
+alter table public.meldingen
+  add column plek_id uuid references public.plekken (id) on delete set null,
+  add column plek_review_id uuid references public.plek_reviews (id) on delete set null;
+
+-- Aantal plekken dat iemand de afgelopen dag heeft toegevoegd. Een functie, omdat een policy niet zijn eigen tabel mag lezen.
+create or replace function public.plekken_afgelopen_dag(wie uuid)
+returns integer language sql stable security definer set search_path = '' as $$
+  select count(*)::int from public.plekken where toegevoegd_door = wie and aangemaakt > now() - interval '1 day';
+$$;
 
 alter table public.plekken enable row level security;
 alter table public.plek_reviews enable row level security;
 
-create policy "plekken lezen" on public.plekken for select to authenticated using (true);
-revoke insert, update, delete on public.plekken from anon, authenticated;
+create policy "plekken lezen" on public.plekken for select to authenticated using (
+  toegevoegd_door = (select auth.uid())
+  or (status <> 'verborgen' and not public.is_geblokkeerd((select auth.uid()), toegevoegd_door))
+);
+-- Status en toevoeger bepaalt de database, niet de app; tegen spam hooguit vijf nieuwe plekken per dag
+create policy "plek toevoegen" on public.plekken for insert to authenticated with check (
+  toegevoegd_door = (select auth.uid())
+  and status = 'nieuw'
+  and public.plekken_afgelopen_dag((select auth.uid())) < 5
+);
+create policy "eigen nieuwe plek verwijderen" on public.plekken for delete to authenticated
+  using (toegevoegd_door = (select auth.uid()) and status = 'nieuw');
+revoke insert, update on public.plekken from anon, authenticated;
+grant insert (soort, naam, omschrijving, kenmerken, regels, plaats, lat, lng) on public.plekken to authenticated;
 
 create policy "plekreviews lezen" on public.plek_reviews for select to authenticated
   using (not public.is_geblokkeerd((select auth.uid()), auteur_id));

@@ -35,6 +35,7 @@ import type {
   Klant,
   PrijsOpbouw,
   Moment,
+  NieuwePlek,
   Plek,
   Punt,
   Rol,
@@ -130,6 +131,10 @@ interface AppActies {
   /** Review van een plek schrijven of aanpassen; één per gebruiker per plek */
   beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
   verwijderPlekReview: (plekId: string) => void;
+  /** Plek toevoegen; is meteen zichtbaar en wordt daarna door een medewerker bekeken. Geeft het id terug. */
+  voegPlekToe: (p: NieuwePlek) => string;
+  /** Alleen een plek die je zelf hebt toegevoegd en die nog niet is gecontroleerd */
+  verwijderPlek: (id: string) => void;
   accountVerwijderen: () => void;
 
   /** Het actieve verdienmodel */
@@ -830,6 +835,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [zet],
   );
 
+  const voegPlekToe = useCallback(
+    (nieuw: NieuwePlek) => {
+      const id = nieuwId('plek');
+      setState((s) => ({
+        ...s,
+        plekken: [
+          ...s.plekken,
+          {
+            ...nieuw,
+            id,
+            naam: nieuw.naam.trim(),
+            omschrijving: nieuw.omschrijving.trim(),
+            regels: nieuw.regels?.trim() || undefined,
+            reviews: [],
+            toegevoegdDoor: s.gebruiker?.voornaam,
+            vanMij: true,
+            gecontroleerd: false,
+          },
+        ],
+      }));
+      return id;
+    },
+    [setState],
+  );
+  const verwijderPlek = useCallback(
+    (id: string) => zet('plekken', (ps) => ps.filter((p) => !(p.id === id && p.vanMij && !p.gecontroleerd))),
+    [zet],
+  );
+
   const accountVerwijderen = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
@@ -921,6 +955,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     sluitMelding,
     beoordeelPlek,
     verwijderPlekReview,
+    voegPlekToe,
+    verwijderPlek,
     accountVerwijderen,
     uitlater,
     klant,

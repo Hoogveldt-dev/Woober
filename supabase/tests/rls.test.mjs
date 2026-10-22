@@ -283,8 +283,7 @@ const nul = (await woober(`select count(*)::int as n from (select boeking_id fro
 check('grootboek komt per boeking op nul uit', nul === 0);
 // Plekken: Woober beheert de plekken, gebruikers schrijven reviews
 const PL = '66666666-6666-6666-6666-666666666666';
-check('gebruiker kan geen plek toevoegen', !!(await als(E, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('strand', 'Nep', 'Nijmegen', 51.85, 5.86)`)).fout);
-await db.exec(`insert into public.plekken (id, soort, naam, plaats, lat, lng) values ('${PL}', 'losloop', 'Hondenveld Stadspark', 'Nijmegen', 51.84, 5.87)`);
+await db.exec(`insert into public.plekken (id, soort, naam, plaats, lat, lng, toegevoegd_door, status) values ('${PL}', 'losloop', 'Hondenveld Stadspark', 'Nijmegen', 51.84, 5.87, null, 'gecontroleerd')`);
 check('plekken lezen', (await als(U, `select naam from public.plekken`)).rows?.length === 1);
 check('plek beoordelen', !(await als(E, `insert into public.plek_reviews (plek_id, auteur_id, sterren, tekst) values ('${PL}', '${E}', 5, 'Omheind en ruim')`)).fout);
 check('één review per plek', !!(await als(E, `insert into public.plek_reviews (plek_id, auteur_id, sterren) values ('${PL}', '${E}', 4)`)).fout);
@@ -304,5 +303,25 @@ check('review melden', !(await als(U, `insert into public.meldingen (melder_id, 
 const pl3 = await als(U, `delete from public.plek_reviews where auteur_id = '${E}' returning id`);
 check('review van een ander niet te verwijderen', !pl3.fout && pl3.rows.length === 0, JSON.stringify(pl3));
 check('eigen review verwijderen', (await als(E, `delete from public.plek_reviews where auteur_id = '${E}' returning id`)).rows?.length === 1);
+// Plekken toevoegen door gebruikers
+const pt = await als(E, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('horeca', 'Café De Hoek', 'Nijmegen', 51.845, 5.862) returning id, status, toegevoegd_door`);
+check('gebruiker voegt een café toe', !pt.fout && pt.rows[0].status === 'nieuw' && pt.rows[0].toegevoegd_door === E, JSON.stringify(pt));
+const PT = pt.rows?.[0]?.id;
+check('nieuwe plek meteen zichtbaar voor anderen', (await als(U, `select id from public.plekken where id = '${PT}'`)).rows?.length === 1);
+check('zelf de status zetten kan niet', !!(await als(E, `insert into public.plekken (soort, naam, plaats, lat, lng, status) values ('overig', 'Dierenwinkel', 'Nijmegen', 51.84, 5.86, 'gecontroleerd')`)).fout);
+check('op naam van een ander toevoegen kan niet', !!(await als(E, `insert into public.plekken (soort, naam, plaats, lat, lng, toegevoegd_door) values ('overig', 'Dierenwinkel', 'Nijmegen', 51.84, 5.86, '${U}')`)).fout);
+check('plek van een ander niet aan te passen', !!(await als(U, `update public.plekken set naam = 'Weg' where id = '${PT}'`)).fout);
+const pt2 = await als(U, `delete from public.plekken where id = '${PT}' returning id`);
+check('plek van een ander niet te verwijderen', !pt2.fout && pt2.rows.length === 0, JSON.stringify(pt2));
+check('plek melden', !(await als(U, `insert into public.meldingen (melder_id, gemeld_id, plek_id, reden) values ('${U}', '${E}', '${PT}', 'Plek klopt niet')`)).fout);
+check('plek van een geblokkeerde gebruiker onzichtbaar', (await als(X, `select id from public.plekken where id = '${PT}'`)).rows?.length === 0);
+await db.exec(`update public.plekken set status = 'verborgen' where id = '${PT}'`);
+check('verborgen plek alleen zichtbaar voor de toevoeger', (await als(U, `select id from public.plekken where id = '${PT}'`)).rows?.length === 0 && (await als(E, `select id from public.plekken where id = '${PT}'`)).rows?.length === 1);
+check('verborgen plek niet zelf te verwijderen', (await als(E, `delete from public.plekken where id = '${PT}' returning id`)).rows?.length === 0);
+for (let i = 0; i < 4; i++) await als(U, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('overig', 'Plek ${i}', 'Nijmegen', 51.84, 5.86)`);
+check('vijf plekken per dag', !(await als(U, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('overig', 'Plek 5', 'Nijmegen', 51.84, 5.86)`)).fout);
+check('zesde plek op een dag kan niet', !!(await als(U, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('overig', 'Plek 6', 'Nijmegen', 51.84, 5.86)`)).fout);
+const pt3 = (await als(U, `select id from public.plekken where naam = 'Plek 5'`)).rows[0].id;
+check('eigen nieuwe plek verwijderen', (await als(U, `delete from public.plekken where id = '${pt3}' returning id`)).rows?.length === 1);
 console.log(`\n${ok} geslaagd, ${fout} mislukt`);
 process.exit(fout ? 1 : 0);

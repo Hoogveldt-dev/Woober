@@ -95,8 +95,20 @@ export default function Plekken() {
           />
         ) : (
           <>
-            <Text style={s.titel}>Plekken voor je hond</Text>
-            <Text style={s.sub}>Losloopgebieden, hondvriendelijke stranden en horeca, met reviews van andere baasjes.</Text>
+            <View style={s.kopRij}>
+              <Text style={s.titel}>Plekken voor je hond</Text>
+              <Pressable
+                onPress={() => router.push('/plek-toevoegen')}
+                accessibilityRole="button"
+                accessibilityLabel="Plek toevoegen"
+                hitSlop={6}
+                style={({ pressed }) => [s.toevoegen, pressed && { opacity: 0.8 }]}
+              >
+                <Ionicons name="add" size={18} color={kleuren.primair} />
+                <Text style={s.toevoegenTekst}>Toevoegen</Text>
+              </Pressable>
+            </View>
+            <Text style={s.sub}>Losloopgebieden, stranden, cafés en meer, met reviews van andere baasjes. Mis je een plek? Voeg hem toe.</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.lijst}>
               {zichtbaar.map(({ plek: p, meter }) => {
                 const soort = PLEK_SOORTEN[p.soort];
@@ -173,7 +185,10 @@ const s = StyleSheet.create({
   filters: { position: 'absolute', left: 0, right: 0, flexGrow: 0 },
   filterRij: { gap: ruimte(2), paddingHorizontal: ruimte(4), paddingBottom: ruimte(3) },
   filterSchaduw: { borderRadius: radius.rond, shadowOpacity: 0.08 },
-  titel: { fontSize: 20, fontWeight: '800', color: kleuren.tekst, letterSpacing: -0.4 },
+  kopRij: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: ruimte(2) },
+  toevoegen: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: kleuren.primairVlak, borderRadius: radius.rond, paddingLeft: 8, paddingRight: 12, paddingVertical: 6 },
+  toevoegenTekst: { fontSize: 14, fontWeight: '700', color: kleuren.primair },
+  titel: { flexShrink: 1, fontSize: 20, fontWeight: '800', color: kleuren.tekst, letterSpacing: -0.4 },
   sub: { fontSize: 13, color: kleuren.gedempt, marginTop: 2, lineHeight: 18 },
   lijst: { gap: ruimte(3), paddingVertical: ruimte(3) },
   tegel: { width: 140, gap: 4, borderWidth: 1, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },

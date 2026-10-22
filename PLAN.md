@@ -126,7 +126,7 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Uitlater: opdracht uitvoeren | `src/app/opdracht/[id].tsx` |
 | Uitlater: verdiensten, opdrachten, profiel, verificatie | `src/app/werk/*`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
 | Veiligheid en hulp | `src/app/veiligheid.tsx` |
-| Plekken: kaart met losloopgebieden, hondvriendelijke stranden en horeca, met reviews | `src/app/(tabs)/plekken.tsx`, `src/app/plek/[id].tsx`, `src/data/plekken.ts`, `src/lib/plekken.ts` |
+| Plekken: kaart met losloopgebieden, hondvriendelijke stranden, horeca en andere plekken, met reviews; gebruikers voegen zelf plekken toe | `src/app/(tabs)/plekken.tsx`, `src/app/plek/[id].tsx`, `src/app/plek-toevoegen.tsx`, `src/data/plekken.ts`, `src/lib/plekken.ts` |
 | Kaart van de demowijk met routes | `src/components/Kaart.tsx`, `src/data/stad.ts`, `src/lib/route.ts` |
 | Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts`, `src/components/PrijsRegels.tsx` |
 | Verdienmodel: fases, drukte, Woober Plus, tegoed | `src/lib/verdienmodel.ts`, demoscherm `src/app/verdienmodel.tsx` (Account, Verdienmodel) |
@@ -240,10 +240,10 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
 | Verlengen gaat direct (`verleng_oppas()`) | De oppas bevestigt eerst in de app; bij kaart en Apple Pay wordt de reservering opgehoogd, bij iDEAL volgt een tweede betaling |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
-| Plekken als nepdata (`src/data/plekken.ts`) | Tabel `plekken`, gevuld door het team (eerst handmatig in de pilotstad, later uit open data van gemeenten); reviews in `plek_reviews` |
+| Plekken als nepdata (`src/data/plekken.ts`) | Tabel `plekken`, eerst gevuld door het team (handmatig in de pilotstad, later uit open data van gemeenten) en aangevuld door gebruikers; reviews in `plek_reviews`. Nieuwe plekken van gebruikers controleert een medewerker in het moderatiescherm |
 | Melden en blokkeren lokaal | Moderatiescherm voor het team (eerst Supabase Studio, later een eigen beheerpagina) |
 
-Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 103 controles). Belangrijkste regels:
+Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 115 controles). Belangrijkste regels:
 
 - Prijzen berekent de database uit het tarief van de uitlater (`tarief_voor()`) en het verdienmodel dat geldt (`bereken_prijs()`); de app stuurt nooit een bedrag mee. App en database rekenen tot op de cent hetzelfde.
 - Een hogere commissie gaat pas 15 dagen na aankondiging in; een ingepland model ligt vast.
@@ -253,7 +253,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
 - Verificatievelden kan alleen Woober zetten (kolomrechten).
 - Een eerste wandeling kan pas na een afgeronde kennismaking; boeken bij een geblokkeerde gebruiker kan niet.
-- Plekken voegt alleen Woober toe. Iedere gebruiker schrijft één review per plek, past alleen de eigen review aan en ziet geen reviews van gebruikers die geblokkeerd zijn; een gemelde review beoordeelt een medewerker.
+- Gebruikers voegen zelf plekken toe, hooguit vijf per dag. Zo'n plek is meteen zichtbaar met de status `nieuw`; alleen een medewerker zet hem op `gecontroleerd` of `verborgen`. De toevoeger kan een nieuwe plek nog verwijderen, niet aanpassen. Iedere gebruiker schrijft één review per plek, past alleen de eigen review aan en ziet geen reviews van gebruikers die geblokkeerd zijn; een gemelde review beoordeelt een medewerker.
 - Locatie toevoegen kan alleen tijdens een lopende wandeling, door de uitlater van die wandeling.
 
 ### Volgorde van bouwen
@@ -290,7 +290,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.
 - [ ] Verzekering per uitlater of collectief via Woober?
 - [ ] Alleen particuliere uitlaters, of ook bedrijven met KvK? De demo laat beide zien.
-- [ ] Plekken: mogen gebruikers zelf nieuwe plekken voorstellen (met controle door het team)? En willen we horeca later laten betalen voor een uitgelichte plek, of blijft de kaart neutraal?
+- [ ] Plekken: willen we horeca later laten betalen voor een uitgelichte plek, of blijft de kaart neutraal? En mag de eigenaar van een zaak zijn plek claimen en aanpassen?
 - [ ] Mag Woober een VOG vragen? In de demo optioneel.
 - [ ] Pilotstad: Nijmegen?
 - [ ] **Naam**: Woober lijkt in klank en schrijfwijze op Uber. Laat een merkenonderzoek doen (BOIP en EUIPO) voordat je investeert in het merk; grote merken treden vaak op tegen namen die op hun merk lijken.
