@@ -26,6 +26,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
+      "name": "Woober",
+      "shortName": "Woober",
+      "lang": "nl",
+      "themeColor": "#FF5A5F",
+      "backgroundColor": "#FFFFFF",
+      "description": "Uitlaten of oppas voor je hond, door iemand uit de buurt.",
       "output": "single",
       "bundler": "metro"
     },

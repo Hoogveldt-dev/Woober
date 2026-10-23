@@ -1,9 +1,24 @@
-import { Stack, type Href } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform, Pressable } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MeldingBanner } from '../components/merk';
 import { AppProvider, useApp } from '../state/AppContext';
 import { kleuren } from '../theme';
+
+/**
+ * Op het web kan iemand een pagina direct openen, via een link of door te verversen. Er is dan geen vorige pagina,
+ * dus zonder deze knop zou de terugknop ontbreken en zit je vast op bijvoorbeeld de privacyverklaring.
+ */
+function NaarStart() {
+  const router = useRouter();
+  return (
+    <Pressable onPress={() => router.replace('/')} accessibilityRole="button" accessibilityLabel="Terug" style={{ padding: 8, marginLeft: 4 }}>
+      <Ionicons name="chevron-back" size={24} color={kleuren.tekst} />
+    </Pressable>
+  );
+}
 
 function Navigatie() {
   const { gebruiker, rol, honden, mijnProfiel } = useApp();
@@ -23,14 +38,18 @@ function Navigatie() {
 
   return (
     <Stack
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerShown: false,
         headerTintColor: kleuren.tekst,
         headerTitleStyle: { fontWeight: '700' },
         headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: kleuren.achtergrond },
-      }}
+        headerLeft: Platform.OS === 'web' && !navigation.canGoBack() ? () => <NaarStart /> : undefined,
+      })}
     >
+      {/* Altijd bereikbaar: de privacyverklaring moet ook zonder account te lezen zijn (woober.nl/privacy) */}
+      <Stack.Screen name="privacy" options={{ headerShown: true, title: 'Privacy' }} />
+
       <Stack.Protected guard={!aangemeld} redirectTo={startpunt}>
         <Stack.Screen name="welkom" />
         <Stack.Screen name="aanmelden" options={{ headerShown: true, title: 'Account aanmaken' }} />
