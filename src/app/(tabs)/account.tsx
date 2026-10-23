@@ -127,7 +127,7 @@ export default function Account() {
             onPress={() => wisselRol('uitlater')}
           />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
-          <MenuRij icoon="document-text" titel="Voorwaarden en privacy" sub="Volgt in de echte app" onPress={() => {}} />
+          <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
           <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
         </Blok>
 

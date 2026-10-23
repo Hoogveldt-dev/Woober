@@ -17,6 +17,14 @@ Op het welkomscherm kies je **Demo eigenaar** of **Demo uitlater**. Je kunt late
 
 Controles: `npm run typecheck`, `npx expo lint` en `npm run test:db` (databaseschema en RLS).
 
+## Web (woober.nl)
+
+Netlify bouwt de web-app bij elke push naar `main` (`netlify.toml`). woober.nl is het hoofddomein; extra domeinen komen in Netlify als domeinalias en sturen door naar woober.nl (voorbeeld in `netlify.toml`).
+
+- `public/index.html` is het sjabloon van de pagina (Nederlands, past zich aan de adresbalk en het toetsenbord van mobiele browsers aan). Zolang het een demo is, staat er `noindex` in, zodat zoekmachines hem niet opnemen; haal dat weg bij de echte lancering.
+- Met `public/manifest.webmanifest` en de iconen in `public/` kun je Woober op het beginscherm van je telefoon zetten.
+- Privacy- en cookieverklaring: `src/app/privacy.tsx`, ook zonder account bereikbaar via `/privacy`. Pas deze aan zodra de app echte gegevens opslaat.
+
 ## Zo werkt de demo
 
 - **De andere kant speelt de app zelf.** Boek je als eigenaar, dan accepteert de uitlater na een paar seconden, fietst naar je toe en stuurt onderweg foto's. Ben je uitlater en ga je online, dan komen er vanzelf verzoeken binnen.

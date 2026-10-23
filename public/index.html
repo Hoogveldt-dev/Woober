@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- interactive-widget: op Android krimpt de pagina als het toetsenbord opent, zodat het invoerveld van de chat zichtbaar blijft -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, interactive-widget=resizes-content" />
+    <title>%WEB_TITLE%</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Woober" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Zolang woober.nl een demo met verzonnen gegevens is, hoort hij niet in zoekmachines. Haal dit weg bij de echte lancering. -->
+    <meta name="robots" content="noindex" />
+    <!-- De aanbevolen opmaak van react-native-web: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* De app vult het hele venster */
+      html,
+      body {
+        height: 100%;
+      }
+      /* Op mobiele browsers telt de adresbalk niet mee, zodat de tabbalk onderin altijd zichtbaar is */
+      @supports (height: 100dvh) {
+        html,
+        body {
+          height: 100dvh;
+        }
+      }
+      /* De pagina zelf scrollt niet; dat doen de schermen (ScrollView) */
+      body {
+        overflow: hidden;
+        overscroll-behavior: none;
+        background-color: #ffffff;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>Zet JavaScript aan om Woober te gebruiken.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

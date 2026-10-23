@@ -29,6 +29,12 @@ export default function Welkom() {
           <Text style={s.klein}>
             Het zusje van Woofer. Uitlaters bepalen zelf hun tarief en beschikbaarheid, en jij kiest zelf wie je hond uitlaat.
           </Text>
+          <Text style={s.klein}>
+            Dit is een demo met verzonnen gegevens; er wordt niets opgeslagen.{' '}
+            <Text style={s.link} onPress={() => router.push('/privacy')}>
+              Privacy
+            </Text>
+          </Text>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -44,4 +50,5 @@ const s = StyleSheet.create({
   witteKnop: { backgroundColor: '#fff', borderColor: '#fff' },
   demoRij: { flexDirection: 'row', gap: ruimte(2), marginTop: ruimte(2) },
   klein: { color: '#fff', opacity: 0.85, fontSize: 12, textAlign: 'center', marginTop: ruimte(4), lineHeight: 17 },
+  link: { fontWeight: '700', textDecorationLine: 'underline' },
 });
