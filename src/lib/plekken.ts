@@ -1,14 +1,16 @@
 import type { ComponentProps } from 'react';
 import type { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Plek, PlekSoort } from '../types';
+import type { KaartPunt } from './kaart';
 
 type MciNaam = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-export const PLEK_SOORTEN: Record<PlekSoort, { label: string; meervoud: string; icoon: MciNaam; kleur: string }> = {
-  losloop: { label: 'Losloopgebied', meervoud: 'Losloop', icoon: 'dog-side', kleur: '#3F9C55' },
-  strand: { label: 'Hondenstrand', meervoud: 'Stranden', icoon: 'beach', kleur: '#E0962B' },
-  horeca: { label: 'Hondvriendelijke horeca', meervoud: 'Horeca', icoon: 'coffee', kleur: '#8B5CF6' },
-  overig: { label: 'Andere hondvriendelijke plek', meervoud: 'Overig', icoon: 'paw', kleur: '#0E9F9A' },
+/** `teken` staat in de speld op de echte kaart, die geen iconen van de app kent */
+export const PLEK_SOORTEN: Record<PlekSoort, { label: string; meervoud: string; icoon: MciNaam; kleur: string; teken: string }> = {
+  losloop: { label: 'Losloopgebied', meervoud: 'Losloop', icoon: 'dog-side', kleur: '#3F9C55', teken: '🐕' },
+  strand: { label: 'Hondenstrand', meervoud: 'Stranden', icoon: 'beach', kleur: '#E0962B', teken: '🏖️' },
+  horeca: { label: 'Hondvriendelijke horeca', meervoud: 'Horeca', icoon: 'coffee', kleur: '#8B5CF6', teken: '☕' },
+  overig: { label: 'Andere hondvriendelijke plek', meervoud: 'Overig', icoon: 'paw', kleur: '#0E9F9A', teken: '🐾' },
 };
 
 /** Korte namen voor de soortkeuze bij het toevoegen */
@@ -39,3 +41,10 @@ export function plekScore(p: Plek): { gemiddelde: number; aantal: number } {
 
 /** Maximale lengte van een review, gelijk aan de check in de database */
 export const PLEK_REVIEW_MAX = 300;
+
+/** Speld voor de echte kaart */
+export function plekPunt(p: Plek, actief = false): KaartPunt | null {
+  if (!p.ligging) return null;
+  const soort = PLEK_SOORTEN[p.soort];
+  return { id: p.id, lat: p.ligging.lat, lng: p.ligging.lng, kleur: soort.kleur, teken: soort.teken, titel: p.naam, actief };
+}

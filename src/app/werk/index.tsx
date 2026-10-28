@@ -15,6 +15,8 @@ import { duurTekst, leeftijdTekst, momentTekst, totTekst } from '../../lib/tijd'
 import { verdiendOp } from '../../lib/verdiensten';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
+import { useTekst } from '../../state/Teksten';
+import { UitlaterStartEcht } from '../../components/StartEcht';
 
 function OnlineKnop({ onPress }: { onPress: () => void }) {
   const [puls] = useState(() => new Animated.Value(0));
@@ -54,11 +56,18 @@ function Zoeken() {
   );
 }
 
+/** Echte accounts zien hun verificatie en de wachtlijst; de demo verzoeken en opdrachten */
 export default function Werk() {
+  const { modus } = useApp();
+  return modus === 'echt' ? <UitlaterStartEcht /> : <WerkDemo />;
+}
+
+function WerkDemo() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(300);
   const { mijnProfiel, online, zetOnline, openVerzoek, actieveOpdracht, accepteer, weiger, klant, boekingen } = useApp();
+  const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(300);
   if (!mijnProfiel) return null;
 
@@ -233,6 +242,7 @@ export default function Werk() {
         <RondeKnop icoon="shield-checkmark" label="Veiligheid en hulp" kleur={kleuren.primair} onPress={() => router.push('/veiligheid')} />
       </View>
       <Blad onHoogte={setBladHoogte}>
+        {mededeling.trim() && !actieveOpdracht ? <Melding type="info">{mededeling}</Melding> : null}
         {inhoud}
         {geplandVandaag > 0 && !openVerzoek && !actieveOpdracht ? (
           <Pressable onPress={() => router.push('/werk/opdrachten')} style={s.gepland} accessibilityRole="button">

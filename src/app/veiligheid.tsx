@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentProps } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Sectie } from '../components/blokken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
+import { useTekst } from '../state/Teksten';
 
 type IconNaam = ComponentProps<typeof Ionicons>['name'];
 
@@ -23,15 +24,24 @@ function Punt({ icoon, titel, tekst }: { icoon: IconNaam; titel: string; tekst: 
 
 export default function Veiligheid() {
   const { rol } = useApp();
+  const nood = useTekst('veiligheid.nood');
+  const contact = useTekst('contact.email');
   return (
     <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={gedeeldeStijl.inhoud}>
       <View style={s.nood}>
         <Ionicons name="call" size={22} color="#fff" />
         <View style={{ flex: 1 }}>
           <Text style={s.noodTitel}>Noodgeval</Text>
-          <Text style={s.noodTekst}>112 bij gevaar voor mensen. 144 voor dieren in nood. Meld daarna ook een incident in de app.</Text>
+          <Text style={s.noodTekst}>{nood}</Text>
         </View>
       </View>
+      <Text style={s.contact}>
+        Vraag of probleem zonder haast? Mail{' '}
+        <Text style={s.contactLink} onPress={() => Linking.openURL(`mailto:${contact}`)}>
+          {contact}
+        </Text>
+        .
+      </Text>
 
       {rol === 'eigenaar' ? (
         <>
@@ -81,6 +91,8 @@ const s = StyleSheet.create({
   nood: { flexDirection: 'row', gap: ruimte(3), alignItems: 'center', backgroundColor: kleuren.nope, borderRadius: radius.midden, padding: ruimte(4), marginBottom: ruimte(4) },
   noodTitel: { color: '#fff', fontSize: 17, fontWeight: '800' },
   noodTekst: { color: '#fff', fontSize: 14, lineHeight: 19, marginTop: 2 },
+  contact: { fontSize: 14, color: kleuren.tekst, lineHeight: 20, marginBottom: ruimte(4) },
+  contactLink: { color: kleuren.primair, fontWeight: '700' },
   punt: { flexDirection: 'row', gap: ruimte(3), marginBottom: ruimte(4) },
   icoon: { width: 36, height: 36, borderRadius: 18, backgroundColor: kleuren.primairVlak, alignItems: 'center', justifyContent: 'center' },
   titel: { fontSize: 15, fontWeight: '800', color: kleuren.tekst },

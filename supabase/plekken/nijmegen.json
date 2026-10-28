@@ -1,0 +1,175 @@
+{
+  "toelichting": "Hondvriendelijke plekken in Nijmegen, onderzocht op 28 oktober 2026 via zoekmachines en de genoemde bronnen. Elke plek heeft minstens een bron; 'zoek' is het adres of de plaatsnaam waarmee het script de coördinaten ophaalt. Algemene regels van de gemeente Nijmegen: buiten losloopgebieden aanlijnen (boete 100 euro); losloopgebieden herken je aan een houten paal met een geel plaatje; poep opruimen, behalve op uitlaatplaatsen met een blauw bordje.",
+  "plekken": [
+    {
+      "soort": "losloop",
+      "naam": "Heumensoord",
+      "zoek": "Heumensoord, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Groot bos aan de zuidkant van Nijmegen. Het losloopgebied ligt in het westelijke en noordelijke deel; borden in het bos geven de grens aan.",
+      "kenmerken": ["Bos", "Groot", "Natuurmonumenten"],
+      "regels": "Alleen los in het aangegeven deel. Hond blijft binnen ongeveer 10 meter. Maximaal drie honden per begeleider.",
+      "bronnen": ["https://www.nijmegen.nl/diensten/wijken/honden/", "https://www.brugnijmegen.nl/nieuws/algemeen/227844/herfst-in-heumensoord-hier-mag-je-hond-los"]
+    },
+    {
+      "soort": "losloop",
+      "naam": "Stadspark Staddijk",
+      "zoek": "Staddijk 81, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Stadspark in Dukenburg met een vijver en paden langs het water. Er liggen losloopgebieden in het park.",
+      "kenmerken": ["Park", "Water", "Dukenburg"],
+      "regels": "Aanlijnen als de schaapskudde graast (drie keer per jaar, tussen april en december).",
+      "bronnen": ["https://dedukenburger.nl/hups-en-losloopgebieden/", "https://www.viervoet.nl/wandelgebieden/wandelgebied/park-staddijk/", "https://www.hondenopvakantie.nl/losloopgebied/Gelderland/Stadspark%20Staddijk%20(Nijmegen)/352/"]
+    },
+    {
+      "soort": "losloop",
+      "naam": "Stadspark Meijhorst",
+      "zoek": "Meijhorst, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Park in Dukenburg, door de gemeente genoemd als losloopgebied.",
+      "kenmerken": ["Park", "Dukenburg"],
+      "regels": "Alleen los bij de palen met een geel plaatje.",
+      "bronnen": ["https://www.nijmegen.nl/diensten/wijken/honden/", "https://dedukenburger.nl/hups-en-losloopgebieden/"]
+    },
+    {
+      "soort": "losloop",
+      "naam": "Hatertse Vennen",
+      "zoek": "Hatertse Vennen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Natuurgebied met vennen en heide tussen Nijmegen, Wijchen en Heumen, met aangewezen losloopgebieden.",
+      "kenmerken": ["Natuur", "Heide", "Vennen", "Natuurmonumenten"],
+      "regels": "Alleen los in de aangewezen delen. Maximaal drie honden per begeleider.",
+      "bronnen": ["https://www.nijmegen.nl/diensten/wijken/honden/", "https://wijchen.bestuurlijkeinformatie.nl/Document/View/b662b48f-d614-4e5e-a316-8ae033e9d6d5", "https://www.hartvannederland.nl/milieu-gezondheid/dieren/artikelen/hondeneigenaren-maximaal-drie-honden-bos-natuurmonumenten"]
+    },
+    {
+      "soort": "losloop",
+      "naam": "Goffertpark",
+      "zoek": "Goffertpark, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Groot stadspark met een losloopterrein.",
+      "kenmerken": ["Park", "Groot"],
+      "regels": "Alleen los op het losloopterrein, bij de palen met een geel plaatje.",
+      "bronnen": ["https://bobshondenuitlaatservice.nl/uitlaatgebieden"]
+    },
+    {
+      "soort": "strand",
+      "naam": "Strandje Spiegelwaal",
+      "zoek": "Spiegelwaal, Lent",
+      "plaats": "Nijmegen",
+      "omschrijving": "Klein strand aan de Spiegelwaal in Lent, tegenover het centrum.",
+      "kenmerken": ["Strand", "Water", "Lent"],
+      "regels": "Honden los van 1 oktober tot 1 mei. Waterkwaliteit soms slecht door instroom uit de Waal.",
+      "bronnen": ["https://lanabanana.nl/gelderland/wandelen-hond-centrum-nijmegen/", "https://zwemindex.nl/lent/strand"]
+    },
+    {
+      "soort": "strand",
+      "naam": "Waalstrandjes Ooijpolder",
+      "zoek": "Bisonbaai, Ooij",
+      "plaats": "Berg en Dal",
+      "omschrijving": "Strandjes langs de Waal in de Ooijpolder, bij de Bisonbaai. Een lange lijn is handig om de hond even te laten afkoelen.",
+      "kenmerken": ["Strand", "Rivier", "Natuur"],
+      "regels": "In de polder aanlijnen; langs de Waal mag de hond los. Bij de Bisonbaai aanlijnen vanwege grote grazers. Niet zelf zwemmen in de Waal: gevaarlijke stroming.",
+      "bronnen": ["https://www.anwb.nl/wandelen/routes/rondje-ooijpolder", "https://lanabanana.nl/gelderland/wandelen-hond-ooijpolder-nijmegen/"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Brouwerij De Hemel",
+      "zoek": "Franseplaats 1, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Brouwerscafé en restaurant in de Commanderie van Sint Jan, met eigen bier.",
+      "kenmerken": ["Binnen", "Terras", "Eigen brouwerij"],
+      "regels": "Honden welkom zolang ze geen overlast geven.",
+      "bronnen": ["https://metdehond.nl/tips/restaurants/gelderland/"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "MikMak",
+      "zoek": "Kelfkensbos 45, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Restaurant aan het Kelfkensbos in het centrum.",
+      "kenmerken": ["Terras"],
+      "regels": "",
+      "bronnen": ["https://en.eet.nu/nijmegen/mikmak"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "BliXem",
+      "zoek": "Groesbeekseweg 75, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Lunchroom en restaurant aan de Groesbeekseweg.",
+      "kenmerken": [],
+      "regels": "",
+      "bronnen": ["https://en.eet.nu/nijmegen/blixem"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Funkenstein",
+      "zoek": "Lange Hezelstraat 80, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Eetcafé in de Lange Hezelstraat.",
+      "kenmerken": [],
+      "regels": "",
+      "bronnen": ["https://en.eet.nu/nijmegen/funkenstein"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Lunchbar de Viking",
+      "zoek": "Lange Hezelstraat 104, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Lunchbar voor ontbijt, koffie met taart en lunch.",
+      "kenmerken": ["Binnen", "Terras"],
+      "regels": "",
+      "bronnen": ["https://www.lunchbardeviking.nl/"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Eetcafé Klinkklaar",
+      "zoek": "Tooropstraat 59, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Eetcafé in Nijmegen-Oost.",
+      "kenmerken": ["Terras"],
+      "regels": "",
+      "bronnen": ["https://en.eet.nu/nijmegen/eetcafe-klinkklaar", "https://www.yelp.com/biz/klinkklaar-nijmegen"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "'t Sfeerhuys",
+      "zoek": "Looimolenweg 15, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Restaurant bij de Looimolen.",
+      "kenmerken": ["Terras"],
+      "regels": "",
+      "bronnen": ["https://en.eet.nu/nijmegen/t-sfeerhuys", "https://www.inspirerendelocaties.nl/locatie/'t_sfeerhuys-41377"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Café Hop en Heivuur",
+      "zoek": "Heidebloemstraat 7, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Buurtcafé dat honden verwent met koekjes en een puppuccino.",
+      "kenmerken": ["Terras", "Hondenkoekjes"],
+      "regels": "",
+      "bronnen": ["https://hopenheivuur.nl/"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "Pimpelmees",
+      "zoek": "Dobbelmannweg 53, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Restaurant in de Hazenkamp voor koffie, lunch, diner en borrel.",
+      "kenmerken": ["Binnen", "Terras"],
+      "regels": "",
+      "bronnen": ["https://nijmegenlokaal.nl/bedrijf/pimpelmees-nijmegen/"]
+    },
+    {
+      "soort": "horeca",
+      "naam": "GLASWERK",
+      "zoek": "Hobbemastraat 2, Nijmegen",
+      "plaats": "Nijmegen",
+      "omschrijving": "Restaurant, zeven dagen per week open vanaf 12 uur.",
+      "kenmerken": ["Binnen"],
+      "regels": "Honden aan de lijn en welopgevoed.",
+      "bronnen": ["https://glaswerk-nijmegen.nl/"]
+    }
+  ]
+}

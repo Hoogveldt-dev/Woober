@@ -1,8 +1,13 @@
-# Woober, prototype 0.1
+# Woober
 
 Klikbare demo van Woober, het zusje van Woofer: hondeneigenaren boeken een uitlater of een oppas aan huis uit de buurt zoals je bij Uber een rit boekt, en volgen het live. Bovenin kies je **Uitlaten** of **Oppas**, de rest werkt hetzelfde. Het plan staat in [PLAN.md](PLAN.md).
 
-Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde code draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata en worden niet opgeslagen; na herladen begin je opnieuw.
+Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde code draait als iOS-app, Android-app en web app.
+
+Er zijn twee manieren om de app te gebruiken:
+
+- **Echt account**: inloggen met Apple, Google of een code per e-mail. Account, adres, honden, uitlaatprofiel, plekken, reviews en de wachtlijst staan in Supabase (Frankfurt), op een echte kaart van PDOK. Boeken, chat en betalen zijn er voor echte accounts nog niet; het startscherm biedt dan de wachtlijst aan.
+- **Demo**: rechtsonder op het welkomscherm **Demo bekijken**, dan als eigenaar of als uitlater. Zo kun je rondkijken voordat je een account maakt. Alles is verzonnen en wordt niet opgeslagen; na herladen begin je opnieuw.
 
 ## Starten
 
@@ -13,7 +18,7 @@ npx expo start        # druk op w (web), i (iOS-simulator) of a (Android)
 
 Op je telefoon: installeer Expo Go en scan de QR-code uit `npx expo start`.
 
-Op het welkomscherm kies je **Demo eigenaar** of **Demo uitlater**. Je kunt later wisselen via Account.
+Op het welkomscherm tik je rechtsonder op **Demo bekijken** en kies je **Als eigenaar** of **Als uitlater**. Je kunt later wisselen via Account.
 
 Controles: `npm run typecheck`, `npx expo lint` en `npm run test:db` (databaseschema en RLS).
 
@@ -25,13 +30,61 @@ Netlify bouwt de web-app bij elke push naar `main` (`netlify.toml`). woober.nl i
 - Met `public/manifest.webmanifest` en de iconen in `public/` kun je Woober op het beginscherm van je telefoon zetten.
 - Privacy- en cookieverklaring: `src/app/privacy.tsx`, ook zonder account bereikbaar via `/privacy`. Pas deze aan zodra de app echte gegevens opslaat.
 
+## Inloggen met Apple en Google instellen
+
+De code staat klaar (`src/lib/account.ts`, `src/app/aanmelden.tsx`). Wat nog moet gebeuren buiten de code, in deze volgorde:
+
+**1. Supabase** (dashboard, project Woober, Authentication)
+
+- URL Configuration: Site URL `https://woober.nl`. Redirect URLs: `https://woober.nl/aanmelden`, `http://localhost:8081/aanmelden`, `woober://auth` en tijdens het ontwikkelen met Expo Go `exp://**`.
+- Emails, template **Magic Link**: zet `{{ .Token }}` in de tekst, bijvoorbeeld `Je inlogcode voor Woober is {{ .Token }}`. De app vraagt om die code van 6 cijfers.
+- Emails, SMTP Settings: koppel een eigen mailprovider (bijvoorbeeld Postmark of Resend) met afzender `noreply@woober.nl`. Zonder eigen SMTP stuurt Supabase maar een paar mails per uur.
+
+**2. Google** ([Google Cloud Console](https://console.cloud.google.com))
+
+- Maak een project Woober, vul het OAuth-toestemmingsscherm in (naam Woober, logo, link naar `https://woober.nl/privacy`) en publiceer het.
+- Credentials, OAuth client ID, type **Web application**. Authorized redirect URI: `https://hnvafpbxhkxpvwwsgoba.supabase.co/auth/v1/callback`.
+- Zet Client ID en Client Secret in Supabase bij Authentication, Sign In / Providers, Google, en zet Google aan.
+
+**3. Apple** ([Apple Developer](https://developer.apple.com/account), lidmaatschap nodig)
+
+- Identifiers, App ID `nl.woober.app` met **Sign in with Apple** aan.
+- Identifiers, Services ID, bijvoorbeeld `nl.woober.web`, voor het web en Android. Bij Sign in with Apple: domein `hnvafpbxhkxpvwwsgoba.supabase.co`, return URL `https://hnvafpbxhkxpvwwsgoba.supabase.co/auth/v1/callback`.
+- Keys, nieuwe sleutel met Sign in with Apple. Bewaar het `.p8`-bestand veilig, niet in deze repository.
+- Supabase, provider Apple: Client IDs `nl.woober.app,nl.woober.web` (voor testen in Expo Go ook `host.exp.Exponent`), en het geheime sleutelwoord dat je met Team ID, Key ID en het `.p8`-bestand maakt (Supabase heeft daar een hulpmiddel voor op de pagina van de provider). Dit geheim verloopt na 6 maanden; zet een herinnering.
+
+Op iPhone gebruikt de app het eigen inlogvenster van Apple; op Android en het web gaat Apple via de browser. Apple eist in de App Store dat je je account in de app kunt verwijderen; dat kan onder Account.
+
+Testen: `npx expo start`, dan **Inloggen of account maken**. Op het web werken Google en e-mail meteen na stap 1 en 2. Voor het eigen Apple-venster op iPhone is een development build het betrouwbaarst (`npx eas-cli@latest build --profile development --platform ios`).
+
 ## Zo werkt de demo
 
 - **De andere kant speelt de app zelf.** Boek je als eigenaar, dan accepteert de uitlater na een paar seconden, fietst naar je toe en stuurt onderweg foto's. Ben je uitlater en ga je online, dan komen er vanzelf verzoeken binnen.
 - **De tijd loopt 30 keer sneller**, dus een wandeling van 30 minuten duurt een minuut. Oppas loopt 120 keer sneller: 3 uur duurt anderhalve minuut. Met **Sneller (demo)** spring je 5 minuten vooruit, bij oppas een half uur. Instelbaar in `src/lib/simulatie.ts`.
 - **De kaart is een verzonnen wijk** aan de Waal, getekend met SVG. Zo werkt alles zonder kaartsleutels, ook op het web. Routes lopen over de straten; wandelingen gaan rond de vijver in het Stadspark.
 - **De ophaalcode** zie je als eigenaar in de app; als uitlater staat de code in de demo onder het invulveld.
-- **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Onder Account, Verdienmodel (demo) wissel je naar Groei of het Uber-model, boots je drukte na en zie je wat eigenaar, uitlater en Woober krijgen. Actiecodes WOOBER5 en BUURT10 geven tegoed.
+- **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Gebruikers zien het verdienmodel niet; alleen beheerders (zie hieronder). Actiecodes WOOBER5 en BUURT10 geven tegoed.
+
+## Beheer
+
+Een beheerder ziet onder Account het menu **Beheer**. Demo-gebruikers en gewone accounts zien dit nooit; de database controleert het ook zelf.
+
+- **Cijfers**: accounts, eigenaren, uitlaters, honden, plekken en de wachtlijst.
+- **Plekken en meldingen**: nieuwe plekken goedkeuren of verbergen, gemelde plekken en reviews afhandelen met een besluit, elke plek aanpassen of op de kaart verschuiven, en de onderzochte plekken in Nijmegen inladen (`supabase/plekken/nijmegen.json`; de coördinaten zoekt de app bij OpenStreetMap).
+- **Uitlaters verifiëren**: per uitlater identiteit, verzekering, rekening en eventueel VOG aanzetten, met het e-mailadres om stukken op te vragen. Pas met de eerste drie is een uitlater zichtbaar.
+- **Wachtlijst**: wie het wil weten zodra Woober in de buurt start, per postcodegebied.
+- **Teksten in de app**: zie hieronder.
+- **Verdienmodel**: het actieve model, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen.
+
+Beheerder word je alleen via de database, nooit vanuit de app. Log eerst één keer in met je account en voer dan in de SQL-editor van Supabase uit:
+
+```sql
+insert into public.beheerders (gebruiker_id) select id from auth.users where email = 'jouw@adres.nl';
+```
+
+Daarna opnieuw inloggen. Een beheerder weghalen: `delete from public.beheerders where gebruiker_id = ...`.
+
+Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de teksten op het startscherm, verificatie, het noodnummer, het contactadres en de gegevens in de privacyverklaring en de gebruiksvoorwaarden. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl. Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts` en gebruik `useTekst()` in het scherm.
 
 ## Wat zit erin
 
@@ -49,9 +102,19 @@ Netlify bouwt de web-app bij elke push naar `main` (`netlify.toml`). woober.nl i
 
 Een overzicht van schermen en bestanden staat in [PLAN.md](PLAN.md#wat-de-demo-laat-zien).
 
+## De kaart
+
+Echte accounts zien een echte kaart: Leaflet met de achtergrondkaart van PDOK (Kadaster), gratis en zonder sleutel. Op het web draait die in een afgeschermde iframe, in de app in een WebView (`react-native-webview`, zit in Expo Go). Leaflet zit als tekst in de app (`src/lib/leaflet.gen.ts`, opnieuw maken met `npm run kaart:leaflet`), zodat er niets van een CDN komt. De demo houdt de getekende wijk.
+
+## Builds voor de stores
+
+`eas.json` heeft een profiel `preview` (testversie om te delen, op Android een apk) en `production`. Eerst één keer `npx eas-cli@latest init` om het project aan je Expo-account te koppelen, daarna bijvoorbeeld `npx eas-cli@latest build --profile preview --platform all`. Zie [ACTIES.md](ACTIES.md).
+
 ## Nog niet in deze versie
 
-- Echte accounts en database (schema klaar in `supabase/migrations/`, Supabase in eu-central-1)
-- Echte kaart en locatie (`react-native-maps` en `expo-location`)
+Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
+
+- Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`); tot dan alleen in de demo
+- Locatie tijdens de wandeling (`expo-location`)
 - Betalen via Stripe Connect en iDEAL
-- Pushmeldingen, foto's uploaden, moderatiescherm
+- Pushmeldingen en foto's uploaden

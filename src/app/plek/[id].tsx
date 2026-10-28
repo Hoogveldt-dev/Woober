@@ -1,12 +1,13 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { gedeeldeStijl, Sectie, Sterren, SterrenKiezer } from '../../components/blokken';
+import { EchteKaart } from '../../components/EchteKaart';
 import { Kaart } from '../../components/Kaart';
 import { Badge, Knop, Melding, Veld } from '../../components/ui';
-import { PLEK_REVIEW_MAX, PLEK_SOORTEN, plekScore } from '../../lib/plekken';
+import { PLEK_REVIEW_MAX, PLEK_SOORTEN, plekPunt, plekScore } from '../../lib/plekken';
 import { afstand, formatAfstand } from '../../lib/route';
 import { dagTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
@@ -16,19 +17,27 @@ import type { Plek, PlekReview } from '../../types';
 export default function PlekScherm() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { plekken, gebruiker, rol, gemeld, meld, verwijderPlek } = useApp();
+  const { plekken, gebruiker, rol, gemeld, meld, verwijderPlek, modus } = useApp();
   const p = plekken.find((x) => x.id === id);
+  const speld = useMemo(() => (p ? plekPunt(p, true) : null), [p]);
   if (!p) return <Redirect href={rol === 'uitlater' ? '/werk' : '/'} />;
 
+  const echt = modus === 'echt';
   const soort = PLEK_SOORTEN[p.soort];
   const score = plekScore(p);
+  // Plekken van Woober zelf kun je in een echt account ook melden, bijvoorbeeld een café dat dicht is
+  const meldbaar = !p.vanMij && (echt || Boolean(p.toegevoegdDoor));
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['bottom']}>
       <Stack.Screen options={{ title: p.naam }} />
       <ScrollView contentContainerStyle={gedeeldeStijl.inhoud} keyboardShouldPersistTaps="handled">
         <View style={s.kaart}>
-          <Kaart markers={[{ id: p.id, soort: 'plek', punt: p.punt, naam: p.naam, plekSoort: p.soort, actief: true }]} focus={[p.punt]} vast />
+          {echt && speld ? (
+            <EchteKaart punten={[speld]} begin={{ lat: speld.lat, lng: speld.lng, zoom: 15 }} />
+          ) : (
+            <Kaart markers={[{ id: p.id, soort: 'plek', punt: p.punt, naam: p.naam, plekSoort: p.soort, actief: true }]} focus={[p.punt]} vast />
+          )}
         </View>
 
         <View style={s.kop}>
@@ -39,7 +48,7 @@ export default function PlekScherm() {
             <Text style={gedeeldeStijl.titel}>{p.naam}</Text>
             <Text style={s.soort}>
               {soort.label}
-              {gebruiker ? `, ${formatAfstand(afstand(gebruiker.thuis, p.punt))} van huis` : ''}
+              {echt ? (p.plaats ? `, ${p.plaats}` : '') : gebruiker ? `, ${formatAfstand(afstand(gebruiker.thuis, p.punt))} van huis` : ''}
             </Text>
           </View>
         </View>
@@ -83,7 +92,7 @@ export default function PlekScherm() {
             }}
           />
         ) : null}
-        {p.toegevoegdDoor && !p.vanMij ? (
+        {meldbaar ? (
           gemeld.includes(p.id) ? (
             <Text style={[s.gemeld, { marginTop: ruimte(6) }]}>Gemeld. Een medewerker bekijkt deze plek.</Text>
           ) : (

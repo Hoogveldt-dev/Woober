@@ -12,7 +12,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Woober gebruikt je locatie alleen tijdens een wandeling, zodat de eigenaar de route kan volgen.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Tijdens een wandeling blijft Woober je route vastleggen terwijl je telefoon in je zak zit. Na de wandeling stopt dit direct."
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -43,7 +44,10 @@
             "web": false
           }
         }
-      ]
+      ],
+      "expo-web-browser",
+      "expo-sqlite",
+      "expo-apple-authentication"
     ],
     "scheme": "woober"
   }

@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { HOND_KLEUREN, RASSEN } from '../data/honden';
 import { isoNaarNl, nlNaarIso } from '../lib/tijd';
-import { nieuwId } from '../state/AppContext';
+import { nieuweUuid } from '../lib/account';
 import { kleuren, ruimte } from '../theme';
 import type { Aanlijnen, Energie, Grootte, Hond, MetHonden } from '../types';
 import { HondAvatar } from './avatars';
@@ -44,7 +44,7 @@ export function HondFormulier({ begin, knopTitel, onBewaar, extra }: { begin: Ho
     setGeprobeerd(true);
     if (!geldig || !geboorteIso || !grootte) return;
     onBewaar({
-      id: begin?.id ?? nieuwId('h'),
+      id: begin?.id ?? nieuweUuid(),
       naam: naam.trim(),
       ras,
       geboortedatum: geboorteIso,

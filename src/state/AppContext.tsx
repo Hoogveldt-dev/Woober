@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AppState as AppStatus } from 'react-native';
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { maakDemoPlekken } from '../data/plekken';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
+import * as account from '../lib/account';
+import * as plekkenDb from '../lib/plekkenDb';
 import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
@@ -19,6 +22,7 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
@@ -49,6 +53,14 @@ export const LOPEND: Boeking['status'][] = ['onderweg', 'aangekomen', 'bezig'];
 export const ACTIEF: Boeking['status'][] = ['aangevraagd', ...LOPEND];
 
 interface AppState {
+  /** Demo met verzonnen gegevens, of een echt account in Supabase */
+  modus: 'demo' | 'echt';
+  /** Ingelogd bij Supabase. Kan zonder gebruiker: dan is de aanmelding nog niet afgemaakt. */
+  ingelogd: boolean;
+  /** Bij het starten: nog bezig met kijken of er een sessie is */
+  laden: boolean;
+  /** Lid van het team, met toegang tot Beheer (verdienmodel en andere instellingen). Nooit in de demo. */
+  beheerder: boolean;
   gebruiker: Gebruiker | null;
   rol: Rol;
   honden: Hond[];
@@ -92,8 +104,11 @@ export interface Aanvraag {
 }
 
 interface AppActies {
-  aanmelden: (g: Gebruiker, rol: Rol) => void;
+  /** Na het inloggen: profiel en adres opslaan en het account openen */
+  aanmelden: (g: Gebruiker, rol: Rol, voorwaardenVersie?: string) => Promise<void>;
   demoStart: (rol: Rol) => void;
+  /** Uitloggen, of de demo verlaten */
+  uitloggen: () => Promise<void>;
   bewaarHond: (h: Hond) => void;
   verwijderHond: (id: string) => void;
   wisselRol: (r: Rol) => void;
@@ -132,10 +147,12 @@ interface AppActies {
   beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
   verwijderPlekReview: (plekId: string) => void;
   /** Plek toevoegen; is meteen zichtbaar en wordt daarna door een medewerker bekeken. Geeft het id terug. */
-  voegPlekToe: (p: NieuwePlek) => string;
+  voegPlekToe: (p: NieuwePlek) => Promise<string>;
+  /** Plekken opnieuw ophalen uit de database (alleen bij een echt account) */
+  herlaadPlekken: () => Promise<void>;
   /** Alleen een plek die je zelf hebt toegevoegd en die nog niet is gecontroleerd */
   verwijderPlek: (id: string) => void;
-  accountVerwijderen: () => void;
+  accountVerwijderen: () => Promise<void>;
 
   /** Het actieve verdienmodel */
   verdienmodel: Verdienmodel;
@@ -160,6 +177,10 @@ let teller = 0;
 export const nieuwId = (prefix: string) => `${prefix}-${Date.now()}-${++teller}`;
 
 const LEEG: AppState = {
+  modus: 'demo',
+  ingelogd: false,
+  laden: false,
+  beheerder: false,
   gebruiker: null,
   rol: 'eigenaar',
   honden: [],
@@ -355,7 +376,7 @@ function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, zetRuw] = useState<AppState>(LEEG);
+  const [state, zetRuw] = useState<AppState>({ ...LEEG, laden: true });
   const [wachtSinds, setWachtSinds] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const ref = useRef({ state, wachtSinds });
@@ -385,7 +406,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [setState]);
 
-  const aanmelden = useCallback((g: Gebruiker, rol: Rol) => {
+  /** Melding bovenin als opslaan in de database mislukt; de wijziging blijft in de app staan */
+  const meldFout = useCallback(
+    (e: unknown) => {
+      const tekst = e instanceof Error ? e.message : 'Er ging iets mis. Probeer het nog eens.';
+      zet('meldingen', (ms) => [...ms, { id: nieuwId('n'), rol: ref.current.state.rol, titel: 'Niet opgeslagen', tekst, icoon: 'alert-circle', tijd: Date.now() }]);
+    },
+    [zet],
+  );
+  const echt = useCallback(() => ref.current.state.modus === 'echt', []);
+
+  /** Zet het account uit de database in de app; zonder account blijft de gebruiker op het aanmeldscherm */
+  const openAccount = useCallback(async () => {
+    try {
+      const a = await account.laadAccount();
+      // Zonder plekken werkt de rest gewoon; dan blijft de lijst leeg tot het later lukt
+      const plekken = a ? await plekkenDb.laadPlekken().catch(() => []) : [];
+      setState((oud) => ({
+        ...LEEG,
+        uitlaters: maakDemoUitlaters(),
+        verdienmodelId: oud.verdienmodelId,
+        modus: 'echt',
+        ingelogd: true,
+        plekken,
+        ...(a ? { gebruiker: a.gebruiker, rol: a.rol, honden: a.honden, mijnProfiel: a.profiel, beheerder: a.beheerder } : {}),
+      }));
+    } catch (e) {
+      setState((s) => ({ ...s, ingelogd: true, laden: false }));
+      meldFout(e);
+    }
+  }, [setState, meldFout]);
+
+  // Sessie van Supabase volgen: bij het starten, na inloggen met Apple, Google of e-mail, en na uitloggen
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((gebeurtenis, sessie) => {
+      // Geen Supabase-aanroepen binnen deze callback zelf; die wachten op elkaar
+      setTimeout(() => {
+        if (gebeurtenis === 'SIGNED_OUT' || !sessie) {
+          setState((s) => (s.modus === 'echt' ? { ...LEEG, uitlaters: maakDemoUitlaters(), verdienmodelId: s.verdienmodelId } : { ...s, laden: false, ingelogd: false }));
+        } else if (gebeurtenis === 'INITIAL_SESSION' || (gebeurtenis === 'SIGNED_IN' && !ref.current.state.gebruiker)) {
+          openAccount();
+        }
+      }, 0);
+    });
+    // Tokens alleen verversen als de app op de voorgrond staat
+    const status = AppStatus.addEventListener('change', (s) => (s === 'active' ? supabase.auth.startAutoRefresh() : supabase.auth.stopAutoRefresh()));
+    return () => {
+      data.subscription.unsubscribe();
+      status.remove();
+    };
+  }, [setState, openAccount]);
+
+  const aanmelden = useCallback(async (g: Gebruiker, rol: Rol, voorwaardenVersie = '') => {
+    if (ref.current.state.ingelogd) {
+      // Fouten gaan terug naar het aanmeldscherm
+      await account.maakAccount(g, rol, voorwaardenVersie);
+      await openAccount();
+      return;
+    }
     setState((s) => ({
       ...s,
       gebruiker: g,
@@ -393,7 +471,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       mijnProfiel: rol === 'uitlater' ? null : s.mijnProfiel,
       tegoed: rol === 'eigenaar' ? s.tegoed + modelVoor(s.verdienmodelId).welkomsttegoed : s.tegoed,
     }));
-  }, [setState]);
+  }, [setState, openAccount]);
 
   const demoStart = useCallback((rol: Rol) => {
     const uitlaters = maakDemoUitlaters();
@@ -457,13 +535,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWachtSinds(Date.now());
   }, [setState]);
 
-  const bewaarHond = useCallback((h: Hond) => zet('honden', (hs) => (hs.some((x) => x.id === h.id) ? hs.map((x) => (x.id === h.id ? h : x)) : [...hs, h])), [zet]);
-  const verwijderHond = useCallback((id: string) => zet('honden', (hs) => hs.filter((h) => h.id !== id)), [zet]);
-  const wisselRol = useCallback((r: Rol) => setState((s) => ({ ...s, rol: r, online: r === 'uitlater' ? s.online : false })), [setState]);
-  const bewaarProfiel = useCallback((p: Uitlater) => zet('mijnProfiel', () => p), [zet]);
+  // In een echt account gaat elke wijziging ook naar de database; de app wacht daar niet op
+  const bewaarHond = useCallback(
+    (h: Hond) => {
+      zet('honden', (hs) => (hs.some((x) => x.id === h.id) ? hs.map((x) => (x.id === h.id ? h : x)) : [...hs, h]));
+      if (echt()) account.bewaarHond(h).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  const verwijderHond = useCallback(
+    (id: string) => {
+      zet('honden', (hs) => hs.filter((h) => h.id !== id));
+      if (echt()) account.verwijderHond(id).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  const wisselRol = useCallback(
+    (r: Rol) => {
+      setState((s) => ({ ...s, rol: r, online: r === 'uitlater' ? s.online : false }));
+      if (echt()) account.bewaarRol(r).catch(meldFout);
+    },
+    [setState, meldFout, echt],
+  );
+  const bewaarProfiel = useCallback(
+    (p: Uitlater) => {
+      zet('mijnProfiel', () => p);
+      if (echt()) account.bewaarUitlaatprofiel(p).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  // Alleen in de demo; in een echt account zet Woober de verificatie na controle
   const verifieer = useCallback(
-    (stap: keyof Verificatie) => zet('mijnProfiel', (p) => (p ? { ...p, verificatie: { ...p.verificatie, [stap]: true } } : p)),
-    [zet],
+    (stap: keyof Verificatie) => {
+      if (echt()) return;
+      zet('mijnProfiel', (p) => (p ? { ...p, verificatie: { ...p.verificatie, [stap]: true } } : p));
+    },
+    [zet, echt],
   );
   const zetOnline = useCallback((aan: boolean) => {
     setState((s) => ({ ...s, online: aan }));
@@ -794,10 +901,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [setState]);
 
-  const meld = useCallback((id: string, _reden: string) => {
-    // In de echte app gaat dit naar het moderatiescherm, waar altijd een mens beslist.
+  const meld = useCallback((id: string, reden: string) => {
+    // Gaat naar het moderatiescherm (Beheer), waar altijd een mens beslist
     setState((s) => ({ ...s, gemeld: s.gemeld.includes(id) ? s.gemeld : [...s.gemeld, id] }));
-  }, [setState]);
+    if (!echt()) return;
+    const ps = ref.current.state.plekken;
+    const plek = ps.find((p) => p.id === id);
+    const review = plek ? undefined : ps.flatMap((p) => p.reviews).find((r) => r.id === id);
+    if (plek || review) plekkenDb.meld({ plek, review }, reden).catch(meldFout);
+  }, [setState, echt, meldFout]);
 
   /** Sluit een melding en alle oudere meldingen voor dezelfde rol */
   const sluitMelding = useCallback(
@@ -811,8 +923,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Plekken
 
+  const herlaadPlekken = useCallback(async () => {
+    if (!echt()) return;
+    try {
+      const plekken = await plekkenDb.laadPlekken();
+      setState((s) => ({ ...s, plekken }));
+    } catch (e) {
+      meldFout(e);
+    }
+  }, [echt, setState, meldFout]);
+
   const beoordeelPlek = useCallback(
-    (plekId: string, sterren: number, tekst: string) =>
+    (plekId: string, sterren: number, tekst: string) => {
+      if (echt()) {
+        const bestaand = ref.current.state.plekken.find((p) => p.id === plekId)?.reviews.find((r) => r.vanMij);
+        plekkenDb.schrijfReview(plekId, sterren, tekst.trim(), bestaand?.id).then(herlaadPlekken, meldFout);
+      }
       setState((s) => ({
         ...s,
         plekken: s.plekken.map((p) =>
@@ -826,17 +952,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
               }
             : p,
         ),
-      })),
-    [setState],
+      }));
+    },
+    [setState, echt, herlaadPlekken, meldFout],
   );
   const verwijderPlekReview = useCallback(
-    (plekId: string) =>
-      zet('plekken', (ps) => ps.map((p) => (p.id === plekId ? { ...p, reviews: p.reviews.filter((r) => !r.vanMij) } : p))),
-    [zet],
+    (plekId: string) => {
+      if (echt()) plekkenDb.verwijderReview(plekId).catch(meldFout);
+      zet('plekken', (ps) => ps.map((p) => (p.id === plekId ? { ...p, reviews: p.reviews.filter((r) => !r.vanMij) } : p)));
+    },
+    [zet, echt, meldFout],
   );
 
   const voegPlekToe = useCallback(
-    (nieuw: NieuwePlek) => {
+    async (nieuw: NieuwePlek) => {
+      if (echt()) {
+        // Fouten (zoals te veel plekken op een dag) gaan terug naar het scherm
+        const id = await plekkenDb.voegPlekToe(nieuw, ref.current.state.gebruiker?.plaats || 'Nijmegen');
+        await herlaadPlekken();
+        return id;
+      }
       const id = nieuwId('plek');
       setState((s) => ({
         ...s,
@@ -857,18 +992,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }));
       return id;
     },
-    [setState],
+    [setState, echt, herlaadPlekken],
   );
   const verwijderPlek = useCallback(
-    (id: string) => zet('plekken', (ps) => ps.filter((p) => !(p.id === id && p.vanMij && !p.gecontroleerd))),
-    [zet],
+    (id: string) => {
+      if (echt()) plekkenDb.verwijderPlek(id).catch(meldFout);
+      zet('plekken', (ps) => ps.filter((p) => !(p.id === id && p.vanMij && !p.gecontroleerd)));
+    },
+    [zet, echt, meldFout],
   );
 
-  const accountVerwijderen = useCallback(() => {
+  const opnieuw = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setState((oud) => ({ ...LEEG, uitlaters: maakDemoUitlaters(), verdienmodelId: oud.verdienmodelId, drukteNagebootst: oud.drukteNagebootst }));
   }, [setState]);
+  const accountVerwijderen = useCallback(async () => {
+    if (echt()) {
+      try {
+        await account.verwijderAccount();
+      } catch (e) {
+        meldFout(e);
+        return;
+      }
+    }
+    opnieuw();
+  }, [opnieuw, meldFout, echt]);
+  const uitloggen = useCallback(async () => {
+    // Ook vanuit de demo: een half afgemaakte aanmelding hoort er niet te blijven hangen
+    await account.uitloggen().catch(() => undefined);
+    opnieuw();
+  }, [opnieuw]);
 
   // Verdienmodel en tegoed
 
@@ -919,6 +1073,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ...state,
     aanmelden,
     demoStart,
+    uitloggen,
     bewaarHond,
     verwijderHond,
     wisselRol,
@@ -956,6 +1111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     beoordeelPlek,
     verwijderPlekReview,
     voegPlekToe,
+    herlaadPlekken,
     verwijderPlek,
     accountVerwijderen,
     uitlater,
@@ -989,6 +1145,8 @@ function voegBerichtToe(gesprekken: Gesprek[], metId: string, rol: Rol, tekst: s
 
 /** Eén stap van de demo-simulatie. Puur: geeft dezelfde staat terug als er niets verandert. */
 function verwerkTik(s: AppState, nu: number, wachtSinds: number): AppState {
+  // Echte accounts krijgen geen nagespeelde verzoeken of boekingen
+  if (s.modus === 'echt') return s;
   let veranderd = false;
   const extra: Boeking[] = [];
 

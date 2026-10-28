@@ -1,21 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Melding } from '../components/ui';
+import { useTekst } from '../state/Teksten';
 import { kleuren, ruimte } from '../theme';
 
 /**
- * Privacy- en cookieverklaring voor de demo (AVG art. 13, Telecommunicatiewet art. 11.7a).
- * De demo slaat niets op; vervang deze tekst zodra echte accounts en Supabase erin zitten.
+ * Privacy- en cookieverklaring (AVG art. 13, Telecommunicatiewet art. 11.7a).
+ * Vul deze aan zodra er meer echt wordt: boekingen, locatie, betalingen, foto's en pushmeldingen.
  * Op het web ook bereikbaar via woober.nl/privacy; die link is nodig voor App Store en Google Play.
  */
-const ORGANISATIE = {
-  naam: '[Naam onderneming] (handelsnaam Woober)',
-  kvk: '[KvK-nummer]',
-  adres: '[Vestigingsadres]',
-  email: '[privacy@woober.nl]',
-};
-const VERSIE = '22 oktober 2026';
-const IS_CONCEPT = true;
+// Naam, KvK, adres, e-mail, versie en de conceptwaarschuwing past een beheerder aan onder Beheer, Teksten.
+interface Organisatie {
+  naam: string;
+  kvk: string;
+  adres: string;
+  email: string;
+}
 
 interface Sectie {
   titel: string;
@@ -23,7 +23,7 @@ interface Sectie {
   punten?: string[];
 }
 
-const SECTIES: Sectie[] = [
+const secties = (ORGANISATIE: Organisatie): Sectie[] => [
   {
     titel: 'Wie zijn wij',
     alineas: [
@@ -32,10 +32,37 @@ const SECTIES: Sectie[] = [
     ],
   },
   {
-    titel: 'Dit is een demo',
+    titel: 'Welke gegevens we bewaren',
+    punten: [
+      'Je account: je e-mailadres en, als je inlogt met Apple of Google, de naam die je daar gebruikt. Bij Apple kun je je e-mailadres verbergen; we krijgen dan een doorstuuradres.',
+      'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent.',
+      'Je honden: naam, ras, geboortedatum, karakter, bijzonderheden en dierenarts.',
+      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd. Om je te kunnen verifiëren, ziet een medewerker van Woober je e-mailadres.',
+      'Plekken en reviews die je schrijft. Andere gebruikers zien daarbij alleen je voornaam.',
+      'Of je op de wachtlijst staat, zodat we je kunnen mailen zodra Woober in je buurt start. Afmelden kan op het startscherm.',
+      'Wanneer je met de gebruiksvoorwaarden akkoord ging en welke versie dat was.',
+      'Meldingen die je doet over een plek of review. Een medewerker leest die.',
+      'Doel: je laten inloggen en je account, honden en profiel bewaren. Grondslag: de overeenkomst met jou (het gebruik van Woober).',
+      'Andere gebruikers zien nooit je e-mailadres of adres. Een uitlater ziet het adres van een eigenaar pas na een geaccepteerde boeking.',
+    ],
+  },
+  {
+    titel: 'Waar en hoe lang',
+    punten: [
+      'We bewaren je gegevens bij Supabase, in een datacenter in Frankfurt (Duitsland). Supabase verwerkt ze in onze opdracht. Supabase is een Amerikaans bedrijf; doorgifte buiten de Europese Unie gebeurt op basis van het EU-VS Data Privacy Framework of de standaardcontractbepalingen van de Europese Commissie.',
+      'We bewaren je gegevens zolang je een account hebt. Verwijder je je account in de app (Account, Account verwijderen), dan verwijderen we je profiel, adres, honden, uitlaatprofiel, reviews en wachtlijst direct. Plekken die je hebt toegevoegd blijven staan voor anderen, zonder je naam. Alleen betaalgegevens die we volgens de wet zeven jaar moeten bewaren, houden we, zonder je naam.',
+    ],
+  },
+  {
+    titel: 'De kaart',
     alineas: [
-      'Deze versie van Woober is een demo. Alle uitlaters, eigenaren, honden, boekingen en betalingen zijn verzonnen. Wat je invult, zoals een naam, je hond of een bericht, blijft alleen in het geheugen van je browser of telefoon en verdwijnt als je de pagina ververst of de app sluit. We sturen het nergens naartoe en bewaren het niet.',
-      'De demo gebruikt geen locatie, geen camera en geen echte kaartdienst; de kaart is een verzonnen wijk die in de app zelf getekend wordt.',
+      'De kaart komt van PDOK, de dienst voor kaarten van de Nederlandse overheid (Kadaster). Je telefoon of browser haalt de kaartbeelden daar rechtstreeks op; PDOK ziet daarbij je IP-adres, net als bij elke website. De app gebruikt je eigen locatie niet.',
+    ],
+  },
+  {
+    titel: 'Nog in opbouw',
+    alineas: [
+      'Boeken, chatten en betalen zijn nog niet beschikbaar. De demo op het welkomscherm laat zien hoe het gaat werken; wat je in de demo doet, blijft alleen op je eigen apparaat en verdwijnt als je de app sluit. Zodra boeken, locatie tijdens een wandeling, foto’s of betalen echt worden, passen we deze verklaring aan en laten we het je weten.',
     ],
   },
   {
@@ -49,7 +76,7 @@ const SECTIES: Sectie[] = [
   {
     titel: 'Cookies',
     alineas: [
-      'De demo plaatst geen cookies en slaat niets op in je browser. We gebruiken geen analysediensten, advertenties of trackers.',
+      'Als je inlogt, bewaart Woober een inlogsleutel op je apparaat (in de browser in de lokale opslag), zodat je ingelogd blijft. Dat is nodig om de app te laten werken; daar vragen we geen toestemming voor. Bij uitloggen verdwijnt hij. We gebruiken geen analysediensten, advertenties of trackers.',
     ],
   },
   {
@@ -61,13 +88,21 @@ const SECTIES: Sectie[] = [
 ];
 
 export default function Privacy() {
+  const organisatie: Organisatie = {
+    naam: useTekst('privacy.organisatie'),
+    kvk: useTekst('privacy.kvk'),
+    adres: useTekst('privacy.adres'),
+    email: useTekst('privacy.email'),
+  };
+  const versie = useTekst('privacy.versie');
+  const concept = useTekst('privacy.concept');
   return (
     <ScrollView contentContainerStyle={s.inhoud}>
       <Text style={s.kop}>Privacy- en cookieverklaring</Text>
-      <Text style={s.versie}>Versie {VERSIE}</Text>
-      {IS_CONCEPT ? <Melding type="waarschuwing">Concept. Deze tekst is nog niet definitief en nog niet juridisch gecontroleerd.</Melding> : null}
+      <Text style={s.versie}>Versie {versie}</Text>
+      {concept.trim() ? <Melding type="waarschuwing">{concept}</Melding> : null}
 
-      {SECTIES.map((sectie) => (
+      {secties(organisatie).map((sectie) => (
         <View key={sectie.titel} style={s.sectie}>
           <Text style={s.titel}>{sectie.titel}</Text>
           {sectie.punten?.map((p) => (

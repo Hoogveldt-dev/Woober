@@ -8,7 +8,8 @@ import { PersoonAvatar } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, useNu } from '../../components/blokken';
 import { Kaart, type KaartMarker } from '../../components/Kaart';
 import { Woordmerk } from '../../components/merk';
-import { Chip } from '../../components/ui';
+import { EigenaarStartEcht } from '../../components/StartEcht';
+import { Chip, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { routeTussen } from '../../lib/route';
 import { reistijdMin, resterendeRitMin, verstrekenMin } from '../../lib/simulatie';
@@ -16,17 +17,25 @@ import { begroeting, duurTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
 import type { BoekConcept, Dienst } from '../../types';
+import { useTekst } from '../../state/Teksten';
 
 const DIENSTEN: { id: Dienst; titel: string; sub: string; icoon: 'dog-service' | 'sofa' }[] = [
   { id: 'uitlaten', titel: 'Uitlaten', sub: '30 tot 60 minuten', icoon: 'dog-service' },
   { id: 'oppas', titel: 'Oppas', sub: 'bij jou thuis', icoon: 'sofa' },
 ];
 
-export default function Uitlaten() {
+/** Echte accounts zien de kaart met plekken en de wachtlijst; de demo het volledige boeken */
+export default function Start() {
+  const { modus } = useApp();
+  return modus === 'echt' ? <EigenaarStartEcht /> : <UitlatenDemo />;
+}
+
+function UitlatenDemo() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(400);
   const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater } = useApp();
+  const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(330);
   const [dienst, setDienst] = useState<Dienst>('uitlaten');
 
@@ -135,6 +144,8 @@ export default function Uitlaten() {
         <Text style={s.groet}>
           {begroeting(nu)}, {gebruiker.voornaam}
         </Text>
+        {/* Tot de echte boekingen er zijn (stap 3 in PLAN.md) laat een echt account de voorbeeldwijk zien */}
+        {mededeling.trim() ? <Melding type="info">{mededeling}</Melding> : null}
 
         <View style={s.diensten}>
           {DIENSTEN.map((d) => {
