@@ -105,7 +105,7 @@ export interface Aanvraag {
 
 interface AppActies {
   /** Na het inloggen: profiel en adres opslaan en het account openen */
-  aanmelden: (g: Gebruiker, rol: Rol) => Promise<void>;
+  aanmelden: (g: Gebruiker, rol: Rol, voorwaardenVersie?: string) => Promise<void>;
   demoStart: (rol: Rol) => void;
   /** Uitloggen, of de demo verlaten */
   uitloggen: () => Promise<void>;
@@ -457,10 +457,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [setState, openAccount]);
 
-  const aanmelden = useCallback(async (g: Gebruiker, rol: Rol) => {
+  const aanmelden = useCallback(async (g: Gebruiker, rol: Rol, voorwaardenVersie = '') => {
     if (ref.current.state.ingelogd) {
       // Fouten gaan terug naar het aanmeldscherm
-      await account.maakAccount(g, rol);
+      await account.maakAccount(g, rol, voorwaardenVersie);
       await openAccount();
       return;
     }
@@ -1145,6 +1145,8 @@ function voegBerichtToe(gesprekken: Gesprek[], metId: string, rol: Rol, tekst: s
 
 /** Eén stap van de demo-simulatie. Puur: geeft dezelfde staat terug als er niets verandert. */
 function verwerkTik(s: AppState, nu: number, wachtSinds: number): AppState {
+  // Echte accounts krijgen geen nagespeelde verzoeken of boekingen
+  if (s.modus === 'echt') return s;
   let veranderd = false;
   const extra: Boeking[] = [];
 

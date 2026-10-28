@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Vinkje } from '../components/blokken';
@@ -153,7 +154,9 @@ function RolKaart({ actief, onPress, icoon, titel, tekst }: { actief: boolean; o
 }
 
 function Gegevens() {
+  const router = useRouter();
   const { aanmelden, uitloggen } = useApp();
+  const voorwaardenVersie = useTekst('voorwaarden.versie');
   const [rol, setRol] = useState<Rol | null>(null);
   const [voornaam, setVoornaam] = useState('');
   const [email, setEmail] = useState('');
@@ -201,6 +204,7 @@ function Gegevens() {
           thuis: DEMO_THUIS,
         },
         rol,
+        voorwaardenVersie,
       );
     } catch (e) {
       setOpslagFout(foutTekst(e));
@@ -254,7 +258,15 @@ function Gegevens() {
           Ik ben 18 jaar of ouder.
         </Vinkje>
         <Vinkje aan={akkoord} onPress={() => setAkkoord((v) => !v)}>
-          Ik ga akkoord met de gebruiksvoorwaarden en het privacybeleid van Woober.
+          Ik ga akkoord met de{' '}
+          <Text style={s.link} onPress={() => router.push('/voorwaarden')}>
+            gebruiksvoorwaarden
+          </Text>{' '}
+          en het{' '}
+          <Text style={s.link} onPress={() => router.push('/privacy')}>
+            privacybeleid
+          </Text>{' '}
+          van Woober.
         </Vinkje>
 
         {geprobeerd && (!akkoord || !volwassen) ? <Melding type="fout">Vink beide vakjes aan om verder te gaan.</Melding> : null}
@@ -286,4 +298,5 @@ const s = StyleSheet.create({
   rolTekst: { fontSize: 13, color: kleuren.gedempt, lineHeight: 18 },
   rolVink: { position: 'absolute', top: 10, right: 10 },
   fout: { fontSize: 12, color: kleuren.nope, fontWeight: '600', marginBottom: 4 },
+  link: { color: kleuren.primair, fontWeight: '700', textDecorationLine: 'underline' },
 });

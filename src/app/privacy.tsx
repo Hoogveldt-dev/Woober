@@ -37,7 +37,11 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
       'Je account: je e-mailadres en, als je inlogt met Apple of Google, de naam die je daar gebruikt. Bij Apple kun je je e-mailadres verbergen; we krijgen dan een doorstuuradres.',
       'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent.',
       'Je honden: naam, ras, geboortedatum, karakter, bijzonderheden en dierenarts.',
-      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd.',
+      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd. Om je te kunnen verifiëren, ziet een medewerker van Woober je e-mailadres.',
+      'Plekken en reviews die je schrijft. Andere gebruikers zien daarbij alleen je voornaam.',
+      'Of je op de wachtlijst staat, zodat we je kunnen mailen zodra Woober in je buurt start. Afmelden kan op het startscherm.',
+      'Wanneer je met de gebruiksvoorwaarden akkoord ging en welke versie dat was.',
+      'Meldingen die je doet over een plek of review. Een medewerker leest die.',
       'Doel: je laten inloggen en je account, honden en profiel bewaren. Grondslag: de overeenkomst met jou (het gebruik van Woober).',
       'Andere gebruikers zien nooit je e-mailadres of adres. Een uitlater ziet het adres van een eigenaar pas na een geaccepteerde boeking.',
     ],
@@ -46,13 +50,19 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
     titel: 'Waar en hoe lang',
     punten: [
       'We bewaren je gegevens bij Supabase, in een datacenter in Frankfurt (Duitsland). Supabase verwerkt ze in onze opdracht. Supabase is een Amerikaans bedrijf; doorgifte buiten de Europese Unie gebeurt op basis van het EU-VS Data Privacy Framework of de standaardcontractbepalingen van de Europese Commissie.',
-      'We bewaren je gegevens zolang je een account hebt. Verwijder je je account in de app (Account, Account verwijderen), dan verwijderen we je profiel, adres, honden en uitlaatprofiel direct. Alleen betaalgegevens die we volgens de wet zeven jaar moeten bewaren, houden we, zonder je naam.',
+      'We bewaren je gegevens zolang je een account hebt. Verwijder je je account in de app (Account, Account verwijderen), dan verwijderen we je profiel, adres, honden, uitlaatprofiel, reviews en wachtlijst direct. Plekken die je hebt toegevoegd blijven staan voor anderen, zonder je naam. Alleen betaalgegevens die we volgens de wet zeven jaar moeten bewaren, houden we, zonder je naam.',
+    ],
+  },
+  {
+    titel: 'De kaart',
+    alineas: [
+      'De kaart komt van PDOK, de dienst voor kaarten van de Nederlandse overheid (Kadaster). Je telefoon of browser haalt de kaartbeelden daar rechtstreeks op; PDOK ziet daarbij je IP-adres, net als bij elke website. De app gebruikt je eigen locatie niet.',
     ],
   },
   {
     titel: 'Nog in opbouw',
     alineas: [
-      'Boeken, chatten, de kaart en betalen werken nog met verzonnen voorbeelden, net als de demo op het welkomscherm. Wat je daar doet, blijft alleen op je eigen apparaat en verdwijnt als je de app sluit. De app gebruikt nog geen locatie en geen camera. Zodra dat verandert, passen we deze verklaring aan en laten we het je weten.',
+      'Boeken, chatten en betalen zijn nog niet beschikbaar. De demo op het welkomscherm laat zien hoe het gaat werken; wat je in de demo doet, blijft alleen op je eigen apparaat en verdwijnt als je de app sluit. Zodra boeken, locatie tijdens een wandeling, foto’s of betalen echt worden, passen we deze verklaring aan en laten we het je weten.',
     ],
   },
   {

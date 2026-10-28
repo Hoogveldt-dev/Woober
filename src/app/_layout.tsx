@@ -29,7 +29,7 @@ const BEGIN_ADRES =
     : null;
 
 function Navigatie() {
-  const { gebruiker, rol, honden, mijnProfiel, laden, beheerder } = useApp();
+  const { gebruiker, rol, honden, mijnProfiel, laden, beheerder, modus } = useApp();
   const aangemeld = gebruiker !== null;
   const router = useRouter();
 
@@ -70,6 +70,7 @@ function Navigatie() {
     >
       {/* Altijd bereikbaar: de privacyverklaring moet ook zonder account te lezen zijn (woober.nl/privacy) */}
       <Stack.Screen name="privacy" options={{ headerShown: true, title: 'Privacy' }} />
+      <Stack.Screen name="voorwaarden" options={{ headerShown: true, title: 'Voorwaarden' }} />
 
       <Stack.Protected guard={!aangemeld} redirectTo={startpunt}>
         <Stack.Screen name="welkom" />
@@ -86,6 +87,10 @@ function Navigatie() {
 
       <Stack.Protected guard={eigenaarKlaar} redirectTo={startpunt}>
         <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+
+      {/* Boeken en alles wat erbij hoort is nog nagespeeld; echte accounts kunnen hier nog niet komen (stap 3 in PLAN.md) */}
+      <Stack.Protected guard={eigenaarKlaar && modus === 'demo'} redirectTo={startpunt}>
         <Stack.Screen name="boeken" options={{ headerShown: true, title: 'Kies een uitlater' }} />
         <Stack.Screen name="bevestigen" options={{ headerShown: true, title: 'Boeking bevestigen' }} />
         <Stack.Screen name="kennismaking" options={{ headerShown: true, title: 'Kennismaken' }} />
@@ -96,12 +101,18 @@ function Navigatie() {
 
       <Stack.Protected guard={uitlaterKlaar} redirectTo={startpunt}>
         <Stack.Screen name="werk" />
-        <Stack.Screen name="opdracht/[id]" />
         <Stack.Screen name="verificatie" options={{ headerShown: true, title: 'Verificatie' }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={eigenaarKlaar || uitlaterKlaar} redirectTo={startpunt}>
+      <Stack.Protected guard={uitlaterKlaar && modus === 'demo'} redirectTo={startpunt}>
+        <Stack.Screen name="opdracht/[id]" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && modus === 'demo'} redirectTo={startpunt}>
         <Stack.Screen name="chat/[id]" options={{ headerShown: true, title: '' }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={eigenaarKlaar || uitlaterKlaar} redirectTo={startpunt}>
         <Stack.Screen name="hond/[id]" options={{ headerShown: true, title: 'Hond' }} />
         <Stack.Screen name="profiel-uitlater" options={{ headerShown: true, title: 'Jouw profiel' }} />
         <Stack.Screen name="veiligheid" options={{ headerShown: true, title: 'Veiligheid en hulp' }} />

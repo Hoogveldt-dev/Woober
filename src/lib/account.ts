@@ -140,9 +140,12 @@ export async function laadAccount(): Promise<Account | null> {
 }
 
 /** Maakt profiel en adres aan na het eerste inloggen */
-export async function maakAccount(g: Gebruiker, rol: Rol) {
+export async function maakAccount(g: Gebruiker, rol: Rol, voorwaardenVersie: string) {
   const id = await mijnId();
-  const { error } = await supabase.from('profielen').upsert({ id, voornaam: g.voornaam, plaats: g.plaats, rol });
+  // Bewijs van akkoord met de gebruiksvoorwaarden: wanneer en welke versie
+  const { error } = await supabase
+    .from('profielen')
+    .upsert({ id, voornaam: g.voornaam, plaats: g.plaats, rol, voorwaarden_akkoord: new Date().toISOString(), voorwaarden_versie: voorwaardenVersie.slice(0, 40) });
   if (error) throw new Error(vertaal(error.message));
   const { error: adresFout } = await supabase
     .from('adressen')

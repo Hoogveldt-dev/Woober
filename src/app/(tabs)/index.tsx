@@ -8,6 +8,7 @@ import { PersoonAvatar } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, useNu } from '../../components/blokken';
 import { Kaart, type KaartMarker } from '../../components/Kaart';
 import { Woordmerk } from '../../components/merk';
+import { EigenaarStartEcht } from '../../components/StartEcht';
 import { Chip, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { routeTussen } from '../../lib/route';
@@ -23,12 +24,17 @@ const DIENSTEN: { id: Dienst; titel: string; sub: string; icoon: 'dog-service' |
   { id: 'oppas', titel: 'Oppas', sub: 'bij jou thuis', icoon: 'sofa' },
 ];
 
-export default function Uitlaten() {
+/** Echte accounts zien de kaart met plekken en de wachtlijst; de demo het volledige boeken */
+export default function Start() {
+  const { modus } = useApp();
+  return modus === 'echt' ? <EigenaarStartEcht /> : <UitlatenDemo />;
+}
+
+function UitlatenDemo() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(400);
-  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater, modus } = useApp();
-  const binnenkort = useTekst('start.binnenkort_eigenaar');
+  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater } = useApp();
   const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(330);
   const [dienst, setDienst] = useState<Dienst>('uitlaten');
@@ -140,7 +146,6 @@ export default function Uitlaten() {
         </Text>
         {/* Tot de echte boekingen er zijn (stap 3 in PLAN.md) laat een echt account de voorbeeldwijk zien */}
         {mededeling.trim() ? <Melding type="info">{mededeling}</Melding> : null}
-        {modus === 'echt' && binnenkort.trim() ? <Melding type="info">{binnenkort}</Melding> : null}
 
         <View style={s.diensten}>
           {DIENSTEN.map((d) => {

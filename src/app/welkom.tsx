@@ -38,6 +38,10 @@ export default function Welkom() {
             <Text style={s.link} onPress={() => router.push('/privacy')}>
               Privacy
             </Text>
+            {'   '}
+            <Text style={s.link} onPress={() => router.push('/voorwaarden')}>
+              Voorwaarden
+            </Text>
           </Text>
         </View>
 
