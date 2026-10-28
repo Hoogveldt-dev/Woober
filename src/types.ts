@@ -289,6 +289,8 @@ export interface PlekReview {
   datum: number;
   /** Door de gebruiker zelf geschreven */
   vanMij?: boolean;
+  /** Alleen bij echte plekken: account van de schrijver, om te kunnen melden */
+  auteurId?: string;
 }
 
 export interface Plek {
@@ -308,7 +310,15 @@ export interface Plek {
   vanMij?: boolean;
   /** Een medewerker heeft de plek bekeken. Nieuwe plekken van gebruikers zijn meteen zichtbaar, met een label. */
   gecontroleerd: boolean;
+  /** Alleen bij echte plekken uit de database: de plek op de wereldkaart. De demo gebruikt `punt`. */
+  ligging?: { lat: number; lng: number };
+  /** Woonplaats of gemeente van de plek */
+  plaats?: string;
+  /** Alleen bij echte plekken: account van de toevoeger, om te kunnen melden */
+  toegevoegdDoorId?: string;
+  /** Alleen voor beheerders zichtbaar als die 'verborgen' is */
+  status?: 'nieuw' | 'gecontroleerd' | 'verborgen';
 }
 
 /** Wat een gebruiker invult bij het toevoegen van een plek */
-export type NieuwePlek = Pick<Plek, 'soort' | 'naam' | 'punt' | 'omschrijving' | 'kenmerken' | 'regels'>;
+export type NieuwePlek = Pick<Plek, 'soort' | 'naam' | 'punt' | 'omschrijving' | 'kenmerken' | 'regels' | 'ligging'>;

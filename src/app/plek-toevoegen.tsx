@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { gedeeldeStijl } from '../components/blokken';
+import { EchteKaart } from '../components/EchteKaart';
 import { Kaart, type KaartMarker } from '../components/Kaart';
 import { Chip, Knop, Label, Melding, Veld } from '../components/ui';
 import {
@@ -14,7 +15,9 @@ import {
   PLEK_REGELS_MAX,
   PLEK_SOORT_KORT,
   PLEK_SOORTEN,
+  plekPunt,
 } from '../lib/plekken';
+import { afstandMeter, NIJMEGEN, type KaartPunt, type LatLng } from '../lib/kaart';
 import { afstand, formatAfstand } from '../lib/route';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../theme';
@@ -24,10 +27,16 @@ const SOORTEN: PlekSoort[] = ['horeca', 'losloop', 'strand', 'overig'];
 
 export default function PlekToevoegen() {
   const router = useRouter();
-  const { gebruiker, plekken, voegPlekToe } = useApp();
+  const { gebruiker, plekken, voegPlekToe, modus } = useApp();
+  const echt = modus === 'echt';
   const thuis = useMemo(() => gebruiker?.thuis ?? { x: 500, y: 600 }, [gebruiker?.thuis]);
   const [soort, setSoort] = useState<PlekSoort>('horeca');
   const [punt, setPunt] = useState<Punt>(thuis);
+  // Echte accounts wijzen de plek aan op de wereldkaart
+  const [ligging, setLigging] = useState<LatLng>(NIJMEGEN);
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState<string | null>(null);
+  const echtePunten = useMemo(() => plekken.map((p) => plekPunt(p)).filter((x): x is KaartPunt => x !== null), [plekken]);
   const [naam, setNaam] = useState('');
   const [omschrijving, setOmschrijving] = useState('');
   const [kenmerken, setKenmerken] = useState<string[]>([]);
@@ -40,7 +49,7 @@ export default function PlekToevoegen() {
     ...plekken.map((p): KaartMarker => ({ id: p.id, soort: 'plek', punt: p.punt, naam: p.naam, plekSoort: p.soort })),
   ];
   const dichtbij = plekken
-    .map((p) => ({ p, meter: afstand(p.punt, punt) }))
+    .map((p) => ({ p, meter: echt ? (p.ligging ? afstandMeter(p.ligging, ligging) : Infinity) : afstand(p.punt, punt) }))
     .filter((x) => x.p.soort === soort && x.meter < DUBBEL_BINNEN)
     .sort((a, b) => a.meter - b.meter)[0];
   const naamOk = naam.trim().length >= 2;
@@ -51,15 +60,26 @@ export default function PlekToevoegen() {
     setKenmerken((ks) => ks.filter((k) => PLEK_KENMERKEN[s].includes(k)));
   };
   const wissel = (k: string) => setKenmerken((ks) => (ks.includes(k) ? ks.filter((x) => x !== k) : [...ks, k]));
-  const opslaan = () => {
-    const id = voegPlekToe({ soort, naam, punt, omschrijving, kenmerken, regels });
-    router.replace({ pathname: '/plek/[id]', params: { id } });
+  const opslaan = async () => {
+    setBezig(true);
+    setFout(null);
+    try {
+      const id = await voegPlekToe({ soort, naam, punt, ligging: echt ? ligging : undefined, omschrijving, kenmerken, regels });
+      router.replace({ pathname: '/plek/[id]', params: { id } });
+    } catch (e) {
+      setFout(e instanceof Error ? e.message : 'Toevoegen lukte niet.');
+      setBezig(false);
+    }
   };
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['bottom']}>
       <View style={s.kaart}>
-        <Kaart markers={markers} focus={focus} maxZoom={0.8} onMidden={setPunt} />
+        {echt ? (
+          <EchteKaart punten={echtePunten} begin={{ ...NIJMEGEN, zoom: 14 }} richten={false} onMidden={setLigging} />
+        ) : (
+          <Kaart markers={markers} focus={focus} maxZoom={0.8} onMidden={setPunt} />
+        )}
         {/* De speld staat vast in het midden; je schuift de kaart eronder */}
         <View style={s.speldVak} pointerEvents="none">
           <View style={[s.speld, schaduw, { backgroundColor: PLEK_SOORTEN[soort].kleur }]}>
@@ -124,7 +144,8 @@ export default function PlekToevoegen() {
           <Melding type="info">
             Je plek is meteen te zien voor andere gebruikers, met het label Net toegevoegd en je voornaam. Een medewerker kijkt er daarna naar. Voeg geen woonadres toe.
           </Melding>
-          <Knop titel="Plek toevoegen" icoon="add-circle" uitgeschakeld={!naamOk} onPress={opslaan} stijl={{ marginTop: ruimte(2) }} />
+          {fout ? <Melding type="fout">{fout}</Melding> : null}
+          <Knop titel={bezig ? 'Bezig met toevoegen' : 'Plek toevoegen'} icoon="add-circle" uitgeschakeld={!naamOk || bezig} onPress={opslaan} stijl={{ marginTop: ruimte(2) }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

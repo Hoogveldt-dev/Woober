@@ -4,9 +4,11 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Blad, Sterren } from '../../components/blokken';
+import { EchteKaart } from '../../components/EchteKaart';
 import { Kaart, type KaartMarker } from '../../components/Kaart';
 import { Chip, Knop } from '../../components/ui';
-import { PLEK_SOORTEN, plekScore } from '../../lib/plekken';
+import type { KaartPunt } from '../../lib/kaart';
+import { PLEK_SOORTEN, plekPunt, plekScore } from '../../lib/plekken';
 import { afstand, formatAfstand } from '../../lib/route';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
@@ -22,7 +24,9 @@ const FILTERS: { id: Filter; label: string }[] = [
 export default function Plekken() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { gebruiker, plekken } = useApp();
+  const { gebruiker, plekken, modus } = useApp();
+  // Een echt account ziet de echte plekken op de wereldkaart; de demo de verzonnen wijk
+  const echt = modus === 'echt';
   const [filter, setFilter] = useState<Filter>('alles');
   const [gekozen, setGekozen] = useState<string | null>(null);
   const [bladHoogte, setBladHoogte] = useState(260);
@@ -32,9 +36,14 @@ export default function Plekken() {
     () =>
       plekken
         .filter((p) => filter === 'alles' || p.soort === filter)
-        .map((p) => ({ plek: p, meter: thuis ? afstand(thuis, p.punt) : 0 }))
-        .sort((a, b) => a.meter - b.meter),
-    [plekken, filter, thuis],
+        .map((p) => ({ plek: p, meter: thuis && !echt ? afstand(thuis, p.punt) : 0 }))
+        // Zonder eigen locatie sorteren echte plekken op naam
+        .sort((a, b) => a.meter - b.meter || a.plek.naam.localeCompare(b.plek.naam, 'nl')),
+    [plekken, filter, thuis, echt],
+  );
+  const echtePunten = useMemo(
+    () => zichtbaar.map(({ plek }) => plekPunt(plek, plek.id === gekozen)).filter((x): x is KaartPunt => x !== null),
+    [zichtbaar, gekozen],
   );
   // Alleen opnieuw richten bij een ander filter, niet bij het kiezen van een plek
   const focus = useMemo(() => [...(thuis ? [thuis] : []), ...zichtbaar.map((z) => z.plek.punt)], [zichtbaar, thuis]);
@@ -60,7 +69,18 @@ export default function Plekken() {
 
   return (
     <View style={s.scherm}>
-      <Kaart markers={markers} focus={focus} bovenmarge={insets.top + 60} ondermarge={bladHoogte} maxZoom={0.8} />
+      {echt ? (
+        <EchteKaart
+          punten={echtePunten}
+          richtSleutel={filter}
+          bovenmarge={insets.top + 60}
+          ondermarge={bladHoogte}
+          onKies={(id) => (id === gekozen ? open(id) : setGekozen(id))}
+          onTik={() => setGekozen(null)}
+        />
+      ) : (
+        <Kaart markers={markers} focus={focus} bovenmarge={insets.top + 60} ondermarge={bladHoogte} maxZoom={0.8} />
+      )}
 
       <ScrollView
         horizontal
@@ -87,7 +107,7 @@ export default function Plekken() {
           <PlekKaartje
             naam={keuze.plek.naam}
             soort={keuze.plek.soort}
-            meter={keuze.meter}
+            waar={echt ? (keuze.plek.plaats ?? '') : formatAfstand(keuze.meter)}
             score={plekScore(keuze.plek)}
             regels={keuze.plek.regels}
             onPress={() => open(keuze.plek.id)}
@@ -122,7 +142,7 @@ export default function Plekken() {
                       {p.naam}
                     </Text>
                     <Sterren waarde={score.gemiddelde} aantal={score.aantal} grootte={12} />
-                    <Text style={s.tegelSub}>{formatAfstand(meter)}</Text>
+                    <Text style={s.tegelSub}>{echt ? p.plaats : formatAfstand(meter)}</Text>
                   </Pressable>
                 );
               })}
@@ -137,7 +157,7 @@ export default function Plekken() {
 function PlekKaartje({
   naam,
   soort,
-  meter,
+  waar,
   score,
   regels,
   onPress,
@@ -145,7 +165,8 @@ function PlekKaartje({
 }: {
   naam: string;
   soort: PlekSoort;
-  meter: number;
+  /** Afstand van huis, of de plaats als die niet bekend is */
+  waar: string;
   score: { gemiddelde: number; aantal: number };
   regels?: string;
   onPress: () => void;
@@ -161,7 +182,8 @@ function PlekKaartje({
         <View style={{ flex: 1 }}>
           <Text style={s.kaartjeNaam}>{naam}</Text>
           <Text style={s.tegelSub}>
-            {config.label}, {formatAfstand(meter)}
+            {config.label}
+            {waar ? `, ${waar}` : ''}
           </Text>
         </View>
         <Pressable onPress={onSluit} accessibilityRole="button" accessibilityLabel="Sluiten" hitSlop={8}>

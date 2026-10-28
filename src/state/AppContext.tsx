@@ -5,6 +5,7 @@ import { maakDemoPlekken } from '../data/plekken';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
 import * as account from '../lib/account';
+import * as plekkenDb from '../lib/plekkenDb';
 import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
@@ -146,7 +147,9 @@ interface AppActies {
   beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
   verwijderPlekReview: (plekId: string) => void;
   /** Plek toevoegen; is meteen zichtbaar en wordt daarna door een medewerker bekeken. Geeft het id terug. */
-  voegPlekToe: (p: NieuwePlek) => string;
+  voegPlekToe: (p: NieuwePlek) => Promise<string>;
+  /** Plekken opnieuw ophalen uit de database (alleen bij een echt account) */
+  herlaadPlekken: () => Promise<void>;
   /** Alleen een plek die je zelf hebt toegevoegd en die nog niet is gecontroleerd */
   verwijderPlek: (id: string) => void;
   accountVerwijderen: () => Promise<void>;
@@ -417,12 +420,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openAccount = useCallback(async () => {
     try {
       const a = await account.laadAccount();
+      // Zonder plekken werkt de rest gewoon; dan blijft de lijst leeg tot het later lukt
+      const plekken = a ? await plekkenDb.laadPlekken().catch(() => []) : [];
       setState((oud) => ({
         ...LEEG,
         uitlaters: maakDemoUitlaters(),
         verdienmodelId: oud.verdienmodelId,
         modus: 'echt',
         ingelogd: true,
+        plekken,
         ...(a ? { gebruiker: a.gebruiker, rol: a.rol, honden: a.honden, mijnProfiel: a.profiel, beheerder: a.beheerder } : {}),
       }));
     } catch (e) {
@@ -895,10 +901,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [setState]);
 
-  const meld = useCallback((id: string, _reden: string) => {
-    // In de echte app gaat dit naar het moderatiescherm, waar altijd een mens beslist.
+  const meld = useCallback((id: string, reden: string) => {
+    // Gaat naar het moderatiescherm (Beheer), waar altijd een mens beslist
     setState((s) => ({ ...s, gemeld: s.gemeld.includes(id) ? s.gemeld : [...s.gemeld, id] }));
-  }, [setState]);
+    if (!echt()) return;
+    const ps = ref.current.state.plekken;
+    const plek = ps.find((p) => p.id === id);
+    const review = plek ? undefined : ps.flatMap((p) => p.reviews).find((r) => r.id === id);
+    if (plek || review) plekkenDb.meld({ plek, review }, reden).catch(meldFout);
+  }, [setState, echt, meldFout]);
 
   /** Sluit een melding en alle oudere meldingen voor dezelfde rol */
   const sluitMelding = useCallback(
@@ -912,8 +923,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Plekken
 
+  const herlaadPlekken = useCallback(async () => {
+    if (!echt()) return;
+    try {
+      const plekken = await plekkenDb.laadPlekken();
+      setState((s) => ({ ...s, plekken }));
+    } catch (e) {
+      meldFout(e);
+    }
+  }, [echt, setState, meldFout]);
+
   const beoordeelPlek = useCallback(
-    (plekId: string, sterren: number, tekst: string) =>
+    (plekId: string, sterren: number, tekst: string) => {
+      if (echt()) {
+        const bestaand = ref.current.state.plekken.find((p) => p.id === plekId)?.reviews.find((r) => r.vanMij);
+        plekkenDb.schrijfReview(plekId, sterren, tekst.trim(), bestaand?.id).then(herlaadPlekken, meldFout);
+      }
       setState((s) => ({
         ...s,
         plekken: s.plekken.map((p) =>
@@ -927,17 +952,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
               }
             : p,
         ),
-      })),
-    [setState],
+      }));
+    },
+    [setState, echt, herlaadPlekken, meldFout],
   );
   const verwijderPlekReview = useCallback(
-    (plekId: string) =>
-      zet('plekken', (ps) => ps.map((p) => (p.id === plekId ? { ...p, reviews: p.reviews.filter((r) => !r.vanMij) } : p))),
-    [zet],
+    (plekId: string) => {
+      if (echt()) plekkenDb.verwijderReview(plekId).catch(meldFout);
+      zet('plekken', (ps) => ps.map((p) => (p.id === plekId ? { ...p, reviews: p.reviews.filter((r) => !r.vanMij) } : p)));
+    },
+    [zet, echt, meldFout],
   );
 
   const voegPlekToe = useCallback(
-    (nieuw: NieuwePlek) => {
+    async (nieuw: NieuwePlek) => {
+      if (echt()) {
+        // Fouten (zoals te veel plekken op een dag) gaan terug naar het scherm
+        const id = await plekkenDb.voegPlekToe(nieuw, ref.current.state.gebruiker?.plaats || 'Nijmegen');
+        await herlaadPlekken();
+        return id;
+      }
       const id = nieuwId('plek');
       setState((s) => ({
         ...s,
@@ -958,11 +992,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }));
       return id;
     },
-    [setState],
+    [setState, echt, herlaadPlekken],
   );
   const verwijderPlek = useCallback(
-    (id: string) => zet('plekken', (ps) => ps.filter((p) => !(p.id === id && p.vanMij && !p.gecontroleerd))),
-    [zet],
+    (id: string) => {
+      if (echt()) plekkenDb.verwijderPlek(id).catch(meldFout);
+      zet('plekken', (ps) => ps.filter((p) => !(p.id === id && p.vanMij && !p.gecontroleerd)));
+    },
+    [zet, echt, meldFout],
   );
 
   const opnieuw = useCallback(() => {
@@ -1074,6 +1111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     beoordeelPlek,
     verwijderPlekReview,
     voegPlekToe,
+    herlaadPlekken,
     verwijderPlek,
     accountVerwijderen,
     uitlater,
