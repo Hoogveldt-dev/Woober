@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter, type Href } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -21,9 +22,27 @@ function NaarStart() {
   );
 }
 
+/** Adres waarmee de web-app werd geopend, vastgelegd voordat de router iemand naar de start stuurt */
+const BEGIN_ADRES =
+  Platform.OS === 'web' && typeof window !== 'undefined' && !['/', '/welkom'].includes(window.location.pathname)
+    ? window.location.pathname + window.location.search
+    : null;
+
 function Navigatie() {
   const { gebruiker, rol, honden, mijnProfiel, laden, beheerder } = useApp();
   const aangemeld = gebruiker !== null;
+  const router = useRouter();
+
+  // Wie op het web een pagina ververst of een link opent, komt eerst op de start terecht: het account is dan
+  // nog niet geladen. Ga naar het oorspronkelijke adres zodra het account er is.
+  const beginAdres = useRef(BEGIN_ADRES);
+  useEffect(() => {
+    if (laden || !beginAdres.current) return;
+    const adres = beginAdres.current;
+    beginAdres.current = null;
+    // Even wachten: de router stuurt na het laden zelf eerst naar de start
+    if (aangemeld) setTimeout(() => router.replace(adres as Href), 50);
+  }, [laden, aangemeld, router]);
   const eigenaarKlaar = aangemeld && rol === 'eigenaar' && honden.length > 0;
   const uitlaterKlaar = aangemeld && rol === 'uitlater' && mijnProfiel !== null;
 
@@ -94,6 +113,10 @@ function Navigatie() {
       <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && beheerder} redirectTo={startpunt}>
         <Stack.Screen name="beheer" options={{ headerShown: true, title: 'Beheer' }} />
         <Stack.Screen name="beheer-teksten" options={{ headerShown: true, title: 'Teksten' }} />
+        <Stack.Screen name="beheer-plekken" options={{ headerShown: true, title: 'Plekken en meldingen' }} />
+        <Stack.Screen name="beheer-plek" options={{ headerShown: true, title: 'Plek' }} />
+        <Stack.Screen name="beheer-uitlaters" options={{ headerShown: true, title: 'Uitlaters verifiëren' }} />
+        <Stack.Screen name="beheer-wachtlijst" options={{ headerShown: true, title: 'Wachtlijst' }} />
         <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
       </Stack.Protected>
     </Stack>

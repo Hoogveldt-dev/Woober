@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, useNu } from '../components/blokken';
+import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Tegel, useNu } from '../components/blokken';
 import { Chip, Knop, Melding, Veld } from '../components/ui';
-import { laadVerdienmodellen, planVerdienmodel, type ModelKort, type Planning } from '../lib/beheer';
+import { laadCijfers, laadVerdienmodellen, planVerdienmodel, type Cijfers, type ModelKort, type Planning } from '../lib/beheer';
 import { datumTijdTekst } from '../lib/tijd';
 import { procent } from '../lib/verdienmodel';
 import { useApp } from '../state/AppContext';
@@ -37,8 +37,10 @@ export default function Beheer() {
   const [bezig, setBezig] = useState(false);
   const [gelukt, setGelukt] = useState<string | null>(null);
 
+  const [cijfers, setCijfers] = useState<Cijfers | null>(null);
   const laad = useCallback(() => {
     laadVerdienmodellen().then(setGegevens, (e: Error) => setFout(e.message));
+    laadCijfers().then(setCijfers, () => setCijfers(null));
   }, []);
   useEffect(laad, [laad]);
 
@@ -73,8 +75,32 @@ export default function Beheer() {
       <Text style={gedeeldeStijl.titel}>Beheer</Text>
       <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(5) }]}>Alleen zichtbaar voor het team. Wat je hier instelt, geldt voor alle gebruikers.</Text>
 
-      <Sectie>Teksten</Sectie>
+      {cijfers ? (
+        <>
+          <Sectie>Cijfers</Sectie>
+          <View style={[gedeeldeStijl.rij, { marginBottom: ruimte(2) }]}>
+            <Tegel klein waarde={String(cijfers.accounts)} label="accounts" />
+            <Tegel klein waarde={String(cijfers.eigenaren)} label="eigenaren" />
+            <Tegel klein waarde={`${cijfers.uitlaters_geverifieerd}/${cijfers.uitlaters}`} label="uitlaters zichtbaar" />
+          </View>
+          <View style={[gedeeldeStijl.rij, { marginBottom: ruimte(5) }]}>
+            <Tegel klein waarde={String(cijfers.honden)} label="honden" />
+            <Tegel klein waarde={String(cijfers.plekken)} label="plekken" />
+            <Tegel klein waarde={String(cijfers.wachtlijst)} label="op de wachtlijst" />
+          </View>
+        </>
+      ) : null}
+
+      <Sectie>Beheren</Sectie>
       <Blok>
+        <MenuRij
+          icoon="location"
+          titel="Plekken en meldingen"
+          sub={cijfers ? `Te bekijken: ${cijfers.plekken_nieuw} ${cijfers.plekken_nieuw === 1 ? 'plek' : 'plekken'}, ${cijfers.meldingen_open} ${cijfers.meldingen_open === 1 ? 'melding' : 'meldingen'}` : 'Nieuwe plekken, meldingen, inladen'}
+          onPress={() => router.push('/beheer-plekken')}
+        />
+        <MenuRij icoon="shield-checkmark" titel="Uitlaters verifiëren" sub="Identiteit, verzekering en rekening" onPress={() => router.push('/beheer-uitlaters')} />
+        <MenuRij icoon="people" titel="Wachtlijst" sub="Wie het wil weten zodra Woober in de buurt start" onPress={() => router.push('/beheer-wachtlijst')} />
         <MenuRij icoon="create" titel="Teksten in de app" sub="Welkomscherm, mededeling, meldingen, privacyverklaring" onPress={() => router.push('/beheer-teksten')} />
       </Blok>
 
