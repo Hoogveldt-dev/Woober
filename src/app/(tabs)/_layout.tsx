@@ -17,7 +17,7 @@ export default function EigenaarTabs() {
         tabBarLabelStyle: { fontWeight: '600' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Uitlaten', tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color as string} size={size} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Zoeken', tabBarIcon: ({ color, size }) => <Ionicons name="search" color={color as string} size={size} /> }} />
       <Tabs.Screen name="plekken" options={{ title: 'Plekken', tabBarIcon: ({ color, size }) => <Ionicons name="location" color={color as string} size={size} /> }} />
       <Tabs.Screen
         name="activiteit"
