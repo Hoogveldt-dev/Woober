@@ -231,17 +231,17 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | --- | --- |
 | Staat in het geheugen (`AppContext.tsx`) | Supabase in eu-central-1 met het schema in `supabase/migrations/`; Auth met e-mail, Apple en Google. **Klaar voor account, adres, honden en uitlaatprofiel** (`src/lib/account.ts`) |
 | Andere kant nagespeeld (`simulatie.ts`) | Echte gebruikers; statuswijzigingen via de databasefuncties (`wijzig_status`, `start_wandeling`) |
-| Eigen SVG-kaart (`Kaart.tsx`) | `react-native-maps` of `expo-maps`; de props (markers, routes, focus) blijven gelijk, `Punt` wordt breedte- en lengtegraad |
+| Eigen SVG-kaart (`Kaart.tsx`) | **Klaar voor plekken**: Leaflet met de kaart van PDOK (`EchteKaart.tsx`, `src/lib/kaart.ts`). Voor boekingen komen routes en de uitlater erbij |
 | Positie berekend uit de tijd | `expo-location` met achtergrondtaak, alleen tijdens `bezig`; posities via Supabase Realtime naar de eigenaar |
 | Betaling getoond | Stripe Connect: account per uitlater, losse betalingen en overboekingen, webhooks via een Supabase Edge Function (zie [Betalen met Stripe Connect](#betalen-met-stripe-connect)) |
 | Verdienmodel in het geheugen, te wisselen in de demo | Tabel `verdienmodellen` met planning; alleen het team plant een fase in |
 | Drukte nagebootst in `verdienmodel.ts` | Serverproces (Edge Function of `pg_cron`) vult `druktefactoren` |
-| Verificatie afvinken | Stripe Identity voor ID, polis uploaden naar een privé-bucket, controle door een medewerker |
+| Verificatie afvinken | **Nu**: een medewerker controleert de stukken per e-mail en zet de stappen aan in Beheer. Later Stripe Identity voor ID en de polis uploaden naar een privé-bucket |
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
 | Verlengen gaat direct (`verleng_oppas()`) | De oppas bevestigt eerst in de app; bij kaart en Apple Pay wordt de reservering opgehoogd, bij iDEAL volgt een tweede betaling |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
-| Plekken als nepdata (`src/data/plekken.ts`) | Tabel `plekken`, eerst gevuld door het team (handmatig in de pilotstad, later uit open data van gemeenten) en aangevuld door gebruikers; reviews in `plek_reviews`. Nieuwe plekken van gebruikers controleert een medewerker in het moderatiescherm |
-| Melden en blokkeren lokaal | Moderatiescherm voor het team (eerst Supabase Studio, later een eigen beheerpagina) |
+| Plekken als nepdata (`src/data/plekken.ts`) | **Klaar**: tabel `plekken` met reviews, gevuld door het team (17 onderzochte plekken in Nijmegen, `supabase/plekken/nijmegen.json`) en door gebruikers; een medewerker controleert in Beheer. De demo houdt de nepdata |
+| Melden en blokkeren lokaal | **Klaar voor plekken en reviews**: meldingen komen in Beheer, een medewerker beslist met een besluit. Melden van personen volgt met de echte boekingen |
 
 Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 115 controles). Belangrijkste regels:
 
@@ -259,9 +259,10 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 ### Volgorde van bouwen
 
 1. ✅ Supabase-project aanmaken (los van Woofer), migratie draaien, Auth instellen. Inloggen met e-mail, Apple en Google zit in de app (`src/lib/account.ts`); de sleutels van Apple en Google moeten nog in Supabase (zie [README.md](README.md#inloggen-met-apple-en-google-instellen)).
-2. ✅ Accounts, honden en uitlaatprofielen echt opslaan, account verwijderen in de app; demo-modus behouden voor presentaties. Tot stap 3 klaar is, ziet een echt account op de kaart de voorbeelden uit de demo, met een melding dat Woober binnenkort start.
+2. ✅ Accounts, honden en uitlaatprofielen echt opslaan, account verwijderen in de app; demo-modus behouden voor presentaties. Tot stap 3 klaar is, kan een echt account niet boeken: het startscherm toont de kaart met plekken en de wachtlijst.
+   ✅ Daarbij, om eerst waarde te bieden zonder uitlaters: plekken echt (kaart, reviews, toevoegen, melden), Beheer voor moderatie, verificatie, wachtlijst, teksten en verdienmodel, en gebruiksvoorwaarden. Wat er nog openstaat: [ACTIES.md](ACTIES.md).
 3. Boeken en statusovergangen via de databasefuncties, met Realtime.
-4. Echte kaart en locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer).
+4. Locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer). De echte kaart is er al (`src/components/EchteKaart.tsx`); routes en de positie van de uitlater komen erbij.
 5. Stripe Connect en iDEAL; eerst in testmodus. Het grootboek afstemmen met de Stripe-uitbetalingen. Fase lancering actief.
 6. Pushmeldingen.
 7. Foto's, moderatie, account verwijderen inclusief foto's in Storage.

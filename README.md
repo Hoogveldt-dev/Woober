@@ -6,7 +6,7 @@ Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde c
 
 Er zijn twee manieren om de app te gebruiken:
 
-- **Echt account**: inloggen met Apple, Google of een code per e-mail. Account, adres, honden en uitlaatprofiel staan in Supabase (Frankfurt). Boeken, chat, kaart en betalen werken nog met de voorbeelden uit de demo; de app zegt dat er ook bij.
+- **Echt account**: inloggen met Apple, Google of een code per e-mail. Account, adres, honden, uitlaatprofiel, plekken, reviews en de wachtlijst staan in Supabase (Frankfurt), op een echte kaart van PDOK. Boeken, chat en betalen zijn er voor echte accounts nog niet; het startscherm biedt dan de wachtlijst aan.
 - **Demo**: rechtsonder op het welkomscherm **Demo bekijken**, dan als eigenaar of als uitlater. Zo kun je rondkijken voordat je een account maakt. Alles is verzonnen en wordt niet opgeslagen; na herladen begin je opnieuw.
 
 ## Starten
@@ -67,7 +67,14 @@ Testen: `npx expo start`, dan **Inloggen of account maken**. Op het web werken G
 
 ## Beheer
 
-Een beheerder ziet onder Account het menu **Beheer**: het actieve verdienmodel, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen met nagebootste drukte. Demo-gebruikers en gewone accounts zien dit nooit.
+Een beheerder ziet onder Account het menu **Beheer**. Demo-gebruikers en gewone accounts zien dit nooit; de database controleert het ook zelf.
+
+- **Cijfers**: accounts, eigenaren, uitlaters, honden, plekken en de wachtlijst.
+- **Plekken en meldingen**: nieuwe plekken goedkeuren of verbergen, gemelde plekken en reviews afhandelen met een besluit, elke plek aanpassen of op de kaart verschuiven, en de onderzochte plekken in Nijmegen inladen (`supabase/plekken/nijmegen.json`; de coördinaten zoekt de app bij OpenStreetMap).
+- **Uitlaters verifiëren**: per uitlater identiteit, verzekering, rekening en eventueel VOG aanzetten, met het e-mailadres om stukken op te vragen. Pas met de eerste drie is een uitlater zichtbaar.
+- **Wachtlijst**: wie het wil weten zodra Woober in de buurt start, per postcodegebied.
+- **Teksten in de app**: zie hieronder.
+- **Verdienmodel**: het actieve model, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen.
 
 Beheerder word je alleen via de database, nooit vanuit de app. Log eerst één keer in met je account en voer dan in de SQL-editor van Supabase uit:
 
@@ -77,7 +84,7 @@ insert into public.beheerders (gebruiker_id) select id from auth.users where ema
 
 Daarna opnieuw inloggen. Een beheerder weghalen: `delete from public.beheerders where gebruiker_id = ...`.
 
-Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de meldingen op het startscherm, verificatie, het noodnummer en de gegevens in de privacyverklaring. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl. Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts` en gebruik `useTekst()` in het scherm.
+Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de teksten op het startscherm, verificatie, het noodnummer, het contactadres en de gegevens in de privacyverklaring en de gebruiksvoorwaarden. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl. Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts` en gebruik `useTekst()` in het scherm.
 
 ## Wat zit erin
 
@@ -95,9 +102,19 @@ Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een
 
 Een overzicht van schermen en bestanden staat in [PLAN.md](PLAN.md#wat-de-demo-laat-zien).
 
+## De kaart
+
+Echte accounts zien een echte kaart: Leaflet met de achtergrondkaart van PDOK (Kadaster), gratis en zonder sleutel. Op het web draait die in een afgeschermde iframe, in de app in een WebView (`react-native-webview`, zit in Expo Go). Leaflet zit als tekst in de app (`src/lib/leaflet.gen.ts`, opnieuw maken met `npm run kaart:leaflet`), zodat er niets van een CDN komt. De demo houdt de getekende wijk.
+
+## Builds voor de stores
+
+`eas.json` heeft een profiel `preview` (testversie om te delen, op Android een apk) en `production`. Eerst één keer `npx eas-cli@latest init` om het project aan je Expo-account te koppelen, daarna bijvoorbeeld `npx eas-cli@latest build --profile preview --platform all`. Zie [ACTIES.md](ACTIES.md).
+
 ## Nog niet in deze versie
 
-- Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`)
-- Echte kaart en locatie (`react-native-maps` en `expo-location`)
+Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
+
+- Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`); tot dan alleen in de demo
+- Locatie tijdens de wandeling (`expo-location`)
 - Betalen via Stripe Connect en iDEAL
-- Pushmeldingen, foto's uploaden, moderatiescherm
+- Pushmeldingen en foto's uploaden
