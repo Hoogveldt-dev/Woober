@@ -398,6 +398,23 @@ check('cijfers voor beheer', cf.rows?.[0]?.wachtlijst === 1 && cf.rows?.[0]?.acc
 check('gewone gebruiker ziet geen cijfers', !!(await als(E, `select * from public.beheer_cijfers()`)).fout);
 check('beheerder verwijdert plek', (await als(U, `delete from public.plekken where id = '${WP}' returning id`)).rows?.length === 1);
 await db.exec(`delete from public.verdienmodel_planning where toelichting = 'Test'; delete from public.beheerders`);
+// Rechten op functies
+const alsAnon = async (q) => {
+  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
+  try { return { rows: (await db.query(q)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
+};
+for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`]) {
+  check(`zonder account geen ${f.split('(')[0]}`, /permission denied/.test((await alsAnon(`select ${f}`)).fout ?? ''));
+}
+check('zonder account wel teksten lezen', !(await alsAnon(`select * from public.teksten`)).fout);
+check('kent elkaar: eigen antwoord', (await als(E, `select public.kent_elkaar('${E}', '${U}') as k`)).rows?.[0]?.k === true);
+check('kent elkaar: niet over anderen', (await als(X, `select public.kent_elkaar('${E}', '${U}') as k`)).rows?.[0]?.k === false);
+check('geblokkeerd: eigen antwoord', (await als(X, `select public.is_geblokkeerd('${X}', '${E}') as g`)).rows?.[0]?.g === true);
+check('geblokkeerd: niet over anderen', (await als(U, `select public.is_geblokkeerd('${E}', '${X}') as g`)).rows?.[0]?.g === false);
+check('plekken van een ander niet te tellen', (await als(E, `select public.plekken_afgelopen_dag('${U}') as n`)).rows?.[0]?.n === 0);
+check('eigen plekken tellen', (await als(U, `select public.plekken_afgelopen_dag('${U}') as n`)).rows?.[0]?.n > 0);
+const vast = await db.query(`select proname, proconfig from pg_proc where proname in ('mag_uitlaten', 'tarief_voor')`);
+check('vast zoekpad', vast.rows.length === 2 && vast.rows.every((r) => String(r.proconfig).includes('search_path')), JSON.stringify(vast.rows));
 // Accounts
 check('eigen rol bewaren', !(await als(E, `update public.profielen set rol = 'uitlater' where id = '${E}'`)).fout);
 check('ongeldige rol kan niet', !!(await als(E, `update public.profielen set rol = 'beheerder' where id = '${E}'`)).fout);
