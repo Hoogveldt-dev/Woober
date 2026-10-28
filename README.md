@@ -1,8 +1,13 @@
-# Woober, prototype 0.1
+# Woober
 
 Klikbare demo van Woober, het zusje van Woofer: hondeneigenaren boeken een uitlater of een oppas aan huis uit de buurt zoals je bij Uber een rit boekt, en volgen het live. Bovenin kies je **Uitlaten** of **Oppas**, de rest werkt hetzelfde. Het plan staat in [PLAN.md](PLAN.md).
 
-Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde code draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata en worden niet opgeslagen; na herladen begin je opnieuw.
+Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde code draait als iOS-app, Android-app en web app.
+
+Er zijn twee manieren om de app te gebruiken:
+
+- **Echt account**: inloggen met Apple, Google of een code per e-mail. Account, adres, honden en uitlaatprofiel staan in Supabase (Frankfurt). Boeken, chat, kaart en betalen werken nog met de voorbeelden uit de demo; de app zegt dat er ook bij.
+- **Demo**: op het welkomscherm **Demo eigenaar** of **Demo uitlater**. Alles is verzonnen en wordt niet opgeslagen; na herladen begin je opnieuw.
 
 ## Starten
 
@@ -24,6 +29,33 @@ Netlify bouwt de web-app bij elke push naar `main` (`netlify.toml`). woober.nl i
 - `public/index.html` is het sjabloon van de pagina (Nederlands, past zich aan de adresbalk en het toetsenbord van mobiele browsers aan). Zolang het een demo is, staat er `noindex` in, zodat zoekmachines hem niet opnemen; haal dat weg bij de echte lancering.
 - Met `public/manifest.webmanifest` en de iconen in `public/` kun je Woober op het beginscherm van je telefoon zetten.
 - Privacy- en cookieverklaring: `src/app/privacy.tsx`, ook zonder account bereikbaar via `/privacy`. Pas deze aan zodra de app echte gegevens opslaat.
+
+## Inloggen met Apple en Google instellen
+
+De code staat klaar (`src/lib/account.ts`, `src/app/aanmelden.tsx`). Wat nog moet gebeuren buiten de code, in deze volgorde:
+
+**1. Supabase** (dashboard, project Woober, Authentication)
+
+- URL Configuration: Site URL `https://woober.nl`. Redirect URLs: `https://woober.nl/aanmelden`, `http://localhost:8081/aanmelden`, `woober://auth` en tijdens het ontwikkelen met Expo Go `exp://**`.
+- Emails, template **Magic Link**: zet `{{ .Token }}` in de tekst, bijvoorbeeld `Je inlogcode voor Woober is {{ .Token }}`. De app vraagt om die code van 6 cijfers.
+- Emails, SMTP Settings: koppel een eigen mailprovider (bijvoorbeeld Postmark of Resend) met afzender `noreply@woober.nl`. Zonder eigen SMTP stuurt Supabase maar een paar mails per uur.
+
+**2. Google** ([Google Cloud Console](https://console.cloud.google.com))
+
+- Maak een project Woober, vul het OAuth-toestemmingsscherm in (naam Woober, logo, link naar `https://woober.nl/privacy`) en publiceer het.
+- Credentials, OAuth client ID, type **Web application**. Authorized redirect URI: `https://hnvafpbxhkxpvwwsgoba.supabase.co/auth/v1/callback`.
+- Zet Client ID en Client Secret in Supabase bij Authentication, Sign In / Providers, Google, en zet Google aan.
+
+**3. Apple** ([Apple Developer](https://developer.apple.com/account), lidmaatschap nodig)
+
+- Identifiers, App ID `nl.woober.app` met **Sign in with Apple** aan.
+- Identifiers, Services ID, bijvoorbeeld `nl.woober.web`, voor het web en Android. Bij Sign in with Apple: domein `hnvafpbxhkxpvwwsgoba.supabase.co`, return URL `https://hnvafpbxhkxpvwwsgoba.supabase.co/auth/v1/callback`.
+- Keys, nieuwe sleutel met Sign in with Apple. Bewaar het `.p8`-bestand veilig, niet in deze repository.
+- Supabase, provider Apple: Client IDs `nl.woober.app,nl.woober.web` (voor testen in Expo Go ook `host.exp.Exponent`), en het geheime sleutelwoord dat je met Team ID, Key ID en het `.p8`-bestand maakt (Supabase heeft daar een hulpmiddel voor op de pagina van de provider). Dit geheim verloopt na 6 maanden; zet een herinnering.
+
+Op iPhone gebruikt de app het eigen inlogvenster van Apple; op Android en het web gaat Apple via de browser. Apple eist in de App Store dat je je account in de app kunt verwijderen; dat kan onder Account.
+
+Testen: `npx expo start`, dan **Inloggen of account maken**. Op het web werken Google en e-mail meteen na stap 1 en 2. Voor het eigen Apple-venster op iPhone is een development build het betrouwbaarst (`npx eas-cli@latest build --profile development --platform ios`).
 
 ## Zo werkt de demo
 
@@ -51,7 +83,7 @@ Een overzicht van schermen en bestanden staat in [PLAN.md](PLAN.md#wat-de-demo-l
 
 ## Nog niet in deze versie
 
-- Echte accounts en database (schema klaar in `supabase/migrations/`, Supabase in eu-central-1)
+- Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`)
 - Echte kaart en locatie (`react-native-maps` en `expo-location`)
 - Betalen via Stripe Connect en iDEAL
 - Pushmeldingen, foto's uploaden, moderatiescherm

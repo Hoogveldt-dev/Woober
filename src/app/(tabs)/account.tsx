@@ -14,7 +14,7 @@ import { kleuren, radius, ruimte } from '../../theme';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, uitloggen, modus, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [bevestig, setBevestig] = useState(false);
   const [code, setCode] = useState('');
   const [codeUitslag, setCodeUitslag] = useState<{ gelukt: boolean; tekst: string } | null>(null);
@@ -128,7 +128,7 @@ export default function Account() {
           />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
-          <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
+          {modus === 'demo' ? <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} /> : null}
         </Blok>
 
         <View style={s.privacy}>
@@ -138,8 +138,9 @@ export default function Account() {
           </Text>
         </View>
 
+        <Knop titel={modus === 'echt' ? 'Uitloggen' : 'Demo verlaten'} variant="secundair" icoon="log-out-outline" onPress={uitloggen} stijl={{ marginTop: ruimte(4) }} />
         {!bevestig ? (
-          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(4) }} />
+          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(3) }} />
         ) : (
           <View style={s.bevestig}>
             <Text style={s.bevestigTitel}>Weet je het zeker?</Text>
@@ -148,7 +149,7 @@ export default function Account() {
             <Knop titel="Annuleren" variant="tekst" stijl={{ marginTop: ruimte(1) }} onPress={() => setBevestig(false)} />
           </View>
         )}
-        <Text style={s.versie}>Woober prototype 0.1. Gegevens worden niet opgeslagen.</Text>
+        <Text style={s.versie}>{modus === 'echt' ? `Woober 1.0. Ingelogd als ${gebruiker.email}.` : 'Woober demo. Gegevens worden niet opgeslagen.'}</Text>
       </ScrollView>
     </SafeAreaView>
   );

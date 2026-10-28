@@ -21,7 +21,7 @@ export default function Welkom() {
         </View>
 
         <View style={s.knoppen}>
-          <Knop titel="Account aanmaken" variant="secundair" stijl={s.witteKnop} onPress={() => router.push('/aanmelden')} />
+          <Knop titel="Inloggen of account maken" variant="secundair" stijl={s.witteKnop} onPress={() => router.push('/aanmelden')} />
           <View style={s.demoRij}>
             <Knop titel="Demo eigenaar" variant="tekst" icoon="paw" tekstKleur="#fff" stijl={{ flex: 1 }} onPress={() => demoStart('eigenaar')} />
             <Knop titel="Demo uitlater" variant="tekst" icoon="bicycle" tekstKleur="#fff" stijl={{ flex: 1 }} onPress={() => demoStart('uitlater')} />
@@ -30,7 +30,7 @@ export default function Welkom() {
             Het zusje van Woofer. Uitlaters bepalen zelf hun tarief en beschikbaarheid, en jij kiest zelf wie je hond uitlaat.
           </Text>
           <Text style={s.klein}>
-            Dit is een demo met verzonnen gegevens; er wordt niets opgeslagen.{' '}
+            In de demo zie je Woober met verzonnen gegevens; daar wordt niets opgeslagen.{' '}
             <Text style={s.link} onPress={() => router.push('/privacy')}>
               Privacy
             </Text>

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Pressable } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MeldingBanner } from '../components/merk';
 import { AppProvider, useApp } from '../state/AppContext';
@@ -21,7 +21,7 @@ function NaarStart() {
 }
 
 function Navigatie() {
-  const { gebruiker, rol, honden, mijnProfiel } = useApp();
+  const { gebruiker, rol, honden, mijnProfiel, laden } = useApp();
   const aangemeld = gebruiker !== null;
   const eigenaarKlaar = aangemeld && rol === 'eigenaar' && honden.length > 0;
   const uitlaterKlaar = aangemeld && rol === 'uitlater' && mijnProfiel !== null;
@@ -37,6 +37,7 @@ function Navigatie() {
         : '/uitlater-aanmaken';
 
   return (
+    <>
     <Stack
       screenOptions={({ navigation }) => ({
         headerShown: false,
@@ -52,7 +53,7 @@ function Navigatie() {
 
       <Stack.Protected guard={!aangemeld} redirectTo={startpunt}>
         <Stack.Screen name="welkom" />
-        <Stack.Screen name="aanmelden" options={{ headerShown: true, title: 'Account aanmaken' }} />
+        <Stack.Screen name="aanmelden" options={{ headerShown: true, title: 'Inloggen' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={aangemeld && rol === 'eigenaar' && honden.length === 0} redirectTo={startpunt}>
@@ -89,6 +90,13 @@ function Navigatie() {
         <Stack.Screen name="plek-toevoegen" options={{ headerShown: true, title: 'Plek toevoegen' }} />
       </Stack.Protected>
     </Stack>
+    {/* Bij het starten even wachten tot bekend is of er al iemand is ingelogd */}
+    {laden ? (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: kleuren.achtergrond, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={kleuren.primair} />
+      </View>
+    ) : null}
+    </>
   );
 }
 

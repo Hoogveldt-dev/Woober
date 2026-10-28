@@ -12,7 +12,7 @@ import { kleuren, radius, ruimte } from '../../theme';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, verdienmodel } = useApp();
+  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, uitloggen, modus, verdienmodel } = useApp();
   const [bevestig, setBevestig] = useState(false);
   if (!gebruiker || !mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
@@ -52,7 +52,7 @@ export default function UitlaterAccount() {
           />
           <MenuRij icoon="paw" titel="Mijn eigen hond laten uitlaten" sub={honden.length ? 'Wissel naar eigenaarmodus' : 'Maak een hondenprofiel aan'} onPress={() => wisselRol('eigenaar')} />
           <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, incidenten, regels" onPress={() => router.push('/veiligheid')} />
-          <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} />
+          {modus === 'demo' ? <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} /> : null}
         </Blok>
 
         <View style={s.privacy}>
@@ -62,8 +62,9 @@ export default function UitlaterAccount() {
           </Text>
         </View>
 
+        <Knop titel={modus === 'echt' ? 'Uitloggen' : 'Demo verlaten'} variant="secundair" icoon="log-out-outline" onPress={uitloggen} stijl={{ marginTop: ruimte(4) }} />
         {!bevestig ? (
-          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(4) }} />
+          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(3) }} />
         ) : (
           <View style={s.bevestig}>
             <Text style={s.bevestigTitel}>Weet je het zeker?</Text>
@@ -72,7 +73,7 @@ export default function UitlaterAccount() {
             <Knop titel="Annuleren" variant="tekst" stijl={{ marginTop: ruimte(1) }} onPress={() => setBevestig(false)} />
           </View>
         )}
-        <Text style={s.versie}>Woober prototype 0.1. Gegevens worden niet opgeslagen.</Text>
+        <Text style={s.versie}>{modus === 'echt' ? `Woober 1.0. Ingelogd als ${gebruiker.email}.` : 'Woober demo. Gegevens worden niet opgeslagen.'}</Text>
       </ScrollView>
     </SafeAreaView>
   );

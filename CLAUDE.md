@@ -13,7 +13,8 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 
 ## Belangrijke plekken
 - Prijzen en annuleren: `src/lib/prijs.ts`. Verdienmodel (fases, servicekosten, boekingskosten, commissie, drukte, Woober Plus, tegoed): `src/lib/verdienmodel.ts`. Dezelfde regels en waarden staan in `bereken_prijs()` en de tabel `verdienmodellen` in `supabase/migrations/`; `npm run test:db` vergelijkt app en database tot op de cent.
-- Gedeelde staat (nu nepdata in het geheugen) en de simulatie van de andere kant: `src/state/AppContext.tsx` en `src/lib/simulatie.ts`.
+- Gedeelde staat en de simulatie van de andere kant: `src/state/AppContext.tsx` en `src/lib/simulatie.ts`. `modus` is `demo` (alles nep) of `echt` (ingelogd; account, adres, honden en uitlaatprofiel gaan ook naar Supabase, de rest is nog demo).
+- Inloggen (Apple, Google, code per e-mail) en opslaan van het account: `src/lib/account.ts`, client in `src/lib/supabase.ts` (alleen de publieke sleutel), scherm `src/app/aanmelden.tsx`. Instellen van de providers: README.
 - Kaart: `src/components/Kaart.tsx` met de demowijk in `src/data/stad.ts`. Later vervangen door een echte kaart met dezelfde props.
 - Plekken (losloopgebieden, hondvriendelijke stranden, horeca, overig) met reviews: tab `src/app/(tabs)/plekken.tsx`, detail `src/app/plek/[id].tsx`, zelf toevoegen `src/app/plek-toevoegen.tsx` (nieuwe plekken zijn meteen zichtbaar en worden daarna door een mens gecontroleerd), nepdata `src/data/plekken.ts`, tabellen `plekken` en `plek_reviews` in `supabase/migrations/`.
 - Databaseschema met RLS (concept): `supabase/migrations/`, getest met `supabase/tests/rls.test.mjs`.

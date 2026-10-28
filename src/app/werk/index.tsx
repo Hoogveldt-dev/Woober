@@ -58,7 +58,7 @@ export default function Werk() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(300);
-  const { mijnProfiel, online, zetOnline, openVerzoek, actieveOpdracht, accepteer, weiger, klant, boekingen } = useApp();
+  const { mijnProfiel, online, zetOnline, openVerzoek, actieveOpdracht, accepteer, weiger, klant, boekingen, modus } = useApp();
   const [bladHoogte, setBladHoogte] = useState(300);
   if (!mijnProfiel) return null;
 
@@ -233,6 +233,7 @@ export default function Werk() {
         <RondeKnop icoon="shield-checkmark" label="Veiligheid en hulp" kleur={kleuren.primair} onPress={() => router.push('/veiligheid')} />
       </View>
       <Blad onHoogte={setBladHoogte}>
+        {modus === 'echt' && !actieveOpdracht ? <Melding type="info">Woober start binnenkort in jouw buurt. Tot dan zijn verzoeken voorbeelden en verdien je er nog niets mee.</Melding> : null}
         {inhoud}
         {geplandVandaag > 0 && !openVerzoek && !actieveOpdracht ? (
           <Pressable onPress={() => router.push('/werk/opdrachten')} style={s.gepland} accessibilityRole="button">

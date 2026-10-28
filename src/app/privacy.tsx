@@ -4,8 +4,8 @@ import { Melding } from '../components/ui';
 import { kleuren, ruimte } from '../theme';
 
 /**
- * Privacy- en cookieverklaring voor de demo (AVG art. 13, Telecommunicatiewet art. 11.7a).
- * De demo slaat niets op; vervang deze tekst zodra echte accounts en Supabase erin zitten.
+ * Privacy- en cookieverklaring (AVG art. 13, Telecommunicatiewet art. 11.7a).
+ * Vul deze aan zodra er meer echt wordt: boekingen, locatie, betalingen, foto's en pushmeldingen.
  * Op het web ook bereikbaar via woober.nl/privacy; die link is nodig voor App Store en Google Play.
  */
 const ORGANISATIE = {
@@ -14,7 +14,7 @@ const ORGANISATIE = {
   adres: '[Vestigingsadres]',
   email: '[privacy@woober.nl]',
 };
-const VERSIE = '22 oktober 2026';
+const VERSIE = '28 oktober 2026';
 const IS_CONCEPT = true;
 
 interface Sectie {
@@ -32,10 +32,27 @@ const SECTIES: Sectie[] = [
     ],
   },
   {
-    titel: 'Dit is een demo',
+    titel: 'Welke gegevens we bewaren',
+    punten: [
+      'Je account: je e-mailadres en, als je inlogt met Apple of Google, de naam die je daar gebruikt. Bij Apple kun je je e-mailadres verbergen; we krijgen dan een doorstuuradres.',
+      'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent.',
+      'Je honden: naam, ras, geboortedatum, karakter, bijzonderheden en dierenarts.',
+      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd.',
+      'Doel: je laten inloggen en je account, honden en profiel bewaren. Grondslag: de overeenkomst met jou (het gebruik van Woober).',
+      'Andere gebruikers zien nooit je e-mailadres of adres. Een uitlater ziet het adres van een eigenaar pas na een geaccepteerde boeking.',
+    ],
+  },
+  {
+    titel: 'Waar en hoe lang',
+    punten: [
+      'We bewaren je gegevens bij Supabase, in een datacenter in Frankfurt (Duitsland). Supabase verwerkt ze in onze opdracht. Supabase is een Amerikaans bedrijf; doorgifte buiten de Europese Unie gebeurt op basis van het EU-VS Data Privacy Framework of de standaardcontractbepalingen van de Europese Commissie.',
+      'We bewaren je gegevens zolang je een account hebt. Verwijder je je account in de app (Account, Account verwijderen), dan verwijderen we je profiel, adres, honden en uitlaatprofiel direct. Alleen betaalgegevens die we volgens de wet zeven jaar moeten bewaren, houden we, zonder je naam.',
+    ],
+  },
+  {
+    titel: 'Nog in opbouw',
     alineas: [
-      'Deze versie van Woober is een demo. Alle uitlaters, eigenaren, honden, boekingen en betalingen zijn verzonnen. Wat je invult, zoals een naam, je hond of een bericht, blijft alleen in het geheugen van je browser of telefoon en verdwijnt als je de pagina ververst of de app sluit. We sturen het nergens naartoe en bewaren het niet.',
-      'De demo gebruikt geen locatie, geen camera en geen echte kaartdienst; de kaart is een verzonnen wijk die in de app zelf getekend wordt.',
+      'Boeken, chatten, de kaart en betalen werken nog met verzonnen voorbeelden, net als de demo op het welkomscherm. Wat je daar doet, blijft alleen op je eigen apparaat en verdwijnt als je de app sluit. De app gebruikt nog geen locatie en geen camera. Zodra dat verandert, passen we deze verklaring aan en laten we het je weten.',
     ],
   },
   {
@@ -49,7 +66,7 @@ const SECTIES: Sectie[] = [
   {
     titel: 'Cookies',
     alineas: [
-      'De demo plaatst geen cookies en slaat niets op in je browser. We gebruiken geen analysediensten, advertenties of trackers.',
+      'Als je inlogt, bewaart Woober een inlogsleutel op je apparaat (in de browser in de lokale opslag), zodat je ingelogd blijft. Dat is nodig om de app te laten werken; daar vragen we geen toestemming voor. Bij uitloggen verdwijnt hij. We gebruiken geen analysediensten, advertenties of trackers.',
     ],
   },
   {

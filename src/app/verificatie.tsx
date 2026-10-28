@@ -41,7 +41,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
 
 export default function VerificatieScherm() {
   const router = useRouter();
-  const { mijnProfiel, verifieer } = useApp();
+  const { mijnProfiel, verifieer, modus } = useApp();
   if (!mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
 
@@ -74,7 +74,7 @@ export default function VerificatieScherm() {
                 {!stap.verplicht ? <Badge tekst="OPTIONEEL" kleur={kleuren.gedempt} /> : null}
               </View>
               <Text style={s.tekst}>{stap.tekst}</Text>
-              {!gedaan ? <Knop titel="Controleren (demo)" variant="secundair" onPress={() => verifieer(stap.id)} stijl={{ marginTop: ruimte(2), alignSelf: 'flex-start', height: 42 }} /> : null}
+              {!gedaan && modus === 'demo' ? <Knop titel="Controleren (demo)" variant="secundair" onPress={() => verifieer(stap.id)} stijl={{ marginTop: ruimte(2), alignSelf: 'flex-start', height: 42 }} /> : null}
             </View>
             {gedaan ? <Ionicons name="checkmark-circle" size={24} color={kleuren.like} /> : null}
           </View>
@@ -87,7 +87,11 @@ export default function VerificatieScherm() {
           <Knop titel="Naar de kaart" icoon="navigate" onPress={() => router.replace('/werk')} stijl={{ marginTop: ruimte(3) }} />
         </>
       ) : (
-        <Melding type="info">In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.</Melding>
+        <Melding type="info">
+          {modus === 'echt'
+            ? 'Je profiel is opgeslagen. Woober neemt per e-mail contact met je op om je identiteit, verzekering en rekening te controleren. Daarna kun je online.'
+            : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
+        </Melding>
       )}
     </ScrollView>
   );

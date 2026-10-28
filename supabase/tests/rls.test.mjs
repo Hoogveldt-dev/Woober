@@ -323,5 +323,16 @@ check('vijf plekken per dag', !(await als(U, `insert into public.plekken (soort,
 check('zesde plek op een dag kan niet', !!(await als(U, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('overig', 'Plek 6', 'Nijmegen', 51.84, 5.86)`)).fout);
 const pt3 = (await als(U, `select id from public.plekken where naam = 'Plek 5'`)).rows[0].id;
 check('eigen nieuwe plek verwijderen', (await als(U, `delete from public.plekken where id = '${pt3}' returning id`)).rows?.length === 1);
+// Accounts
+check('eigen rol bewaren', !(await als(E, `update public.profielen set rol = 'uitlater' where id = '${E}'`)).fout);
+check('ongeldige rol kan niet', !!(await als(E, `update public.profielen set rol = 'beheerder' where id = '${E}'`)).fout);
+check('rol van een ander niet aan te passen', (await als(X, `update public.profielen set rol = 'uitlater' where id = '${E}' returning id`)).rows?.length === 0);
+check('adres zonder coördinaten', !(await als(X, `insert into public.adressen (gebruiker_id, straat_huisnummer, postcode, plaats) values ('${X}', 'Rijnkade 1', '6811 AA', 'Arnhem')`)).fout);
+check('leeftijd op uitlaatprofiel', !(await als(U, `update public.uitlaters set leeftijd = 31 where id = '${U}'`)).fout);
+check('niet ingelogd geen account verwijderen', !!(await als('', `select public.verwijder_mijn_account()`)).fout);
+check('eigen account verwijderen', !(await als(X, `select public.verwijder_mijn_account()`)).fout);
+const weg = await db.query(`select (select count(*) from auth.users where id = '${X}')::int as u, (select count(*) from public.profielen where id = '${X}')::int as p, (select count(*) from public.adressen where gebruiker_id = '${X}')::int as a`);
+check('account, profiel en adres weg', weg.rows[0].u === 0 && weg.rows[0].p === 0 && weg.rows[0].a === 0, JSON.stringify(weg.rows));
+check('andere accounts blijven', (await db.query(`select count(*)::int as n from auth.users where id in ('${E}', '${U}')`)).rows[0].n === 2);
 console.log(`\n${ok} geslaagd, ${fout} mislukt`);
 process.exit(fout ? 1 : 0);

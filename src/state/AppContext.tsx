@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AppState as AppStatus } from 'react-native';
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { maakDemoPlekken } from '../data/plekken';
 import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
+import * as account from '../lib/account';
 import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
@@ -19,6 +21,7 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
@@ -49,6 +52,12 @@ export const LOPEND: Boeking['status'][] = ['onderweg', 'aangekomen', 'bezig'];
 export const ACTIEF: Boeking['status'][] = ['aangevraagd', ...LOPEND];
 
 interface AppState {
+  /** Demo met verzonnen gegevens, of een echt account in Supabase */
+  modus: 'demo' | 'echt';
+  /** Ingelogd bij Supabase. Kan zonder gebruiker: dan is de aanmelding nog niet afgemaakt. */
+  ingelogd: boolean;
+  /** Bij het starten: nog bezig met kijken of er een sessie is */
+  laden: boolean;
   gebruiker: Gebruiker | null;
   rol: Rol;
   honden: Hond[];
@@ -92,8 +101,11 @@ export interface Aanvraag {
 }
 
 interface AppActies {
-  aanmelden: (g: Gebruiker, rol: Rol) => void;
+  /** Na het inloggen: profiel en adres opslaan en het account openen */
+  aanmelden: (g: Gebruiker, rol: Rol) => Promise<void>;
   demoStart: (rol: Rol) => void;
+  /** Uitloggen, of de demo verlaten */
+  uitloggen: () => Promise<void>;
   bewaarHond: (h: Hond) => void;
   verwijderHond: (id: string) => void;
   wisselRol: (r: Rol) => void;
@@ -135,7 +147,7 @@ interface AppActies {
   voegPlekToe: (p: NieuwePlek) => string;
   /** Alleen een plek die je zelf hebt toegevoegd en die nog niet is gecontroleerd */
   verwijderPlek: (id: string) => void;
-  accountVerwijderen: () => void;
+  accountVerwijderen: () => Promise<void>;
 
   /** Het actieve verdienmodel */
   verdienmodel: Verdienmodel;
@@ -160,6 +172,9 @@ let teller = 0;
 export const nieuwId = (prefix: string) => `${prefix}-${Date.now()}-${++teller}`;
 
 const LEEG: AppState = {
+  modus: 'demo',
+  ingelogd: false,
+  laden: false,
   gebruiker: null,
   rol: 'eigenaar',
   honden: [],
@@ -355,7 +370,7 @@ function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, zetRuw] = useState<AppState>(LEEG);
+  const [state, zetRuw] = useState<AppState>({ ...LEEG, laden: true });
   const [wachtSinds, setWachtSinds] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const ref = useRef({ state, wachtSinds });
@@ -385,7 +400,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [setState]);
 
-  const aanmelden = useCallback((g: Gebruiker, rol: Rol) => {
+  /** Melding bovenin als opslaan in de database mislukt; de wijziging blijft in de app staan */
+  const meldFout = useCallback(
+    (e: unknown) => {
+      const tekst = e instanceof Error ? e.message : 'Er ging iets mis. Probeer het nog eens.';
+      zet('meldingen', (ms) => [...ms, { id: nieuwId('n'), rol: ref.current.state.rol, titel: 'Niet opgeslagen', tekst, icoon: 'alert-circle', tijd: Date.now() }]);
+    },
+    [zet],
+  );
+  const echt = useCallback(() => ref.current.state.modus === 'echt', []);
+
+  /** Zet het account uit de database in de app; zonder account blijft de gebruiker op het aanmeldscherm */
+  const openAccount = useCallback(async () => {
+    try {
+      const a = await account.laadAccount();
+      setState((oud) => ({
+        ...LEEG,
+        uitlaters: maakDemoUitlaters(),
+        verdienmodelId: oud.verdienmodelId,
+        modus: 'echt',
+        ingelogd: true,
+        ...(a ? { gebruiker: a.gebruiker, rol: a.rol, honden: a.honden, mijnProfiel: a.profiel } : {}),
+      }));
+    } catch (e) {
+      setState((s) => ({ ...s, ingelogd: true, laden: false }));
+      meldFout(e);
+    }
+  }, [setState, meldFout]);
+
+  // Sessie van Supabase volgen: bij het starten, na inloggen met Apple, Google of e-mail, en na uitloggen
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((gebeurtenis, sessie) => {
+      // Geen Supabase-aanroepen binnen deze callback zelf; die wachten op elkaar
+      setTimeout(() => {
+        if (gebeurtenis === 'SIGNED_OUT' || !sessie) {
+          setState((s) => (s.modus === 'echt' ? { ...LEEG, uitlaters: maakDemoUitlaters(), verdienmodelId: s.verdienmodelId } : { ...s, laden: false, ingelogd: false }));
+        } else if (gebeurtenis === 'INITIAL_SESSION' || (gebeurtenis === 'SIGNED_IN' && !ref.current.state.gebruiker)) {
+          openAccount();
+        }
+      }, 0);
+    });
+    // Tokens alleen verversen als de app op de voorgrond staat
+    const status = AppStatus.addEventListener('change', (s) => (s === 'active' ? supabase.auth.startAutoRefresh() : supabase.auth.stopAutoRefresh()));
+    return () => {
+      data.subscription.unsubscribe();
+      status.remove();
+    };
+  }, [setState, openAccount]);
+
+  const aanmelden = useCallback(async (g: Gebruiker, rol: Rol) => {
+    if (ref.current.state.ingelogd) {
+      // Fouten gaan terug naar het aanmeldscherm
+      await account.maakAccount(g, rol);
+      await openAccount();
+      return;
+    }
     setState((s) => ({
       ...s,
       gebruiker: g,
@@ -393,7 +462,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       mijnProfiel: rol === 'uitlater' ? null : s.mijnProfiel,
       tegoed: rol === 'eigenaar' ? s.tegoed + modelVoor(s.verdienmodelId).welkomsttegoed : s.tegoed,
     }));
-  }, [setState]);
+  }, [setState, openAccount]);
 
   const demoStart = useCallback((rol: Rol) => {
     const uitlaters = maakDemoUitlaters();
@@ -457,13 +526,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWachtSinds(Date.now());
   }, [setState]);
 
-  const bewaarHond = useCallback((h: Hond) => zet('honden', (hs) => (hs.some((x) => x.id === h.id) ? hs.map((x) => (x.id === h.id ? h : x)) : [...hs, h])), [zet]);
-  const verwijderHond = useCallback((id: string) => zet('honden', (hs) => hs.filter((h) => h.id !== id)), [zet]);
-  const wisselRol = useCallback((r: Rol) => setState((s) => ({ ...s, rol: r, online: r === 'uitlater' ? s.online : false })), [setState]);
-  const bewaarProfiel = useCallback((p: Uitlater) => zet('mijnProfiel', () => p), [zet]);
+  // In een echt account gaat elke wijziging ook naar de database; de app wacht daar niet op
+  const bewaarHond = useCallback(
+    (h: Hond) => {
+      zet('honden', (hs) => (hs.some((x) => x.id === h.id) ? hs.map((x) => (x.id === h.id ? h : x)) : [...hs, h]));
+      if (echt()) account.bewaarHond(h).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  const verwijderHond = useCallback(
+    (id: string) => {
+      zet('honden', (hs) => hs.filter((h) => h.id !== id));
+      if (echt()) account.verwijderHond(id).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  const wisselRol = useCallback(
+    (r: Rol) => {
+      setState((s) => ({ ...s, rol: r, online: r === 'uitlater' ? s.online : false }));
+      if (echt()) account.bewaarRol(r).catch(meldFout);
+    },
+    [setState, meldFout, echt],
+  );
+  const bewaarProfiel = useCallback(
+    (p: Uitlater) => {
+      zet('mijnProfiel', () => p);
+      if (echt()) account.bewaarUitlaatprofiel(p).catch(meldFout);
+    },
+    [zet, meldFout, echt],
+  );
+  // Alleen in de demo; in een echt account zet Woober de verificatie na controle
   const verifieer = useCallback(
-    (stap: keyof Verificatie) => zet('mijnProfiel', (p) => (p ? { ...p, verificatie: { ...p.verificatie, [stap]: true } } : p)),
-    [zet],
+    (stap: keyof Verificatie) => {
+      if (echt()) return;
+      zet('mijnProfiel', (p) => (p ? { ...p, verificatie: { ...p.verificatie, [stap]: true } } : p));
+    },
+    [zet, echt],
   );
   const zetOnline = useCallback((aan: boolean) => {
     setState((s) => ({ ...s, online: aan }));
@@ -864,11 +962,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [zet],
   );
 
-  const accountVerwijderen = useCallback(() => {
+  const opnieuw = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setState((oud) => ({ ...LEEG, uitlaters: maakDemoUitlaters(), verdienmodelId: oud.verdienmodelId, drukteNagebootst: oud.drukteNagebootst }));
   }, [setState]);
+  const accountVerwijderen = useCallback(async () => {
+    if (echt()) {
+      try {
+        await account.verwijderAccount();
+      } catch (e) {
+        meldFout(e);
+        return;
+      }
+    }
+    opnieuw();
+  }, [opnieuw, meldFout, echt]);
+  const uitloggen = useCallback(async () => {
+    // Ook vanuit de demo: een half afgemaakte aanmelding hoort er niet te blijven hangen
+    await account.uitloggen().catch(() => undefined);
+    opnieuw();
+  }, [opnieuw]);
 
   // Verdienmodel en tegoed
 
@@ -919,6 +1033,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ...state,
     aanmelden,
     demoStart,
+    uitloggen,
     bewaarHond,
     verwijderHond,
     wisselRol,

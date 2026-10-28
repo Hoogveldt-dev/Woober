@@ -229,7 +229,7 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 
 | Nu in de demo | Straks in de MVP |
 | --- | --- |
-| Staat in het geheugen (`AppContext.tsx`) | Supabase in eu-central-1 met het schema in `supabase/migrations/`; Auth met e-mail, Apple en Google |
+| Staat in het geheugen (`AppContext.tsx`) | Supabase in eu-central-1 met het schema in `supabase/migrations/`; Auth met e-mail, Apple en Google. **Klaar voor account, adres, honden en uitlaatprofiel** (`src/lib/account.ts`) |
 | Andere kant nagespeeld (`simulatie.ts`) | Echte gebruikers; statuswijzigingen via de databasefuncties (`wijzig_status`, `start_wandeling`) |
 | Eigen SVG-kaart (`Kaart.tsx`) | `react-native-maps` of `expo-maps`; de props (markers, routes, focus) blijven gelijk, `Punt` wordt breedte- en lengtegraad |
 | Positie berekend uit de tijd | `expo-location` met achtergrondtaak, alleen tijdens `bezig`; posities via Supabase Realtime naar de eigenaar |
@@ -258,13 +258,13 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 
 ### Volgorde van bouwen
 
-1. Supabase-project aanmaken (los van Woofer), migratie draaien, Auth instellen.
-2. Accounts, honden en uitlaatprofielen echt opslaan; demo-modus behouden voor presentaties.
+1. ✅ Supabase-project aanmaken (los van Woofer), migratie draaien, Auth instellen. Inloggen met e-mail, Apple en Google zit in de app (`src/lib/account.ts`); de sleutels van Apple en Google moeten nog in Supabase (zie [README.md](README.md#inloggen-met-apple-en-google-instellen)).
+2. ✅ Accounts, honden en uitlaatprofielen echt opslaan, account verwijderen in de app; demo-modus behouden voor presentaties. Tot stap 3 klaar is, ziet een echt account op de kaart de voorbeelden uit de demo, met een melding dat Woober binnenkort start.
 3. Boeken en statusovergangen via de databasefuncties, met Realtime.
 4. Echte kaart en locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer).
 5. Stripe Connect en iDEAL; eerst in testmodus. Het grootboek afstemmen met de Stripe-uitbetalingen. Fase lancering actief.
 6. Pushmeldingen.
-7. Foto's, moderatie, account verwijderen inclusief data.
+7. Foto's, moderatie, account verwijderen inclusief foto's in Storage.
 8. Besloten test met een handvol uitlaters en eigenaren in de pilotstad.
 
 ## Bewust nog niet in de demo

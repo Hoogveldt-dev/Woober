@@ -8,7 +8,7 @@ import { PersoonAvatar } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, useNu } from '../../components/blokken';
 import { Kaart, type KaartMarker } from '../../components/Kaart';
 import { Woordmerk } from '../../components/merk';
-import { Chip } from '../../components/ui';
+import { Chip, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { routeTussen } from '../../lib/route';
 import { reistijdMin, resterendeRitMin, verstrekenMin } from '../../lib/simulatie';
@@ -26,7 +26,7 @@ export default function Uitlaten() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(400);
-  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater } = useApp();
+  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater, modus } = useApp();
   const [bladHoogte, setBladHoogte] = useState(330);
   const [dienst, setDienst] = useState<Dienst>('uitlaten');
 
@@ -135,6 +135,8 @@ export default function Uitlaten() {
         <Text style={s.groet}>
           {begroeting(nu)}, {gebruiker.voornaam}
         </Text>
+        {/* Tot de echte boekingen er zijn (stap 3 in PLAN.md) laat een echt account de voorbeeldwijk zien */}
+        {modus === 'echt' ? <Melding type="info">Woober start binnenkort in jouw buurt. Tot dan zie je hier voorbeelden; boekingen zijn nog niet echt.</Melding> : null}
 
         <View style={s.diensten}>
           {DIENSTEN.map((d) => {
