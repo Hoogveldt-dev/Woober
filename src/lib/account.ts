@@ -102,6 +102,8 @@ export interface Account {
   rol: Rol;
   honden: Hond[];
   profiel: Uitlater | null;
+  /** Lid van het team; ziet het scherm Beheer. Alleen te zetten in de database. */
+  beheerder: boolean;
 }
 
 /** Laadt het account van de ingelogde gebruiker; null als de aanmelding nog niet is afgemaakt */
@@ -109,11 +111,12 @@ export async function laadAccount(): Promise<Account | null> {
   const { data: sessie } = await supabase.auth.getSession();
   const user = sessie.session?.user;
   if (!user) return null;
-  const [profiel, adres, honden, uitlater] = await Promise.all([
+  const [profiel, adres, honden, uitlater, beheer] = await Promise.all([
     supabase.from('profielen').select('voornaam, plaats, rol').eq('id', user.id).maybeSingle(),
     supabase.from('adressen').select('straat_huisnummer, postcode, plaats').eq('gebruiker_id', user.id).maybeSingle(),
     supabase.from('honden').select('*').eq('eigenaar_id', user.id).order('aangemaakt'),
     supabase.from('uitlaters').select('*').eq('id', user.id).maybeSingle(),
+    supabase.from('beheerders').select('gebruiker_id').eq('gebruiker_id', user.id).maybeSingle(),
   ]);
   const fout = profiel.error ?? adres.error ?? honden.error ?? uitlater.error;
   if (fout) throw new Error(vertaal(fout.message));
@@ -131,6 +134,8 @@ export async function laadAccount(): Promise<Account | null> {
     rol: profiel.data.rol as Rol,
     honden: (honden.data ?? []).map(naarHond),
     profiel: uitlater.data ? naarUitlater(uitlater.data, profiel.data.voornaam) : null,
+    // Zonder de migratie beheer geeft deze vraag een fout; dan ben je gewoon geen beheerder
+    beheerder: !beheer.error && beheer.data !== null,
   };
 }
 

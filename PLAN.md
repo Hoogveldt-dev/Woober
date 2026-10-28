@@ -129,7 +129,7 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Plekken: kaart met losloopgebieden, hondvriendelijke stranden, horeca en andere plekken, met reviews; gebruikers voegen zelf plekken toe | `src/app/(tabs)/plekken.tsx`, `src/app/plek/[id].tsx`, `src/app/plek-toevoegen.tsx`, `src/data/plekken.ts`, `src/lib/plekken.ts` |
 | Kaart van de demowijk met routes | `src/components/Kaart.tsx`, `src/data/stad.ts`, `src/lib/route.ts` |
 | Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts`, `src/components/PrijsRegels.tsx` |
-| Verdienmodel: fases, drukte, Woober Plus, tegoed | `src/lib/verdienmodel.ts`, demoscherm `src/app/verdienmodel.tsx` (Account, Verdienmodel) |
+| Verdienmodel: fases, drukte, Woober Plus, tegoed | `src/lib/verdienmodel.ts`, doorrekenen in `src/app/verdienmodel.tsx` en inplannen in `src/app/beheer.tsx` (Account, Beheer, alleen voor beheerders) |
 | Simulatie van de andere kant | `src/lib/simulatie.ts`, `src/state/AppContext.tsx` |
 | Databaseschema met RLS (concept) | `supabase/migrations/`, test: `npm run test:db` |
 
@@ -147,7 +147,7 @@ We beginnen zonder winst om gebruikers binnen te halen. Het Uber-achtige verdien
 
 ### De knoppen en drie fases
 
-Alle knoppen staan op één plek: `src/lib/verdienmodel.ts` in de app, de tabel `verdienmodellen` in de database. In de demo wissel je onder Account, Verdienmodel (demo).
+Alle knoppen staan op één plek: `src/lib/verdienmodel.ts` in de app, de tabel `verdienmodellen` in de database. Beheerders plannen een model in en rekenen de fases door onder Account, Beheer; gewone gebruikers en de demo zien dit niet.
 
 | Knop | Bij Uber | Lancering | Groei | Uber-model |
 | --- | --- | --- | --- | --- |

@@ -21,7 +21,7 @@ function NaarStart() {
 }
 
 function Navigatie() {
-  const { gebruiker, rol, honden, mijnProfiel, laden } = useApp();
+  const { gebruiker, rol, honden, mijnProfiel, laden, beheerder } = useApp();
   const aangemeld = gebruiker !== null;
   const eigenaarKlaar = aangemeld && rol === 'eigenaar' && honden.length > 0;
   const uitlaterKlaar = aangemeld && rol === 'uitlater' && mijnProfiel !== null;
@@ -85,9 +85,14 @@ function Navigatie() {
         <Stack.Screen name="hond/[id]" options={{ headerShown: true, title: 'Hond' }} />
         <Stack.Screen name="profiel-uitlater" options={{ headerShown: true, title: 'Jouw profiel' }} />
         <Stack.Screen name="veiligheid" options={{ headerShown: true, title: 'Veiligheid en hulp' }} />
-        <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
         <Stack.Screen name="plek/[id]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="plek-toevoegen" options={{ headerShown: true, title: 'Plek toevoegen' }} />
+      </Stack.Protected>
+
+      {/* Alleen voor het team (tabel beheerders); demo-gebruikers en gewone accounts zien dit nooit */}
+      <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && beheerder} redirectTo={startpunt}>
+        <Stack.Screen name="beheer" options={{ headerShown: true, title: 'Beheer' }} />
+        <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
       </Stack.Protected>
     </Stack>
     {/* Bij het starten even wachten tot bekend is of er al iemand is ingelogd */}

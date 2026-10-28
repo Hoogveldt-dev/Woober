@@ -63,7 +63,19 @@ Testen: `npx expo start`, dan **Inloggen of account maken**. Op het web werken G
 - **De tijd loopt 30 keer sneller**, dus een wandeling van 30 minuten duurt een minuut. Oppas loopt 120 keer sneller: 3 uur duurt anderhalve minuut. Met **Sneller (demo)** spring je 5 minuten vooruit, bij oppas een half uur. Instelbaar in `src/lib/simulatie.ts`.
 - **De kaart is een verzonnen wijk** aan de Waal, getekend met SVG. Zo werkt alles zonder kaartsleutels, ook op het web. Routes lopen over de straten; wandelingen gaan rond de vijver in het Stadspark.
 - **De ophaalcode** zie je als eigenaar in de app; als uitlater staat de code in de demo onder het invulveld.
-- **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Onder Account, Verdienmodel (demo) wissel je naar Groei of het Uber-model, boots je drukte na en zie je wat eigenaar, uitlater en Woober krijgen. Actiecodes WOOBER5 en BUURT10 geven tegoed.
+- **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Gebruikers zien het verdienmodel niet; alleen beheerders (zie hieronder). Actiecodes WOOBER5 en BUURT10 geven tegoed.
+
+## Beheer
+
+Een beheerder ziet onder Account het menu **Beheer**: het actieve verdienmodel, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen met nagebootste drukte. Demo-gebruikers en gewone accounts zien dit nooit.
+
+Beheerder word je alleen via de database, nooit vanuit de app. Log eerst één keer in met je account en voer dan in de SQL-editor van Supabase uit:
+
+```sql
+insert into public.beheerders (gebruiker_id) select id from auth.users where email = 'jouw@adres.nl';
+```
+
+Daarna opnieuw inloggen. Een beheerder weghalen: `delete from public.beheerders where gebruiker_id = ...`.
 
 ## Wat zit erin
 

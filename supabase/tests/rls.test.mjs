@@ -323,6 +323,19 @@ check('vijf plekken per dag', !(await als(U, `insert into public.plekken (soort,
 check('zesde plek op een dag kan niet', !!(await als(U, `insert into public.plekken (soort, naam, plaats, lat, lng) values ('overig', 'Plek 6', 'Nijmegen', 51.84, 5.86)`)).fout);
 const pt3 = (await als(U, `select id from public.plekken where naam = 'Plek 5'`)).rows[0].id;
 check('eigen nieuwe plek verwijderen', (await als(U, `delete from public.plekken where id = '${pt3}' returning id`)).rows?.length === 1);
+// Beheer
+check('gewone gebruiker is geen beheerder', (await als(E, `select public.ben_beheerder() as b`)).rows?.[0]?.b === false);
+check('zelf beheerder worden kan niet', !!(await als(E, `insert into public.beheerders (gebruiker_id) values ('${E}')`)).fout);
+check('gewone gebruiker plant geen verdienmodel', /beheerders/.test((await als(E, `select public.plan_verdienmodel('groei', now() + interval '20 days')`)).fout ?? ''));
+await db.exec(`insert into public.beheerders (gebruiker_id) values ('${U}')`);
+check('beheerder ziet eigen rol', (await als(U, `select public.ben_beheerder() as b`)).rows?.[0]?.b === true);
+check('beheerders van anderen onzichtbaar', (await als(E, `select * from public.beheerders`)).rows?.length === 0);
+// Eerder in deze test is het Uber-model ingegaan; een lagere commissie mag dan direct (de 15-dagenregel staat hierboven getest)
+check('beheerder plant lagere commissie direct', !(await als(U, `select public.plan_verdienmodel('groei', now() + interval '1 hour', 'Test')`)).fout);
+check('beheerder plant niet met terugwerkende kracht', /terugwerkende/.test((await als(U, `select public.plan_verdienmodel('lancering', now() - interval '1 day')`)).fout ?? ''));
+check('beheerder plant verdienmodel', !(await als(U, `select public.plan_verdienmodel('groei', now() + interval '20 days', 'Test')`)).fout);
+check('onbekend model kan niet', !!(await als(U, `select public.plan_verdienmodel('gratis_alles', now() + interval '20 days')`)).fout);
+await db.exec(`delete from public.verdienmodel_planning where toelichting = 'Test'; delete from public.beheerders`);
 // Accounts
 check('eigen rol bewaren', !(await als(E, `update public.profielen set rol = 'uitlater' where id = '${E}'`)).fout);
 check('ongeldige rol kan niet', !!(await als(E, `update public.profielen set rol = 'beheerder' where id = '${E}'`)).fout);

@@ -17,6 +17,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 - Inloggen (Apple, Google, code per e-mail) en opslaan van het account: `src/lib/account.ts`, client in `src/lib/supabase.ts` (alleen de publieke sleutel), scherm `src/app/aanmelden.tsx`. Instellen van de providers: README.
 - Kaart: `src/components/Kaart.tsx` met de demowijk in `src/data/stad.ts`. Later vervangen door een echte kaart met dezelfde props.
 - Plekken (losloopgebieden, hondvriendelijke stranden, horeca, overig) met reviews: tab `src/app/(tabs)/plekken.tsx`, detail `src/app/plek/[id].tsx`, zelf toevoegen `src/app/plek-toevoegen.tsx` (nieuwe plekken zijn meteen zichtbaar en worden daarna door een mens gecontroleerd), nepdata `src/data/plekken.ts`, tabellen `plekken` en `plek_reviews` in `supabase/migrations/`.
+- Beheer (alleen voor beheerders in de tabel `beheerders`, nooit in de demo): `src/app/beheer.tsx`, `src/lib/beheer.ts`, migratie `20261028010000_beheer.sql`. Instellingen voor het team horen daar, niet in het gewone accountmenu.
 - Databaseschema met RLS (concept): `supabase/migrations/`, getest met `supabase/tests/rls.test.mjs`.
 
 ## Afspraken

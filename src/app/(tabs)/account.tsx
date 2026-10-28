@@ -14,7 +14,7 @@ import { kleuren, radius, ruimte } from '../../theme';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, uitloggen, modus, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [bevestig, setBevestig] = useState(false);
   const [code, setCode] = useState('');
   const [codeUitslag, setCodeUitslag] = useState<{ gelukt: boolean; tekst: string } | null>(null);
@@ -128,7 +128,7 @@ export default function Account() {
           />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
-          {modus === 'demo' ? <MenuRij icoon="pricetags" titel="Verdienmodel (demo)" sub={`Nu: ${verdienmodel.naam}`} onPress={() => router.push('/verdienmodel')} /> : null}
+          {beheerder ? <MenuRij icoon="construct" titel="Beheer" sub="Verdienmodel en andere instellingen, alleen voor het team" onPress={() => router.push('/beheer')} /> : null}
         </Blok>
 
         <View style={s.privacy}>

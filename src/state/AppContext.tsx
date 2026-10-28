@@ -58,6 +58,8 @@ interface AppState {
   ingelogd: boolean;
   /** Bij het starten: nog bezig met kijken of er een sessie is */
   laden: boolean;
+  /** Lid van het team, met toegang tot Beheer (verdienmodel en andere instellingen). Nooit in de demo. */
+  beheerder: boolean;
   gebruiker: Gebruiker | null;
   rol: Rol;
   honden: Hond[];
@@ -175,6 +177,7 @@ const LEEG: AppState = {
   modus: 'demo',
   ingelogd: false,
   laden: false,
+  beheerder: false,
   gebruiker: null,
   rol: 'eigenaar',
   honden: [],
@@ -420,7 +423,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         verdienmodelId: oud.verdienmodelId,
         modus: 'echt',
         ingelogd: true,
-        ...(a ? { gebruiker: a.gebruiker, rol: a.rol, honden: a.honden, mijnProfiel: a.profiel } : {}),
+        ...(a ? { gebruiker: a.gebruiker, rol: a.rol, honden: a.honden, mijnProfiel: a.profiel, beheerder: a.beheerder } : {}),
       }));
     } catch (e) {
       setState((s) => ({ ...s, ingelogd: true, laden: false }));
