@@ -277,6 +277,10 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - Koppeling met Woofer, zoals hetzelfde hondenprofiel
 - Echte foto's, echte locatie, echte betalingen en pushmeldingen
 
+## Genomen beslissingen
+
+- **Tabs voor eigenaren (oktober 2026)**: de eerste tab heet Zoeken; Uitlaten of Oppas kies je bovenin het startscherm. Een eigen tab voor Oppas is afgewezen: zes tabs passen niet goed op een telefoon, het startscherm zou dubbel bestaan en de uitlater-kant is ook niet gesplitst. Overwogen is Activiteit naar Account te verplaatsen en de vrije tab te gebruiken voor Honden (profiel, eerdere wandelingen en rapporten per hond). Voorlopig blijft Activiteit een eigen tab, omdat geplande boekingen en de teller dan direct zichtbaar zijn, zoals bij Uber. Gaat Activiteit later toch naar Account, laat dan de eerstvolgende geplande boeking ook op Zoeken zien.
+
 ## Open vragen
 
 - [ ] Wanneer van Lancering naar Groei en naar het Uber-model? Voorstel: op een aantal wandelingen per week in de pilotstad, niet op een datum.
