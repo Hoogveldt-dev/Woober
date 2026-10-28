@@ -18,6 +18,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 - Kaart: `src/components/Kaart.tsx` met de demowijk in `src/data/stad.ts`. Later vervangen door een echte kaart met dezelfde props.
 - Plekken (losloopgebieden, hondvriendelijke stranden, horeca, overig) met reviews: tab `src/app/(tabs)/plekken.tsx`, detail `src/app/plek/[id].tsx`, zelf toevoegen `src/app/plek-toevoegen.tsx` (nieuwe plekken zijn meteen zichtbaar en worden daarna door een mens gecontroleerd), nepdata `src/data/plekken.ts`, tabellen `plekken` en `plek_reviews` in `supabase/migrations/`. Echte plekken in de pilotstad: `supabase/plekken/nijmegen.json` (met bronnen); `node supabase/plekken/maak-migratie.mjs` haalt coördinaten op en maakt de migratie.
 - Beheer (alleen voor beheerders in de tabel `beheerders`, nooit in de demo): `src/app/beheer.tsx`, `src/lib/beheer.ts`, migratie `20261028010000_beheer.sql`. Instellingen voor het team horen daar, niet in het gewone accountmenu.
+- Teksten die Kjell zelf aanpast: standaard in `src/lib/teksten.ts`, aanpassingen in de tabel `teksten`, gebruik met `useTekst()` uit `src/state/Teksten.tsx`, beheerscherm `src/app/beheer-teksten.tsx`. Maak een tekst die vaak verandert (aankondigingen, contactgegevens, uitleg) aanpasbaar in plaats van hem vast in een scherm te zetten.
 - Databaseschema met RLS (concept): `supabase/migrations/`, getest met `supabase/tests/rls.test.mjs`.
 
 ## Afspraken

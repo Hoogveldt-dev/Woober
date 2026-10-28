@@ -73,6 +73,11 @@ export default function Beheer() {
       <Text style={gedeeldeStijl.titel}>Beheer</Text>
       <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(5) }]}>Alleen zichtbaar voor het team. Wat je hier instelt, geldt voor alle gebruikers.</Text>
 
+      <Sectie>Teksten</Sectie>
+      <Blok>
+        <MenuRij icoon="create" titel="Teksten in de app" sub="Welkomscherm, mededeling, meldingen, privacyverklaring" onPress={() => router.push('/beheer-teksten')} />
+      </Blok>
+
       <Sectie>Verdienmodel</Sectie>
       {!gegevens && !fout ? <ActivityIndicator style={{ marginBottom: ruimte(4) }} /> : null}
       {gegevens ? (

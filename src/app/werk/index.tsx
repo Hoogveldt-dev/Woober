@@ -15,6 +15,7 @@ import { duurTekst, leeftijdTekst, momentTekst, totTekst } from '../../lib/tijd'
 import { verdiendOp } from '../../lib/verdiensten';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
+import { useTekst } from '../../state/Teksten';
 
 function OnlineKnop({ onPress }: { onPress: () => void }) {
   const [puls] = useState(() => new Animated.Value(0));
@@ -59,6 +60,8 @@ export default function Werk() {
   const insets = useSafeAreaInsets();
   const nu = useNu(300);
   const { mijnProfiel, online, zetOnline, openVerzoek, actieveOpdracht, accepteer, weiger, klant, boekingen, modus } = useApp();
+  const binnenkort = useTekst('start.binnenkort_uitlater');
+  const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(300);
   if (!mijnProfiel) return null;
 
@@ -233,7 +236,8 @@ export default function Werk() {
         <RondeKnop icoon="shield-checkmark" label="Veiligheid en hulp" kleur={kleuren.primair} onPress={() => router.push('/veiligheid')} />
       </View>
       <Blad onHoogte={setBladHoogte}>
-        {modus === 'echt' && !actieveOpdracht ? <Melding type="info">Woober start binnenkort in jouw buurt. Tot dan zijn verzoeken voorbeelden en verdien je er nog niets mee.</Melding> : null}
+        {mededeling.trim() && !actieveOpdracht ? <Melding type="info">{mededeling}</Melding> : null}
+        {modus === 'echt' && !actieveOpdracht && binnenkort.trim() ? <Melding type="info">{binnenkort}</Melding> : null}
         {inhoud}
         {geplandVandaag > 0 && !openVerzoek && !actieveOpdracht ? (
           <Pressable onPress={() => router.push('/werk/opdrachten')} style={s.gepland} accessibilityRole="button">

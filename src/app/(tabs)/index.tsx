@@ -16,6 +16,7 @@ import { begroeting, duurTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
 import type { BoekConcept, Dienst } from '../../types';
+import { useTekst } from '../../state/Teksten';
 
 const DIENSTEN: { id: Dienst; titel: string; sub: string; icoon: 'dog-service' | 'sofa' }[] = [
   { id: 'uitlaten', titel: 'Uitlaten', sub: '30 tot 60 minuten', icoon: 'dog-service' },
@@ -27,6 +28,8 @@ export default function Uitlaten() {
   const insets = useSafeAreaInsets();
   const nu = useNu(400);
   const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater, modus } = useApp();
+  const binnenkort = useTekst('start.binnenkort_eigenaar');
+  const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(330);
   const [dienst, setDienst] = useState<Dienst>('uitlaten');
 
@@ -136,7 +139,8 @@ export default function Uitlaten() {
           {begroeting(nu)}, {gebruiker.voornaam}
         </Text>
         {/* Tot de echte boekingen er zijn (stap 3 in PLAN.md) laat een echt account de voorbeeldwijk zien */}
-        {modus === 'echt' ? <Melding type="info">Woober start binnenkort in jouw buurt. Tot dan zie je hier voorbeelden; boekingen zijn nog niet echt.</Melding> : null}
+        {mededeling.trim() ? <Melding type="info">{mededeling}</Melding> : null}
+        {modus === 'echt' && binnenkort.trim() ? <Melding type="info">{binnenkort}</Melding> : null}
 
         <View style={s.diensten}>
           {DIENSTEN.map((d) => {

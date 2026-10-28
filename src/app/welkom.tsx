@@ -8,10 +8,15 @@ import { Logo } from '../components/merk';
 import { Knop } from '../components/ui';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
+import { useTekst } from '../state/Teksten';
 
 export default function Welkom() {
   const router = useRouter();
   const { demoStart } = useApp();
+  const slogan = useTekst('welkom.slogan');
+  const knop = useTekst('welkom.knop');
+  const ondertitel = useTekst('welkom.ondertitel');
+  const demoUitleg = useTekst('welkom.demo');
   const [demoKeuze, setDemoKeuze] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -21,13 +26,13 @@ export default function Welkom() {
         <View style={s.midden}>
           <Logo grootte={88} kleur="#fff" binnen={kleuren.primair} />
           <Text style={s.logo}>woober</Text>
-          <Text style={s.slogan}>Uitlaten of oppas voor je hond, door iemand uit de buurt. Zo geregeld.</Text>
+          <Text style={s.slogan}>{slogan}</Text>
         </View>
 
         <View style={s.knoppen}>
-          <Knop titel="Inloggen of account maken" variant="secundair" stijl={s.witteKnop} onPress={() => router.push('/aanmelden')} />
+          <Knop titel={knop} variant="secundair" stijl={s.witteKnop} onPress={() => router.push('/aanmelden')} />
           <Text style={s.klein}>
-            Het zusje van Woofer. Uitlaters bepalen zelf hun tarief en beschikbaarheid, en jij kiest zelf wie je hond uitlaat.
+            {ondertitel}
           </Text>
           <Text style={s.klein}>
             <Text style={s.link} onPress={() => router.push('/privacy')}>
@@ -40,7 +45,7 @@ export default function Welkom() {
         <View style={[s.demo, { bottom: insets.bottom + ruimte(4), right: insets.right + ruimte(4) }]} pointerEvents="box-none">
           {demoKeuze ? (
             <View style={s.demoKaart}>
-              <Text style={s.demoUitleg}>Kijk rond met verzonnen gegevens. Er wordt niets opgeslagen.</Text>
+              <Text style={s.demoUitleg}>{demoUitleg}</Text>
               <Pressable onPress={() => demoStart('eigenaar')} accessibilityRole="button" style={({ pressed }) => [s.demoOptie, pressed && { opacity: 0.6 }]}>
                 <Ionicons name="paw" size={15} color={kleuren.primair} />
                 <Text style={s.demoOptieTekst}>Als eigenaar</Text>

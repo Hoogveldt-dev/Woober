@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Sectie } from '../components/blokken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
+import { useTekst } from '../state/Teksten';
 
 type IconNaam = ComponentProps<typeof Ionicons>['name'];
 
@@ -23,13 +24,14 @@ function Punt({ icoon, titel, tekst }: { icoon: IconNaam; titel: string; tekst: 
 
 export default function Veiligheid() {
   const { rol } = useApp();
+  const nood = useTekst('veiligheid.nood');
   return (
     <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={gedeeldeStijl.inhoud}>
       <View style={s.nood}>
         <Ionicons name="call" size={22} color="#fff" />
         <View style={{ flex: 1 }}>
           <Text style={s.noodTitel}>Noodgeval</Text>
-          <Text style={s.noodTekst}>112 bij gevaar voor mensen. 144 voor dieren in nood. Meld daarna ook een incident in de app.</Text>
+          <Text style={s.noodTekst}>{nood}</Text>
         </View>
       </View>
 

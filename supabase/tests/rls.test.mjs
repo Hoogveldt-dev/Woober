@@ -335,6 +335,22 @@ check('beheerder plant lagere commissie direct', !(await als(U, `select public.p
 check('beheerder plant niet met terugwerkende kracht', /terugwerkende/.test((await als(U, `select public.plan_verdienmodel('lancering', now() - interval '1 day')`)).fout ?? ''));
 check('beheerder plant verdienmodel', !(await als(U, `select public.plan_verdienmodel('groei', now() + interval '20 days', 'Test')`)).fout);
 check('onbekend model kan niet', !!(await als(U, `select public.plan_verdienmodel('gratis_alles', now() + interval '20 days')`)).fout);
+// Teksten in de app
+check('beheerder past tekst aan', !(await als(U, `insert into public.teksten (sleutel, waarde) values ('welkom.slogan', 'Nieuwe slogan')`)).fout);
+const tk = await db.query(`select gewijzigd_door from public.teksten where sleutel = 'welkom.slogan'`);
+check('tekst onthoudt wie hem aanpaste', tk.rows[0]?.gewijzigd_door === U, JSON.stringify(tk.rows));
+check('gewone gebruiker leest teksten', (await als(E, `select waarde from public.teksten`)).rows?.[0]?.waarde === 'Nieuwe slogan');
+await db.exec(`reset role; set role anon;`);
+const anonTekst = await db.query(`select waarde from public.teksten`).then((r) => r.rows, (e) => e.message);
+const anonSchrijf = await db.query(`insert into public.teksten (sleutel, waarde) values ('x.y', 'z')`).then(() => null, (e) => e.message);
+await db.exec('reset role');
+check('zonder account teksten lezen', Array.isArray(anonTekst) && anonTekst.length === 1, JSON.stringify(anonTekst));
+check('zonder account geen tekst schrijven', !!anonSchrijf);
+check('gewone gebruiker schrijft geen tekst', !!(await als(E, `insert into public.teksten (sleutel, waarde) values ('welkom.knop', 'Hack')`)).fout);
+check('gewone gebruiker past geen tekst aan', (await als(E, `update public.teksten set waarde = 'Hack' returning sleutel`)).rows?.length === 0);
+check('gewone gebruiker zet geen tekst terug', (await als(E, `delete from public.teksten returning sleutel`)).rows?.length === 0);
+check('ongeldige sleutel kan niet', !!(await als(U, `insert into public.teksten (sleutel, waarde) values ('Welkom Slogan!', 'x')`)).fout);
+check('beheerder zet tekst terug', (await als(U, `delete from public.teksten where sleutel = 'welkom.slogan' returning sleutel`)).rows?.length === 1);
 await db.exec(`delete from public.verdienmodel_planning where toelichting = 'Test'; delete from public.beheerders`);
 // Accounts
 check('eigen rol bewaren', !(await als(E, `update public.profielen set rol = 'uitlater' where id = '${E}'`)).fout);

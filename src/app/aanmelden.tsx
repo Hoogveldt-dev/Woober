@@ -9,6 +9,7 @@ import { bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoog
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Rol } from '../types';
+import { useTekst } from '../state/Teksten';
 
 const foutTekst = (e: unknown) => (e instanceof Error ? e.message : 'Er ging iets mis. Probeer het nog eens.');
 
@@ -26,6 +27,9 @@ export default function Aanmelden() {
 }
 
 function Inloggen() {
+  const titel = useTekst('inloggen.titel');
+  const sub = useTekst('inloggen.sub');
+  const privacyZin = useTekst('inloggen.privacy');
   const [bezig, setBezig] = useState<'apple' | 'google' | 'mail' | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [email, setEmail] = useState('');
@@ -56,8 +60,8 @@ function Inloggen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={gedeeldeStijl.inhoud} keyboardShouldPersistTaps="handled">
-        <Text style={gedeeldeStijl.titel}>Welkom bij Woober</Text>
-        <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(6) }]}>Log in of maak een account. Nieuw? Dan vul je daarna je gegevens aan.</Text>
+        <Text style={gedeeldeStijl.titel}>{titel}</Text>
+        <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(6) }]}>{sub}</Text>
 
         <View style={s.sociaal}>
           {appleKnop ? (
@@ -125,7 +129,7 @@ function Inloggen() {
         {fout ? <View style={{ marginTop: ruimte(4) }}><Melding type="fout">{fout}</Melding></View> : null}
 
         <Text style={[gedeeldeStijl.klein, { marginTop: ruimte(6) }]}>
-          Je e-mailadres zien andere gebruikers nooit. Woober gebruikt het alleen om je in te laten loggen en je over je boekingen te berichten.
+          {privacyZin}
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -7,6 +7,7 @@ import { Badge, Knop, Melding } from '../components/ui';
 import { klaarVoorWerk, useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Verificatie } from '../types';
+import { useTekst } from '../state/Teksten';
 
 const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: ComponentProps<typeof Ionicons>['name']; verplicht: boolean }[] = [
   {
@@ -42,6 +43,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
 export default function VerificatieScherm() {
   const router = useRouter();
   const { mijnProfiel, verifieer, modus } = useApp();
+  const uitlegEcht = useTekst('verificatie.echt');
   if (!mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
 
@@ -89,7 +91,7 @@ export default function VerificatieScherm() {
       ) : (
         <Melding type="info">
           {modus === 'echt'
-            ? 'Je profiel is opgeslagen. Woober neemt per e-mail contact met je op om je identiteit, verzekering en rekening te controleren. Daarna kun je online.'
+            ? uitlegEcht
             : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
         </Melding>
       )}

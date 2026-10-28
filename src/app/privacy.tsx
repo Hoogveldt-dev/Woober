@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Melding } from '../components/ui';
+import { useTekst } from '../state/Teksten';
 import { kleuren, ruimte } from '../theme';
 
 /**
@@ -8,14 +9,13 @@ import { kleuren, ruimte } from '../theme';
  * Vul deze aan zodra er meer echt wordt: boekingen, locatie, betalingen, foto's en pushmeldingen.
  * Op het web ook bereikbaar via woober.nl/privacy; die link is nodig voor App Store en Google Play.
  */
-const ORGANISATIE = {
-  naam: '[Naam onderneming] (handelsnaam Woober)',
-  kvk: '[KvK-nummer]',
-  adres: '[Vestigingsadres]',
-  email: '[privacy@woober.nl]',
-};
-const VERSIE = '28 oktober 2026';
-const IS_CONCEPT = true;
+// Naam, KvK, adres, e-mail, versie en de conceptwaarschuwing past een beheerder aan onder Beheer, Teksten.
+interface Organisatie {
+  naam: string;
+  kvk: string;
+  adres: string;
+  email: string;
+}
 
 interface Sectie {
   titel: string;
@@ -23,7 +23,7 @@ interface Sectie {
   punten?: string[];
 }
 
-const SECTIES: Sectie[] = [
+const secties = (ORGANISATIE: Organisatie): Sectie[] => [
   {
     titel: 'Wie zijn wij',
     alineas: [
@@ -78,13 +78,21 @@ const SECTIES: Sectie[] = [
 ];
 
 export default function Privacy() {
+  const organisatie: Organisatie = {
+    naam: useTekst('privacy.organisatie'),
+    kvk: useTekst('privacy.kvk'),
+    adres: useTekst('privacy.adres'),
+    email: useTekst('privacy.email'),
+  };
+  const versie = useTekst('privacy.versie');
+  const concept = useTekst('privacy.concept');
   return (
     <ScrollView contentContainerStyle={s.inhoud}>
       <Text style={s.kop}>Privacy- en cookieverklaring</Text>
-      <Text style={s.versie}>Versie {VERSIE}</Text>
-      {IS_CONCEPT ? <Melding type="waarschuwing">Concept. Deze tekst is nog niet definitief en nog niet juridisch gecontroleerd.</Melding> : null}
+      <Text style={s.versie}>Versie {versie}</Text>
+      {concept.trim() ? <Melding type="waarschuwing">{concept}</Melding> : null}
 
-      {SECTIES.map((sectie) => (
+      {secties(organisatie).map((sectie) => (
         <View key={sectie.titel} style={s.sectie}>
           <Text style={s.titel}>{sectie.titel}</Text>
           {sectie.punten?.map((p) => (

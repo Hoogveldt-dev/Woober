@@ -77,6 +77,8 @@ insert into public.beheerders (gebruiker_id) select id from auth.users where ema
 
 Daarna opnieuw inloggen. Een beheerder weghalen: `delete from public.beheerders where gebruiker_id = ...`.
 
+Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de meldingen op het startscherm, verificatie, het noodnummer en de gegevens in de privacyverklaring. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl. Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts` en gebruik `useTekst()` in het scherm.
+
 ## Wat zit erin
 
 | Eigenaar | Uitlater |

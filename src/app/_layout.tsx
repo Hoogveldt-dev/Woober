@@ -5,6 +5,7 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MeldingBanner } from '../components/merk';
 import { AppProvider, useApp } from '../state/AppContext';
+import { TekstenProvider } from '../state/Teksten';
 import { kleuren } from '../theme';
 
 /**
@@ -92,6 +93,7 @@ function Navigatie() {
       {/* Alleen voor het team (tabel beheerders); demo-gebruikers en gewone accounts zien dit nooit */}
       <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && beheerder} redirectTo={startpunt}>
         <Stack.Screen name="beheer" options={{ headerShown: true, title: 'Beheer' }} />
+        <Stack.Screen name="beheer-teksten" options={{ headerShown: true, title: 'Teksten' }} />
         <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
       </Stack.Protected>
     </Stack>
@@ -108,11 +110,13 @@ function Navigatie() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar style="dark" />
-        <Navigatie />
-        <MeldingBanner />
-      </AppProvider>
+      <TekstenProvider>
+        <AppProvider>
+          <StatusBar style="dark" />
+          <Navigatie />
+          <MeldingBanner />
+        </AppProvider>
+      </TekstenProvider>
     </SafeAreaProvider>
   );
 }
