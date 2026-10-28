@@ -7,7 +7,7 @@ Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde c
 Er zijn twee manieren om de app te gebruiken:
 
 - **Echt account**: inloggen met Apple, Google of een code per e-mail. Account, adres, honden en uitlaatprofiel staan in Supabase (Frankfurt). Boeken, chat, kaart en betalen werken nog met de voorbeelden uit de demo; de app zegt dat er ook bij.
-- **Demo**: op het welkomscherm **Demo eigenaar** of **Demo uitlater**. Alles is verzonnen en wordt niet opgeslagen; na herladen begin je opnieuw.
+- **Demo**: rechtsonder op het welkomscherm **Demo bekijken**, dan als eigenaar of als uitlater. Zo kun je rondkijken voordat je een account maakt. Alles is verzonnen en wordt niet opgeslagen; na herladen begin je opnieuw.
 
 ## Starten
 
@@ -18,7 +18,7 @@ npx expo start        # druk op w (web), i (iOS-simulator) of a (Android)
 
 Op je telefoon: installeer Expo Go en scan de QR-code uit `npx expo start`.
 
-Op het welkomscherm kies je **Demo eigenaar** of **Demo uitlater**. Je kunt later wisselen via Account.
+Op het welkomscherm tik je rechtsonder op **Demo bekijken** en kies je **Als eigenaar** of **Als uitlater**. Je kunt later wisselen via Account.
 
 Controles: `npm run typecheck`, `npx expo lint` en `npm run test:db` (databaseschema en RLS).
 
