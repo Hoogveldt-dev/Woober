@@ -45,8 +45,8 @@ export default function Welkom() {
           </Text>
         </View>
 
-        {/* Eerst rondkijken zonder account: de demo met verzonnen gegevens, klein rechtsonder */}
-        <View style={[s.demo, { bottom: insets.bottom + ruimte(4), right: insets.right + ruimte(4) }]} pointerEvents="box-none">
+        {/* Eerst rondkijken zonder account: de demo met verzonnen gegevens, klein linksonder (rechtsonder zit op het web het Netlify-logo) */}
+        <View style={[s.demo, { bottom: insets.bottom + ruimte(4), left: insets.left + ruimte(4) }]} pointerEvents="box-none">
           {demoKeuze ? (
             <View style={s.demoKaart}>
               <Text style={s.demoUitleg}>{demoUitleg}</Text>
@@ -82,7 +82,7 @@ const s = StyleSheet.create({
   slogan: { color: '#fff', fontSize: 18, textAlign: 'center', marginTop: ruimte(3), maxWidth: 320, lineHeight: 25, opacity: 0.95 },
   knoppen: { width: '100%', maxWidth: 420, alignSelf: 'center' },
   witteKnop: { backgroundColor: '#fff', borderColor: '#fff' },
-  demo: { position: 'absolute', alignItems: 'flex-end', gap: ruimte(2) },
+  demo: { position: 'absolute', alignItems: 'flex-start', gap: ruimte(2) },
   demoKnop: {
     flexDirection: 'row',
     alignItems: 'center',
