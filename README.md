@@ -73,7 +73,7 @@ Een beheerder ziet onder Account het menu **Beheer**. Demo-gebruikers en gewone 
 - **Plekken en meldingen**: nieuwe plekken goedkeuren of verbergen, gemelde plekken en reviews afhandelen met een besluit, elke plek aanpassen of op de kaart verschuiven, en de onderzochte plekken in Nijmegen inladen (`supabase/plekken/nijmegen.json`; de coördinaten zoekt de app bij OpenStreetMap).
 - **Uitlaters verifiëren**: per uitlater identiteit, verzekering, rekening en eventueel VOG aanzetten, met het e-mailadres om stukken op te vragen. Pas met de eerste drie is een uitlater zichtbaar.
 - **Wachtlijst**: wie het wil weten zodra Woober in de buurt start, per postcodegebied.
-- **Teksten in de app**: zie hieronder.
+- **Teksten in de app**: de bewerkmodus en een lijst met alle teksten, zie hieronder.
 - **Verdienmodel**: het actieve model, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen.
 
 Beheerder word je alleen via de database, nooit vanuit de app. Log eerst één keer in met je account en voer dan in de SQL-editor van Supabase uit:
@@ -84,7 +84,13 @@ insert into public.beheerders (gebruiker_id) select id from auth.users where ema
 
 Daarna opnieuw inloggen. Een beheerder weghalen: `delete from public.beheerders where gebruiker_id = ...`.
 
-Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de teksten op het startscherm, verificatie, het noodnummer, het contactadres en de gegevens in de privacyverklaring en de gebruiksvoorwaarden. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl. Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts` en gebruik `useTekst()` in het scherm.
+Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een mededeling voor iedereen, het welkomscherm, het inlogscherm, de teksten en de wachtlijstknop op het startscherm, verificatie, het noodnummer, het contactadres, de uitleg in Woober Fit en de gegevens in de privacyverklaring en de gebruiksvoorwaarden. Iedereen ziet de nieuwe tekst zodra de app opent, ook op woober.nl.
+
+- **Bewerkmodus**: zet hem aan en ga gewoon door de app. Bij elke aanpasbare tekst of knop staat een rood hamertje met een stippellijn eromheen; tik erop om hem aan te passen of de standaard terug te zetten. Lege teksten, zoals een mededeling die uit staat, verschijnen als vak zodat je ze kunt invullen. Met **Klaar** linksonder zet je de modus uit.
+- **Welkomscherm en inlogscherm bekijken**: die zie je normaal niet als je bent ingelogd. Hier krijg je ze met hamers; de knoppen doen niets.
+- **Alle teksten in een lijst**: voor teksten die je in de app moeilijk tegenkomt.
+
+Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts`, gebruik `useTekst()` in het scherm en zet `<Bewerkbaar sleutels="...">` (`src/components/Bewerkbaar.tsx`) om wat hem toont.
 
 ## Wat zit erin
 
