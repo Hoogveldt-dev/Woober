@@ -1,12 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Vinkje } from '../components/blokken';
 import { Knop, Label, Melding, Veld } from '../components/ui';
 import { DEMO_THUIS } from '../data/stad';
-import { bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
+import { bekendeGegevens, controleerInlogcode, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Rol } from '../types';
@@ -36,12 +35,6 @@ function Inloggen() {
   const [email, setEmail] = useState('');
   const [codeVerstuurd, setCodeVerstuurd] = useState(false);
   const [code, setCode] = useState('');
-  const [appleKnop, setAppleKnop] = useState(false);
-
-  // Op iPhone en iPad de knop van Apple zelf, zoals Apple voorschrijft
-  useEffect(() => {
-    if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleKnop, () => setAppleKnop(false));
-  }, []);
 
   const probeer = async (wat: 'apple' | 'google' | 'mail', actie: () => Promise<unknown>) => {
     setFout(null);
@@ -65,17 +58,11 @@ function Inloggen() {
         <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(6) }]}>{sub}</Text>
 
         <View style={s.sociaal}>
-          {appleKnop ? (
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={26}
-              style={s.appleKnop}
-              onPress={() => probeer('apple', inloggenMetApple)}
-            />
-          ) : (
-            <Knop titel="Doorgaan met Apple" variant="secundair" icoon="logo-apple" uitgeschakeld={bezig !== null} onPress={() => probeer('apple', inloggenMetApple)} />
-          )}
+          {/* Apple staat nog niet aan (Apple Developer-lidmaatschap nodig): knop grijs met slotje. Zie ACTIES.md */}
+          <View accessible accessibilityRole="button" accessibilityState={{ disabled: true }} accessibilityLabel="Doorgaan met Apple, nog niet beschikbaar">
+            <Knop titel="Doorgaan met Apple" variant="secundair" icoon="logo-apple" uitgeschakeld onPress={() => {}} />
+            <Ionicons name="lock-closed" size={14} color={kleuren.gedempt} style={s.slot} />
+          </View>
           <Knop titel="Doorgaan met Google" variant="secundair" icoon="logo-google" uitgeschakeld={bezig !== null} onPress={() => probeer('google', inloggenMetGoogle)} />
           {bezig === 'apple' || bezig === 'google' ? <ActivityIndicator color={kleuren.primair} /> : null}
         </View>
@@ -281,7 +268,7 @@ function Gegevens() {
 
 const s = StyleSheet.create({
   sociaal: { gap: ruimte(2) },
-  appleKnop: { height: 52, width: '100%' },
+  slot: { position: 'absolute', right: 18, top: 0, bottom: 0, textAlignVertical: 'center', lineHeight: 52, opacity: 0.7 },
   of: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), marginVertical: ruimte(6) },
   lijn: { flex: 1, height: 1, backgroundColor: kleuren.rand },
   ofTekst: { fontSize: 13, color: kleuren.gedempt },
