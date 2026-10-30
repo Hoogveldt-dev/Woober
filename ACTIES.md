@@ -42,6 +42,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   3. Kan Woober het uitbetaalschema van een verbonden account bepalen of een uitbetaling starten, of kiest de uitlater dat zelf in zijn Mollie-dashboard?
   4. Wat kosten iDEAL | Wero, Apple Pay, kaart, routing en uitbetalingen per stuk, en kan Balance Transfers boven 1.000 euro per maand?
   5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
+  6. Wanneer telt een uitlater als actief voor de maandkosten: bij een betaling, een route of een uitbetaling? En kunnen we een uitlater pas aansluiten bij zijn eerste uitbetaling, met zijn geld tot dan ongerouteerd?
   Is het antwoord van Mollie op vraag 1 nee, kies dan Stripe Connect: uitlaters zonder KvK moeten mee kunnen doen.
 - [ ] **Later, als eigenaren willen storten**: een offerte van Mangopay (wallet-partner met e-geldvergunning). Vraag naar een maandelijks minimum, opstartkosten en kosten per identiteitscontrole; die kunnen voor een start zonder omzet te hoog zijn.
 - [ ] **Storten in een Woober Wallet door eigenaren: kies A, B of C** (PLAN.md, Eisen voor betalen en de wallet). Storten en 1:1 terugkrijgen is elektronisch geld, ook als het credits heet. Laat een jurist met kennis van de Wft en DNB-regels kiezen tussen storten bij de betaalpartner (B) en eigen tegoed onder een uitzondering (C). Tot die keuze betalen eigenaren per boeking (A); dat kan zonder vergunning.
