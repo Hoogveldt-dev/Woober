@@ -123,13 +123,14 @@ check('review na betaalde wandeling', !(await als(E, `insert into public.reviews
 const o1 = await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 180::smallint, null, 'thuis', '', 'kaart', true)`);
 check('geen oppas bij wie dat niet aanbiedt', /dienst niet aan/.test(o1.fout ?? ''), JSON.stringify(o1));
 check('uitlater biedt ook oppas aan', !(await als(U, `update public.uitlaters set diensten = '{uitlaten,oppas}', oppas_per_uur = 1100 where id = '${U}'`)).fout);
-const o2 = await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 45::smallint, null, 'thuis', '', 'kaart', true)`);
+const o2 = await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 45::smallint, null, 'thuis', '', 'kaart', true, p_camera_waar => 'Woonkamer')`);
 check('oppas met wandelduur kan niet', /Ongeldige duur/.test(o2.fout ?? ''), JSON.stringify(o2));
-const o3 = await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 180::smallint, null, 'thuis', 'Eten om 20:00', 'kaart', true) as id`);
+const o3 = await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 180::smallint, null, 'thuis', 'Eten om 20:00', 'kaart', true, p_camera_waar => 'Woonkamer, alleen beeld') as id`);
 check('oppas boeken', !o3.fout, o3.fout);
 const O = o3.rows?.[0]?.id;
-const o4 = await als(E, `select dienst, tarief, servicekosten, commissie, camera_in_huis from public.boekingen where id = '${O}'`);
-check('oppasprijs is uurtarief maal uren', JSON.stringify(o4.rows?.[0]) === JSON.stringify({ dienst: 'oppas', tarief: 3300, servicekosten: 0, commissie: 0, camera_in_huis: true }), JSON.stringify(o4));
+const o4 = await als(E, `select dienst, tarief, servicekosten, commissie, oppas_plek, camera_in_huis, camera_waar from public.boekingen where id = '${O}'`);
+check('oppasprijs is uurtarief maal uren', JSON.stringify(o4.rows?.[0]) === JSON.stringify({ dienst: 'oppas', tarief: 3300, servicekosten: 0, commissie: 0, oppas_plek: 'bij_eigenaar', camera_in_huis: true, camera_waar: 'Woonkamer, alleen beeld' }), JSON.stringify(o4));
+check('camera zonder te zeggen waar kan niet', /camera's hangen/.test((await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 180::smallint, null, 'thuis', '', 'kaart', true)`)).fout ?? ''));
 await betaal(O);
 for (const st of ['onderweg', 'aangekomen']) await als(U, `select public.wijzig_status('${O}', '${st}')`);
 const oc = await als(E, `select code from public.ophaalcodes where boeking_id = '${O}'`);
@@ -632,5 +633,53 @@ check('eigen account verwijderen', !(await als(X, `select public.verwijder_mijn_
 const weg = await db.query(`select (select count(*) from auth.users where id = '${X}')::int as u, (select count(*) from public.profielen where id = '${X}')::int as p, (select count(*) from public.adressen where gebruiker_id = '${X}')::int as a`);
 check('account, profiel en adres weg', weg.rows[0].u === 0 && weg.rows[0].p === 0 && weg.rows[0].a === 0, JSON.stringify(weg.rows));
 check('andere accounts blijven', (await db.query(`select count(*)::int as n from auth.users where id in ('${E}', '${U}')`)).rows[0].n === 2);
+// Oppas bij de oppas thuis, afspraken over het huis en afgeven op een ander punt (20261101000000_oppas_en_afgeven.sql)
+console.log('oppas en afgeven');
+// Eerdere boekingen tussen E en U mogen het adres hier niet al zichtbaar maken
+await db.exec(`update public.boekingen set status = 'afgerond' where eigenaar_id = '${E}' and uitlater_id = '${U}' and status in ('gepland', 'onderweg', 'aangekomen', 'bezig')`);
+const LUNA2 = '44444444-4444-4444-4444-444444444444';
+const later = `now() + interval '2 days'`;
+check('thuis ontvangen zonder je huis te beschrijven kan niet', /huis_beschreven/.test((await als(U, `update public.uitlaters set oppas_plekken = '{bij_eigenaar,bij_oppas}' where id = '${U}'`)).fout ?? ''));
+const huis = await als(U, `update public.uitlaters set oppas_plekken = '{bij_eigenaar,bij_oppas}', huis_kenmerken = '{tuin,rookvrij}',
+  huis_omschrijving = 'Benedenwoning met omheinde tuin, rustige straat, geen andere huisdieren in huis.' where id = '${U}'`);
+check('thuis ontvangen met beschrijving van het huis', !huis.fout, huis.fout);
+check('eigenaar leest de beschrijving van het huis', (await als(E, `select huis_kenmerken from public.uitlaters where id = '${U}'`)).rows?.[0]?.huis_kenmerken?.join() === 'tuin,rookvrij');
+const bijOppas = `select public.vraag_boeking_aan('oppas', '${U}', array['${LUNA2}']::uuid[], 180::smallint, ${later}, 'kastje', '', 'ideal', true, p_oppas_plek => 'bij_oppas', p_camera_waar => 'Hal') as id`;
+check('bij de oppas thuis kan pas met een adres van de oppas', /nog geen adres/.test((await als(E, bijOppas)).fout ?? ''));
+await db.exec(`insert into public.adressen values ('${U}', 'Iepenlaan 3', '6512 CD', 'Nijmegen', 51.83, 5.87)`);
+const bo = (await als(E, bijOppas)).rows?.[0]?.id;
+const boRij = (await woober(`select oppas_plek, sleutel, camera_in_huis, camera_waar from public.boekingen where id = '${bo}'`)).rows[0];
+check('bij de oppas thuis: zelf brengen, geen huisregels van de eigenaar', JSON.stringify(boRij) === JSON.stringify({ oppas_plek: 'bij_oppas', sleutel: 'thuis', camera_in_huis: false, camera_waar: '' }), JSON.stringify(boRij));
+check('adres van de oppas pas na accepteren', (await als(E, `select count(*)::int as n from public.adressen where gebruiker_id = '${U}'`)).rows?.[0]?.n === 0);
+await betaal(bo);
+await als(U, `select public.wijzig_status('${bo}', 'gepland')`);
+check('na accepteren ziet de eigenaar het adres van de oppas', (await als(E, `select straat_huisnummer from public.adressen where gebruiker_id = '${U}'`)).rows?.[0]?.straat_huisnummer === 'Iepenlaan 3');
+check('bij de oppas thuis ziet de oppas het adres van de eigenaar niet', (await als(U, `select count(*)::int as n from public.adressen where gebruiker_id = '${E}'`)).rows?.[0]?.n === 0);
+await db.exec(`update public.boekingen set status = 'afgerond' where id = '${bo}'`);
+check('oppas die niet thuis ontvangt, niet te boeken bij de oppas thuis', !(await als(U, `update public.uitlaters set oppas_plekken = '{bij_eigenaar}' where id = '${U}'`)).fout
+  && /niet op deze plek/.test((await als(E, bijOppas)).fout ?? ''));
+const thuisOppas = (await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['${LUNA2}']::uuid[], 180::smallint, ${later}, 'thuis', '', 'ideal', false,
+  p_voorzieningen => '{wifi,koffie_thee}', p_huisregels => 'Boven is privé') as id`)).rows?.[0]?.id;
+check('oppas leest de afspraken over het huis al bij het verzoek', JSON.stringify((await als(U, `select voorzieningen, huisregels from public.boekingen where id = '${thuisOppas}'`)).rows?.[0])
+  === JSON.stringify({ voorzieningen: ['wifi', 'koffie_thee'], huisregels: 'Boven is privé' }));
+check('onbekende voorziening kan niet', !!(await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['${LUNA2}']::uuid[], 180::smallint, ${later}, 'thuis', '', 'ideal', false, p_voorzieningen => '{zwembad}')`)).fout);
+await db.exec(`update public.boekingen set status = 'geannuleerd' where id = '${thuisOppas}'`);
+// Afgeven op een ander punt: de uitlater ziet het adres niet
+const afg = `select public.vraag_boeking_aan('uitlaten', '${U}', array['${LUNA2}']::uuid[], 30::smallint, ${later}, 'kastje', '', 'ideal'`;
+check('afgiftepunt zonder plek op de kaart kan niet', /op de kaart/.test((await als(E, `${afg}, p_afgifte => 'Ingang Stadspark')`)).fout ?? ''));
+const ap = (await als(E, `${afg}, p_afgifte => 'Ingang Stadspark, bij het hek', p_afgifte_lat => 51.84, p_afgifte_lng => 5.87) as id`)).rows?.[0]?.id;
+check('afgeven op een ander punt: zelf meegeven', (await woober(`select sleutel from public.boekingen where id = '${ap}'`)).rows[0].sleutel === 'thuis');
+await betaal(ap);
+await als(U, `select public.wijzig_status('${ap}', 'gepland')`);
+check('afgeven op een ander punt: uitlater ziet het afgiftepunt', (await als(U, `select afgifte from public.boekingen where id = '${ap}'`)).rows?.[0]?.afgifte === 'Ingang Stadspark, bij het hek');
+check('afgeven op een ander punt: uitlater ziet het adres niet', (await als(U, `select count(*)::int as n from public.adressen where gebruiker_id = '${E}'`)).rows?.[0]?.n === 0);
+const thuisOphalen = (await als(E, `${afg}) as id`)).rows?.[0]?.id;
+await betaal(thuisOphalen);
+await als(U, `select public.wijzig_status('${thuisOphalen}', 'gepland')`);
+check('thuis ophalen: uitlater ziet het adres na accepteren', (await als(U, `select count(*)::int as n from public.adressen where gebruiker_id = '${E}'`)).rows?.[0]?.n === 1);
+const afgOppas = (await als(E, `select public.vraag_boeking_aan('oppas', '${U}', array['${LUNA2}']::uuid[], 120::smallint, ${later}, 'thuis', '', 'ideal', false, p_afgifte => 'Park', p_afgifte_lat => 1, p_afgifte_lng => 1) as id`)).rows?.[0]?.id;
+check('afgiftepunt alleen bij uitlaten', afgOppas && (await woober(`select afgifte from public.boekingen where id = '${afgOppas}'`)).rows[0].afgifte === null);
+const km = (await als(E, `select public.vraag_kennismaking_aan('${U}', ${later}, 'Café De Hoek', 51.845, 5.862) as id`)).rows?.[0]?.id;
+check('kennismaken op een openbare plek', (await als(U, `select afgifte from public.boekingen where id = '${km}'`)).rows?.[0]?.afgifte === 'Café De Hoek');
 console.log(`\n${ok} geslaagd, ${fout} mislukt`);
 process.exit(fout ? 1 : 0);
