@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HondAvatar, PersoonAvatar } from '../../components/avatars';
-import { eigenaarBoekingen } from '../../components/BoekingRij';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie } from '../../components/blokken';
 import { Chip, Knop, Kop, Melding, Veld } from '../../components/ui';
 import { euro } from '../../lib/prijs';
@@ -24,7 +23,6 @@ export default function Account() {
   if (!gebruiker) return null;
   const uitnodigCode = `WOOBER-${gebruiker.voornaam.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 8)}`;
   const aantal = boekingen.filter((b) => b.mijnRol === 'eigenaar' && b.status === 'afgerond' && b.soort === 'betaald').length;
-  const geschiedenis = eigenaarBoekingen(boekingen).eerder.length;
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
@@ -55,16 +53,6 @@ export default function Account() {
               <Ionicons name="chevron-forward" size={18} color={kleuren.gedempt} />
             </Pressable>
           ))}
-        </Blok>
-
-        <Sectie>Geschiedenis</Sectie>
-        <Blok>
-          <MenuRij
-            icoon="time"
-            titel="Eerdere wandelingen en oppas"
-            sub={geschiedenis > 0 ? `${geschiedenis} ${geschiedenis === 1 ? 'boeking' : 'boekingen'}, met rapporten` : 'Nog niets'}
-            onPress={() => router.push('/geschiedenis')}
-          />
         </Blok>
 
         <Sectie>Gegevens</Sectie>

@@ -235,7 +235,7 @@ function WerkDemo() {
       <Kaart markers={markers} routes={routes} focus={focus} bovenmarge={insets.top + 64} ondermarge={bladHoogte} />
       <View style={[s.boven, { top: insets.top + ruimte(2) }]} pointerEvents="box-none">
         <RondeKnop icoon="calendar" label="Opdrachten" onPress={() => router.push('/werk/opdrachten')} />
-        <Pressable onPress={() => router.push('/werk/verdiensten')} style={[s.verdienPil, schaduw]} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/verdiensten')} style={[s.verdienPil, schaduw]} accessibilityRole="button">
           <Text style={s.verdienPilLabel}>Vandaag</Text>
           <Text style={s.verdienPilBedrag}>{euro(vandaag)}</Text>
         </Pressable>

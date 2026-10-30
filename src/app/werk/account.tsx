@@ -7,17 +7,20 @@ import { PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Sterren } from '../../components/blokken';
 import { Badge, Knop, Kop } from '../../components/ui';
 import { DUREN, euro } from '../../lib/prijs';
+import { verdiendOp } from '../../lib/verdiensten';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 import { useTekst } from '../../state/Teksten';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, uitloggen, modus, beheerder } = useApp();
+  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, uitloggen, modus, beheerder, boekingen } = useApp();
   const [bevestig, setBevestig] = useState(false);
+  const [nu] = useState(() => Date.now());
   const contact = useTekst('contact.email');
   if (!gebruiker || !mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
+  const week = Array.from({ length: 7 }, (_, i) => verdiendOp(boekingen, new Date(nu - i * 86400000))).reduce((t, b) => t + b, 0);
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
@@ -32,6 +35,10 @@ export default function UitlaterAccount() {
             {klaar ? <Badge tekst="GEVERIFIEERD" icoon="shield-checkmark" /> : <Badge tekst="VERIFICATIE NODIG" icoon="alert" kleur={kleuren.waarschuwing} />}
           </View>
         </View>
+
+        <Blok>
+          <MenuRij icoon="wallet" titel="Verdiensten" sub={`Laatste 7 dagen: ${euro(week)}`} onPress={() => router.push('/verdiensten')} />
+        </Blok>
 
         <Sectie actie={{ titel: 'Wijzigen', onPress: () => router.push('/profiel-uitlater') }}>Mijn tarief</Sectie>
         <Blok>

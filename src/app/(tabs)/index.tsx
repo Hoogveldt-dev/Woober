@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PersoonAvatar } from '../../components/avatars';
-import { eigenaarBoekingen } from '../../components/BoekingRij';
 import { Blad, RondeKnop, Sterren, useNu } from '../../components/blokken';
 import { Kaart, type KaartMarker } from '../../components/Kaart';
 import { Woordmerk } from '../../components/merk';
@@ -14,7 +13,7 @@ import { Chip, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
 import { routeTussen } from '../../lib/route';
 import { reistijdMin, resterendeRitMin, verstrekenMin } from '../../lib/simulatie';
-import { begroeting, duurTekst, momentTekst } from '../../lib/tijd';
+import { begroeting, duurTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte, schaduw } from '../../theme';
 import type { BoekConcept, Dienst } from '../../types';
@@ -35,7 +34,7 @@ function UitlatenDemo() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const nu = useNu(400);
-  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater, boekingen, series, hondenVan } = useApp();
+  const { gebruiker, honden, uitlaters, bekend, geblokkeerd, actieveBoeking, zetConcept, uitlater } = useApp();
   const mededeling = useTekst('mededeling.tekst');
   const [bladHoogte, setBladHoogte] = useState(330);
   const [dienst, setDienst] = useState<Dienst>('uitlaten');
@@ -55,13 +54,6 @@ function UitlatenDemo() {
   const mijnUitlaters = uitlaters.filter((u) => bekend.includes(u.id) && !geblokkeerd.includes(u.id) && u.diensten.includes(dienst));
   const oppas = dienst === 'oppas';
   const hondNamen = honden.map((h) => h.naam).join(' en ');
-
-  // De eerstvolgende afspraak; alles wat gepland is staat op Afspraken
-  const { gepland } = eigenaarBoekingen(boekingen);
-  const vasteAfspraken = series.filter((x) => x.actief).length;
-  const volgende = gepland[0];
-  const volgendeUitlater = volgende ? uitlater(volgende.uitlaterId) : undefined;
-  const meer = gepland.length + vasteAfspraken - (volgende ? 1 : 0);
 
   const start = (deel: Partial<BoekConcept>) => {
     // Bij oppas gaan standaard alle honden mee; bij uitlaten de eerste
@@ -146,36 +138,6 @@ function UitlatenDemo() {
               </View>
               <Ionicons name="chevron-forward" size={22} color="#fff" />
             </LinearGradient>
-          </Pressable>
-        ) : null}
-
-        {volgende || vasteAfspraken > 0 ? (
-          <Pressable onPress={() => router.push('/afspraken')} accessibilityRole="button" style={({ pressed }) => [s.afspraak, pressed && { backgroundColor: kleuren.vlak }]}>
-            <View style={s.afspraakIcoon}>
-              <Ionicons name="calendar" size={18} color={kleuren.primair} />
-            </View>
-            <View style={{ flex: 1 }}>
-              {volgende && volgendeUitlater ? (
-                <>
-                  <Text style={s.afspraakTitel} numberOfLines={1}>
-                    {hoofdletter(momentTekst(volgende.moment, nu))}
-                  </Text>
-                  <Text style={s.afspraakSub} numberOfLines={1}>
-                    {volgende.soort === 'kennismaking'
-                      ? `Kennismaking met ${volgendeUitlater.voornaam}`
-                      : `${volgende.dienst === 'oppas' ? 'Oppas voor ' : ''}${hondenVan(volgende).map((h) => h.naam).join(' en ')} met ${volgendeUitlater.voornaam}`}
-                    {volgende.status === 'aangevraagd' ? ', nog niet bevestigd' : ''}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={s.afspraakTitel}>Vaste afspraken</Text>
-                  <Text style={s.afspraakSub}>{vasteAfspraken === 1 ? '1 vaste afspraak' : `${vasteAfspraken} vaste afspraken`}</Text>
-                </>
-              )}
-            </View>
-            {volgende && meer > 0 ? <Text style={s.afspraakMeer}>+{meer}</Text> : null}
-            <Ionicons name="chevron-forward" size={18} color={kleuren.gedempt} />
           </Pressable>
         ) : null}
 
@@ -265,15 +227,8 @@ function UitlatenDemo() {
   );
 }
 
-const hoofdletter = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-
 const s = StyleSheet.create({
   scherm: { flex: 1, backgroundColor: kleuren.achtergrond },
-  afspraak: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), padding: ruimte(3), borderRadius: radius.midden, borderWidth: 1, borderColor: kleuren.rand, marginBottom: ruimte(3) },
-  afspraakIcoon: { width: 36, height: 36, borderRadius: 18, backgroundColor: kleuren.primairVlak, alignItems: 'center', justifyContent: 'center' },
-  afspraakTitel: { fontSize: 15, fontWeight: '800', color: kleuren.tekst },
-  afspraakSub: { fontSize: 13, color: kleuren.gedempt, marginTop: 1 },
-  afspraakMeer: { fontSize: 13, fontWeight: '800', color: kleuren.primair },
   boven: { position: 'absolute', left: ruimte(4), right: ruimte(4), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   merkPil: { backgroundColor: '#fff', borderRadius: radius.rond, paddingLeft: 8, paddingRight: 14, paddingVertical: 6 },
   actief: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), padding: ruimte(3), borderRadius: radius.midden, marginBottom: ruimte(3) },

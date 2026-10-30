@@ -27,7 +27,8 @@ export default function UitlaterTabs() {
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar" color={color as string} size={size} />,
         }}
       />
-      <Tabs.Screen name="verdiensten" options={{ title: 'Verdiensten', tabBarIcon: ({ color, size }) => <Ionicons name="wallet" color={color as string} size={size} /> }} />
+      {/* Woober Fit: stappen en koppelingen met fitness-apps. Verdiensten staan onder Account. */}
+      <Tabs.Screen name="fit" options={{ title: 'Fit', tabBarIcon: ({ color, size }) => <Ionicons name="footsteps" color={color as string} size={size} /> }} />
       <Tabs.Screen name="berichten" options={{ title: 'Berichten', tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles" color={color as string} size={size} /> }} />
       <Tabs.Screen name="account" options={{ title: 'Account', tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" color={color as string} size={size} /> }} />
     </Tabs>
