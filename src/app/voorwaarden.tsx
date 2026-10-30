@@ -62,6 +62,7 @@ const secties = (g: Gegevens): Sectie[] => [
     titel: '5. Boeken, prijs en annuleren',
     alineas: [
       'Zodra boeken in jouw buurt beschikbaar is, gelden deze regels. Je ziet vooraf de volledige prijs: het tarief van de uitlater, eventuele toeslagen en eventuele kosten van Woober. Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is; daarna krijgt de uitlater 50% van het tarief. Fooi gaat volledig naar de uitlater. Betaal altijd via de app, zodat de afspraak en de verzekering duidelijk zijn.',
+      'Kwam de uitlater niet opdagen of zegde die op het laatste moment af, meld dat dan in de app bij de boeking. Een medewerker van Woober beoordeelt de melding en vraagt de uitlater om een reactie. Krijg je gelijk, dan betaal je niets voor die boeking en krijg je terug wat je al betaalde. Andere gebruikers zien de melding niet.',
     ],
   },
   {

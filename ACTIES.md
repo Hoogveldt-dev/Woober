@@ -38,6 +38,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
 - [ ] **Balk "Powered by Netlify"**: die ligt op telefoons over de tabbalk en komt niet uit onze code. Kijk in Netlify bij de site-instellingen of je die uit kunt zetten, of laat Claude ruimte maken.
 - [ ] **Uit PLAN.md, nog open**: merkonderzoek naar de naam (BOIP en EUIPO), toets van de Wet platformwerk door een arbeidsrechtspecialist, en de verzekering voor uitlaters en oppassen.
+- [ ] **No-show melden laten meenemen in die toets**: een eigenaar kan melden dat een uitlater niet kwam of laat afzegde; een medewerker beoordeelt dat en de eigenaar krijgt dan zijn geld terug (staat in de demo en in de concept-voorwaarden). Vraag de specialist ook wat een medewerker bij herhaling mag doen, en of de zin "Afzeggen heeft geen gevolgen voor je account" bij uitlaters dan nog klopt. Tot die toets is er niets van zichtbaar voor andere gebruikers.
 
 ## 4. App Store en Google Play
 
@@ -87,7 +88,7 @@ In de tab Fit van uitlaters (Woober Fit) staan Apple Fitness, Google Fit, Strava
 
 Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 
-1. **Echt boeken**: geverifieerde uitlaters op de kaart, boeken met `vraag_boeking_aan`, accepteren, onderweg en ophaalcode met `wijzig_status` en `start_wandeling`, live bijwerken met Realtime, chat via de tabel `berichten`, en personen melden en blokkeren. Daarna gaat de wachtlijst over in "je kunt nu boeken".
+1. **Echt boeken**: geverifieerde uitlaters op de kaart, boeken met `vraag_boeking_aan`, accepteren, onderweg en ophaalcode met `wijzig_status` en `start_wandeling`, live bijwerken met Realtime, chat via de tabel `berichten`, en personen melden en blokkeren. Ook de melding van een no-show of late afzegging (nu alleen in de demo, `src/components/AfspraakMelden.tsx`): naar de tabel `meldingen` met de boeking erbij, in Beheer met een besluit, de uitlater kan reageren, en bij gelijk het geld terug via Stripe zodra betalen er is. Daarna gaat de wachtlijst over in "je kunt nu boeken".
 2. **Pushmeldingen** met `expo-notifications`. Nodig van jou: het EAS-project uit stap 4 en de pushsleutel van Apple.
 3. **Locatie en foto's tijdens de wandeling** met `expo-location` en Supabase Storage. Nodig: een testversie, want Expo Go volstaat dan niet meer.
 4. **Betalen** met Stripe Connect en iDEAL, eerst in testmodus. Nodig van jou: een Stripe-account op naam van de onderneming (met KvK).

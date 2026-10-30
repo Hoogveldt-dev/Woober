@@ -82,7 +82,7 @@ export const TEKSTEN = {
     standaard: '[hulp@woober.nl]',
     hulp: 'Staat bij Veiligheid en hulp, onder Account en in de gebruiksvoorwaarden.',
   },
-  'voorwaarden.versie': { groep: 'Gebruiksvoorwaarden', label: 'Datum van deze versie', standaard: '29 oktober 2026', hulp: 'Bij het aanmelden bewaren we welke versie iemand heeft geaccepteerd.' },
+  'voorwaarden.versie': { groep: 'Gebruiksvoorwaarden', label: 'Datum van deze versie', standaard: '30 oktober 2026', hulp: 'Bij het aanmelden bewaren we welke versie iemand heeft geaccepteerd.' },
   'voorwaarden.concept': {
     groep: 'Gebruiksvoorwaarden',
     label: 'Waarschuwing bovenaan',

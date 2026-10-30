@@ -27,6 +27,7 @@ import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
+  AfspraakMelding,
   AppMelding,
   Beoordeling,
   Betaalmethode,
@@ -143,6 +144,8 @@ interface AppActies {
   stuurBericht: (metId: string, rol: Rol, tekst: string) => void;
   blokkeer: (id: string) => void;
   meld: (id: string, reden: string) => void;
+  /** De uitlater kwam niet of zegde laat af; een medewerker beoordeelt de melding */
+  meldAfspraak: (id: string, soort: AfspraakMelding['soort'], toelichting: string) => void;
   sluitMelding: (id: string) => void;
   /** Review van een plek schrijven of aanpassen; één per gebruiker per plek */
   beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
@@ -339,8 +342,24 @@ function demoGeschiedenisEigenaar(thuis: Punt, adres: string, uitlaters: Uitlate
     wandeling('u2', ['h-moos'], 30, 4, 10, 5),
     wandeling('u1', ['h-luna', 'h-moos'], 180, 5, 19, 5, 'oppas'),
     wandeling('u1', ['h-luna'], 60, 6, 17, null),
+    afgezegd(u('u2'), thuis, adres, 2, 9),
     historie({ mijnRol: 'eigenaar', soort: 'kennismaking', uitlaterId: 'u2', hondIds: ['h-luna', 'h-moos'], ophaalPunt: thuis, adres }, 9, 18),
   ];
+}
+
+/** Voor de demo: een wandeling die de uitlater 40 minuten van tevoren afzegde, zodat je het melden kunt zien */
+function afgezegd(u: Uitlater, thuis: Punt, adres: string, dagenGeleden: number, uur: number): Boeking {
+  const tijdstip = new Date(Date.now() - dagenGeleden * 86400000);
+  tijdstip.setHours(uur, 0, 0, 0);
+  return {
+    ...basisBoeking({ mijnRol: 'eigenaar', uitlaterId: u.id, hondIds: ['h-moos'], ophaalPunt: thuis, adres, prijs: berekenPrijs(u, 'uitlaten', 30, 1, modelVoor('lancering')) }),
+    moment: { type: 'later', tijdstip: tijdstip.getTime() },
+    aangemaakt: tijdstip.getTime() - 2 * 86400000,
+    status: 'geannuleerd',
+    statusSinds: tijdstip.getTime() - 40 * 60000,
+    annuleringskosten: 0,
+    geannuleerdDoor: 'uitlater',
+  };
 }
 
 function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
@@ -659,7 +678,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           ...s,
           tegoed: s.tegoed + terug,
-          boekingen: s.boekingen.map((x) => (x.id === id ? { ...x, status: 'geannuleerd', statusSinds: Date.now(), annuleringskosten: kosten } : x)),
+          boekingen: s.boekingen.map((x) => (x.id === id ? { ...x, status: 'geannuleerd', statusSinds: Date.now(), annuleringskosten: kosten, geannuleerdDoor: b.mijnRol } : x)),
         };
       }),
     [setState],
@@ -912,6 +931,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (plek || review) plekkenDb.meld({ plek, review }, reden).catch(meldFout);
   }, [setState, echt, meldFout]);
 
+  // Echte boekingen bestaan nog niet; met echt boeken gaat dit naar de tabel meldingen (zie ACTIES.md, stap 7)
+  const meldAfspraak = useCallback(
+    (id: string, soort: AfspraakMelding['soort'], toelichting: string) =>
+      wijzigBoeking(id, (b) => (b.afspraakMelding ? b : { ...b, afspraakMelding: { soort, toelichting: toelichting.trim().slice(0, 300), tijd: Date.now(), status: 'open' } })),
+    [wijzigBoeking],
+  );
+
   /** Sluit een melding en alle oudere meldingen voor dezelfde rol */
   const sluitMelding = useCallback(
     (id: string) =>
@@ -1111,6 +1137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     stuurBericht,
     blokkeer,
     meld,
+    meldAfspraak,
     sluitMelding,
     beoordeelPlek,
     verwijderPlekReview,

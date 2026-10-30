@@ -1,4 +1,4 @@
-import type { Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
+import type { AfspraakMelding, Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
 import type { Verdienmodel } from './verdienmodel';
 
 /**
@@ -115,6 +115,26 @@ export function annuleringskosten(b: Boeking, nu: number): number {
     if (urenTot >= GRATIS_ANNULEREN_UUR) return 0;
   }
   return Math.round((b.prijs.tarief + b.prijs.toeslag) * ANNULERINGSDEEL);
+}
+
+/** Zo lang na het afgesproken moment mag een uitlater nog niet zijn begonnen voordat de eigenaar een no-show kan melden */
+export const TE_LAAT_MINUTEN = 15;
+
+/**
+ * Kan de eigenaar melden dat de uitlater niet kwam of op het laatste moment afzegde, en zo ja wat ligt voor de hand?
+ * Een melding beoordeelt altijd een medewerker; hier staat alleen wanneer de knop verschijnt.
+ */
+export function meldbareAfspraak(b: Boeking, nu: number): AfspraakMelding['soort'] | null {
+  if (b.mijnRol !== 'eigenaar' || b.afspraakMelding) return null;
+  const tijdstip = b.moment.type === 'later' ? b.moment.tijdstip : null;
+  if (b.status === 'geannuleerd' && b.geannuleerdDoor === 'uitlater') {
+    const kort = tijdstip === null || tijdstip - b.statusSinds < GRATIS_ANNULEREN_UUR * 3600000;
+    return kort ? 'laat_afgezegd' : null;
+  }
+  // De eigenaar annuleerde zelf en betaalde kosten: mogelijk omdat de uitlater niet kwam
+  if (b.status === 'geannuleerd' && b.geannuleerdDoor === 'eigenaar' && (b.annuleringskosten ?? 0) > 0) return 'niet_gekomen';
+  if (b.status === 'gepland' && tijdstip !== null && nu > tijdstip + TE_LAAT_MINUTEN * 60000) return 'niet_gekomen';
+  return null;
 }
 
 export function euro(centen: number): string {

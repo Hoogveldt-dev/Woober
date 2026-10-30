@@ -45,13 +45,16 @@ export function BoekingRij({
         </Text>
         <Text style={s.sub} numberOfLines={1}>
           {b.status === 'afgerond' || b.status === 'geannuleerd'
-            ? momentTekst({ type: 'later', tijdstip: b.gestart ?? b.statusSinds })
+            ? momentTekst({ type: 'later', tijdstip: b.gestart ?? (b.status === 'geannuleerd' && b.moment.type === 'later' ? b.moment.tijdstip : b.statusSinds) })
             : momentTekst(b.moment)}
           {kennismaking ? '' : `, ${duurTekst(b.duur)}`}
         </Text>
         <View style={s.statusRij}>
           <View style={[s.stip, { backgroundColor: status.kleur }]} />
-          <Text style={[s.status, { color: status.kleur }]}>{status.tekst}</Text>
+          <Text style={[s.status, { color: status.kleur }]}>
+            {b.status === 'geannuleerd' && b.mijnRol === 'eigenaar' && b.geannuleerdDoor === 'uitlater' ? `Afgezegd door ${naam}` : status.tekst}
+          </Text>
+          {b.afspraakMelding ? <Ionicons name="flag" size={12} color={kleuren.waarschuwing} accessibilityLabel="Gemeld" /> : null}
           {b.serieId ? <Ionicons name="repeat" size={13} color={kleuren.gedempt} /> : null}
           {b.beoordelingDoorMij ? <Ionicons name="star" size={12} color={kleuren.ster} /> : null}
         </View>

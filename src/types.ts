@@ -177,6 +177,18 @@ export interface Beoordeling {
   tekst: string;
 }
 
+/**
+ * Melding van de eigenaar dat de uitlater niet kwam of op het laatste moment afzegde. Een medewerker beoordeelt
+ * die (nooit automatisch) en vraagt de uitlater om een reactie; krijgt de eigenaar gelijk, dan krijgt die terug wat
+ * hij voor de boeking betaalde. Andere gebruikers zien hier niets van.
+ */
+export interface AfspraakMelding {
+  soort: 'niet_gekomen' | 'laat_afgezegd';
+  toelichting: string;
+  tijd: number;
+  status: 'open' | 'terecht' | 'niet_terecht';
+}
+
 export interface Boeking {
   id: string;
   /** Betaalde boeking (uitlaten of oppas, zie dienst) of een gratis kennismaking */
@@ -216,6 +228,9 @@ export interface Boeking {
   basisDuur?: number;
   beeindigd?: number;
   annuleringskosten?: number;
+  /** Wie de boeking annuleerde */
+  geannuleerdDoor?: Rol;
+  afspraakMelding?: AfspraakMelding;
   beoordelingDoorMij?: Beoordeling;
   reden?: string;
 }

@@ -5,6 +5,7 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HondenStapel, PersoonAvatar } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, Tegel, useNu } from '../../components/blokken';
+import { AfspraakMelden } from '../../components/AfspraakMelden';
 import { IncidentBlad } from '../../components/IncidentBlad';
 import { Kaart } from '../../components/Kaart';
 import { Knop, Melding } from '../../components/ui';
@@ -144,6 +145,7 @@ export default function Wandeling() {
           ) : (
             <Knop titel="Nu laten beginnen (demo)" icoon="play" variant="secundair" onPress={() => startNu(b.id)} />
           )}
+          <AfspraakMelden b={b} naam={u.voornaam} nu={nu} />
           {annuleerKnop}
         </>
       );
@@ -301,7 +303,7 @@ export default function Wandeling() {
     case 'geweigerd':
       inhoud = (
         <>
-          <Text style={s.titel}>{b.status === 'geannuleerd' ? 'Geannuleerd' : `${u.voornaam} kan helaas niet`}</Text>
+          <Text style={s.titel}>{b.status === 'geweigerd' ? `${u.voornaam} kan helaas niet` : b.geannuleerdDoor === 'uitlater' ? `${u.voornaam} heeft afgezegd` : 'Geannuleerd'}</Text>
           <Text style={s.sub}>
             {b.status === 'geannuleerd'
               ? b.annuleringskosten
@@ -317,6 +319,7 @@ export default function Wandeling() {
               router.replace('/boeken');
             }}
           />
+          <AfspraakMelden b={b} naam={u.voornaam} nu={nu} />
         </>
       );
       break;
