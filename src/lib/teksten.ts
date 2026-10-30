@@ -96,7 +96,7 @@ export const TEKSTEN = {
   'privacy.kvk': { groep: 'Privacyverklaring', label: 'KvK-nummer', standaard: '[KvK-nummer]' },
   'privacy.adres': { groep: 'Privacyverklaring', label: 'Vestigingsadres', standaard: '[Vestigingsadres]' },
   'privacy.email': { groep: 'Privacyverklaring', label: 'E-mailadres voor privacyvragen', standaard: '[privacy@woober.nl]' },
-  'privacy.versie': { groep: 'Privacyverklaring', label: 'Datum van deze versie', standaard: '28 oktober 2026' },
+  'privacy.versie': { groep: 'Privacyverklaring', label: 'Datum van deze versie', standaard: '30 oktober 2026' },
   'privacy.concept': {
     groep: 'Privacyverklaring',
     label: 'Waarschuwing bovenaan',
