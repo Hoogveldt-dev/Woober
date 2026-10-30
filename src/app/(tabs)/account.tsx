@@ -71,7 +71,7 @@ export default function Account() {
           <>
           <Sectie>Standaard betaalmethode</Sectie>
           <View style={[gedeeldeStijl.rij, { marginBottom: ruimte(5) }]}>
-            <Chip label="iDEAL" actief={betaalmethode === 'ideal'} onPress={() => zetBetaalmethode('ideal')} />
+            <Chip label="iDEAL | Wero" actief={betaalmethode === 'ideal'} onPress={() => zetBetaalmethode('ideal')} />
             <Chip label="Apple Pay" icoon="logo-apple" actief={betaalmethode === 'applepay'} onPress={() => zetBetaalmethode('applepay')} />
             <Chip label="Creditcard" icoon="card" actief={betaalmethode === 'kaart'} onPress={() => zetBetaalmethode('kaart')} />
           </View>

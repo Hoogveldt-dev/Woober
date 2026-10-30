@@ -58,7 +58,7 @@ Eén account kan beide rollen hebben, zoals iemand die zelf een hond heeft en oo
 3. Startscherm: kaart met uitlaters in de buurt en de vraag "Wie laat je hond uit?".
 4. Uitlater kiezen: welke honden, wanneer (nu, later, elke week), hoe lang (30, 45 of 60 minuten), sorteren op afstand, beoordeling of prijs.
 5. Nieuwe uitlater? Eerst een gratis kennismaking van een kwartier. Bekende uitlater? Direct boeken.
-6. Bevestigen: sleutelafspraak, bericht, betaalmethode (iDEAL, Apple Pay, kaart), prijsopbouw, annuleringsregels.
+6. Bevestigen: sleutelafspraak, bericht, betaalmethode (iDEAL | Wero, Apple Pay, kaart), prijsopbouw, annuleringsregels.
 7. Live: aanvraag verstuurd, uitlater onderweg met aftellende minuten, ophaalcode, wandeling live met route en foto's, noodknop.
 8. Wandelrapport: route, duur, afstand, plas en poep, foto's, notitie van de uitlater, betaling, fooi en beoordeling. Daarna opnieuw boeken of er een vaste wandeling van maken.
 
@@ -190,6 +190,16 @@ Migratie `supabase/migrations/20261022010000_verdienmodel.sql`:
 - Kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
 - Woober Plus via Stripe Billing; de webhook maakt de regel in `abonnementen`.
 - Het grootboek is de basis voor de afstemming met Stripe en voor de boekhouding.
+
+### Mollie Connect als alternatief (onderzocht 30 oktober 2026)
+
+Kan, maar nog niet beslissen voordat Mollie de open vragen in ACTIES.md (stap 3) heeft beantwoord.
+
+- **iDEAL | Wero kan bij allebei.** iDEAL heet sinds 29 januari 2026 iDEAL | Wero (logo en naam verplicht sinds 31 maart 2026); vanaf eind 2026 lopen betalingen geleidelijk via Wero, afronding eind 2027. Stripe en Mollie bieden het allebei aan. Voor deze eis is wisselen dus niet nodig. Mollie is wel Principal Member van EPI, het bedrijf achter Wero, en een Nederlandse betaalinstelling onder toezicht van DNB.
+- **Grootste risico: uitlaters zonder KvK.** Elke uitlater wordt een verbonden account bij Mollie, en Mollie controleert die als bedrijf (KYB) met bedrijfsgegevens. Een particulier zonder KvK-inschrijving lijkt daar niet in te passen; Stripe Connect Express kan wel particulieren aansluiten. Dit beslist de open vraag in Open vragen (alleen particulieren of ook KvK) mee.
+- **Saldo met Mollie, voorstel: vertraagde routing.** Eigenaren betalen aan het marktplaatsaccount van Woober; Mollie houdt het geld vast (niet Woober) tot Woober routes maakt. Het saldo van een uitlater is wat nog niet naar hem is gerouteerd. Tikt hij op Uitbetalen, dan routeert Woober dat bedrag naar zijn Mollie-account en betaalt Mollie het volgens zijn uitbetaalschema uit. Routes moeten binnen 90 dagen na de betaling bestaan, net als de 90 dagen bij Stripe, dus het automatisch uitbetalen na 90 dagen blijft. Vertraagde routing moet Mollie aanzetten en werkt met bruto-afrekening: de kosten van Mollie komen als maandfactuur.
+- **Betalen met saldo bij Mollie:** het nog niet gerouteerde geld van de uitlater direct naar de andere uitlater routeren. Anders via Balance Transfers, maar daar geldt standaard een maximum van 1.000 euro per maand per verbonden account en de uitlater moet toestemming geven.
+- **Wat in Woober gelijk blijft:** het saldo, de regels in `src/lib/saldo.ts`, het grootboek en `20261030000000_saldo.sql` zijn niet aan Stripe gebonden. Bij een wissel worden alleen de kolommen `stripe_payment_intent` en `stripe_payout_id` algemeen (bijvoorbeeld `betaling_ref`, `uitbetaling_ref`), komt er een serverkoppeling voor Mollie in plaats van Stripe, en gaat "Stripe" uit de teksten (saldo, voorwaarden). De controle van identiteit en rekening van uitlaters doet Mollie bij het aansluiten; Stripe Identity (stap 5 in ACTIES.md) is dan niet nodig, de verzekering blijft handwerk.
 
 ### Een fase wisselen
 

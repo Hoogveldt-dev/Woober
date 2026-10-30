@@ -36,6 +36,13 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 - [ ] **Juridisch laten toetsen**: gebruiksvoorwaarden (`/voorwaarden`) en privacyverklaring (`/privacy`) zijn concepten. Haal daarna de conceptwaarschuwing weg onder Beheer, Teksten.
 - [ ] **Verwerkersovereenkomsten** afsluiten of accepteren met Supabase en Netlify (AVG).
+- [ ] **Betaalpartner kiezen: Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief). Vraag Mollie, met Woober als marktplaats:
+  1. Kunnen uitlaters zonder KvK-inschrijving (particulieren) een verbonden account krijgen voor Mollie Connect for Marketplaces?
+  2. Kunnen we met vertraagde routing het geld van één betaling in delen en op verschillende momenten routeren, ook naar een andere uitlater (voor betalen met saldo)?
+  3. Kan Woober het uitbetaalschema van een verbonden account bepalen of een uitbetaling starten, of kiest de uitlater dat zelf in zijn Mollie-dashboard?
+  4. Wat kosten iDEAL | Wero, Apple Pay, kaart, routing en uitbetalingen per stuk, en kan Balance Transfers boven 1.000 euro per maand?
+  5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
+  Is het antwoord op vraag 1 nee, blijf dan bij Stripe, tenzij je alleen uitlaters met KvK wilt.
 - [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Stripe, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
 - [ ] **Balk "Powered by Netlify"**: die ligt op telefoons over de tabbalk en komt niet uit onze code. Kijk in Netlify bij de site-instellingen of je die uit kunt zetten, of laat Claude ruimte maken.
@@ -94,7 +101,7 @@ Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 1. **Echt boeken**: geverifieerde uitlaters op de kaart, boeken met `vraag_boeking_aan`, accepteren, onderweg en ophaalcode met `wijzig_status` en `start_wandeling`, live bijwerken met Realtime, chat via de tabel `berichten`, en personen melden en blokkeren. Ook de melding van een no-show of late afzegging (nu alleen in de demo, `src/components/AfspraakMelden.tsx`): naar de tabel `meldingen` met de boeking erbij, in Beheer met een besluit, de uitlater kan reageren, en bij gelijk het geld terug via Stripe zodra betalen er is. Daarna gaat de wachtlijst over in "je kunt nu boeken".
 2. **Pushmeldingen** met `expo-notifications`. Nodig van jou: het EAS-project uit stap 4 en de pushsleutel van Apple.
 3. **Locatie en foto's tijdens de wandeling** met `expo-location` en Supabase Storage. Nodig: een testversie, want Expo Go volstaat dan niet meer.
-4. **Betalen** met Stripe Connect en iDEAL, eerst in testmodus, met het saldo van uitlaters: handmatige uitbetalingen, uitbetalen op verzoek, automatisch na 90 dagen, en betalen met saldo via een afschrijving van het Connect-account (zie PLAN.md, Betalen met Stripe Connect). Het saldo staat al in de demo en in de database. Nodig van jou: een Stripe-account op naam van de onderneming (met KvK).
+4. **Betalen** met Stripe Connect of Mollie Connect (jouw keuze in stap 3) en iDEAL | Wero, eerst in testmodus, met het saldo van uitlaters: handmatige uitbetalingen, uitbetalen op verzoek, automatisch na 90 dagen, en betalen met saldo via een afschrijving van het Connect-account (zie PLAN.md, Betalen met Stripe Connect). Het saldo staat al in de demo en in de database. Nodig van jou: een account bij Stripe of Mollie op naam van de onderneming (met KvK).
 5. **Verificatie automatiseren** met Stripe Identity en polis uploaden; tot dan doe je het met de hand in Beheer.
 6. **Besloten test** met een handvol uitlaters en eigenaren in Nijmegen.
 

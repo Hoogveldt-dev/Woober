@@ -127,6 +127,6 @@ Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
 
 - Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`); tot dan alleen in de demo
 - Locatie tijdens de wandeling (`expo-location`)
-- Betalen via Stripe Connect en iDEAL
+- Betalen via Stripe Connect of Mollie Connect, met iDEAL | Wero
 - Pushmeldingen en foto's uploaden
 - Koppelingen van Woober Fit met Apple Gezondheid, Health Connect, Strava en Garmin

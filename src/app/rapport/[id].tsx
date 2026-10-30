@@ -16,7 +16,7 @@ import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
 const FOOIEN = [100, 200, 300, 500];
-const METHODE = { ideal: 'iDEAL', applepay: 'Apple Pay', kaart: 'creditcard' } as const;
+const METHODE = { ideal: 'iDEAL | Wero', applepay: 'Apple Pay', kaart: 'creditcard' } as const;
 
 export default function Rapport() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -13,7 +13,7 @@ import { kleuren, radius, ruimte } from '../theme';
 import type { Betaalmethode, Sleutel } from '../types';
 
 const METHODES: { id: Betaalmethode; titel: string; icoon: ComponentProps<typeof Ionicons>['name'] }[] = [
-  { id: 'ideal', titel: 'iDEAL', icoon: 'business' },
+  { id: 'ideal', titel: 'iDEAL | Wero', icoon: 'business' },
   { id: 'applepay', titel: 'Apple Pay', icoon: 'logo-apple' },
   { id: 'kaart', titel: 'Creditcard', icoon: 'card' },
 ];
@@ -165,7 +165,7 @@ export default function Bevestigen() {
             : rest === 0
               ? `Je betaalt met je saldo. Annuleer je op tijd, dan komt alles terug op je saldo. Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
               : methode === 'ideal'
-              ? `Met iDEAL betaal je direct. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur achteraf.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
+              ? `Met iDEAL | Wero betaal je direct. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur achteraf.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
               : `We reserveren het bedrag nu en schrijven het pas af na afloop.${oppas ? ' Verleng je, dan komt het extra uur erbij.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
         </Melding>
         <Melding type="goed">
