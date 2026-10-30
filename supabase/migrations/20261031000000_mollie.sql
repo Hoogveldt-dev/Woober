@@ -332,9 +332,9 @@ end;
 $$;
 
 create or replace function public.te_controleren_koppelingen()
-returns table (uitlater_id uuid, refresh_token text)
+returns table (uitlater_id uuid, organisatie_id text, refresh_token text)
 language sql stable security definer set search_path = '' as $$
-  select uitlater_id, refresh_token from public.mollie_koppelingen where refresh_token is not null and status <> 'klaar';
+  select uitlater_id, organisatie_id, refresh_token from public.mollie_koppelingen where refresh_token is not null and status <> 'klaar';
 $$;
 
 -- Voor de app: hoe ver ben ik met aansluiten bij Mollie? Null als ik nog niet ben begonnen.
