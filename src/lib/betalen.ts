@@ -42,8 +42,11 @@ async function openBijMollie(url: string, terug: string) {
   await WebBrowser.openAuthSessionAsync(url, terug);
 }
 
-/** Betaalpagina voor een boeking (of fooi) openen; daarna komt de eigenaar terug op /betaald */
-export async function startBetaling(boekingId: string, soort: 'boeking' | 'fooi' = 'boeking', fooi?: number) {
+/**
+ * Betaalpagina openen voor een boeking, een extra uur oppas of een fooi; daarna komt de eigenaar terug op /betaald.
+ * Een extra uur gaat pas in als Mollie meldt dat het betaald is.
+ */
+export async function startBetaling(boekingId: string, soort: 'boeking' | 'verlenging' | 'fooi' = 'boeking', fooi?: number) {
   const terug = appAdres(`betaald?boeking=${encodeURIComponent(boekingId)}`);
   const { url } = await functie<{ url: string }>('betaling-starten', { boekingId, soort, fooi, terug });
   await openBijMollie(url, terug);
@@ -69,7 +72,13 @@ export async function mijnSaldo(): Promise<number> {
 }
 
 export async function mijnUitbetalingen(): Promise<Uitbetaling[]> {
-  const { data, error } = await supabase.from('uitbetalingen').select('id, bedrag, status, aangemaakt').order('aangemaakt', { ascending: false }).limit(50);
+  // Een aanvulling van Woober na een terugboeking gaat niet van het saldo af en is geen uitbetaling
+  const { data, error } = await supabase
+    .from('uitbetalingen')
+    .select('id, bedrag, status, aangemaakt')
+    .eq('reden', 'saldo')
+    .order('aangemaakt', { ascending: false })
+    .limit(50);
   if (error) throw new Error('Je uitbetalingen konden niet worden opgehaald.');
   return (data ?? []).map((u) => ({
     id: u.id as string,

@@ -1,4 +1,4 @@
-import type { AfspraakMelding, Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
+import type { AfspraakMelding, Betaalmethode, Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
 import type { Verdienmodel } from './verdienmodel';
 
 /**
@@ -15,6 +15,29 @@ export const DUREN: WandelDuur[] = [30, 45, 60];
 export const OPPAS_DUREN: OppasDuur[] = [120, 180, 240, 300];
 /** Verlengen van oppas gaat per uur */
 export const VERLENG_MINUTEN = 60;
+
+/** Naam van een betaalmethode in zinnen, zoals "met iDEAL | Wero" */
+export const METHODE_NAAM: Record<Betaalmethode, string> = { ideal: 'iDEAL | Wero', applepay: 'Apple Pay', kaart: 'creditcard' };
+
+/** Oppas duurt hooguit 12 uur, ook na verlengen */
+export const MAX_OPPAS_MINUTEN = 720;
+
+/**
+ * Prijs van een oppas na een uur verlengen, met hetzelfde verdienmodel, dezelfde drukte en hetzelfde tegoed als bij
+ * het boeken (prijs_verlengd() in de migratie). De eigenaar betaalt het verschil meteen; het uur gaat pas in als dat
+ * betaald is.
+ */
+export function prijsNaVerlengen(
+  uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur' | 'toeslagExtraHond'>,
+  b: Pick<Boeking, 'duur' | 'hondIds' | 'prijs'>,
+  model: Verdienmodel,
+): PrijsOpbouw {
+  return berekenPrijs(uitlater, 'oppas', b.duur + VERLENG_MINUTEN, b.hondIds.length, model, {
+    drukteFactor: b.prijs.drukteFactor,
+    plus: b.prijs.plus,
+    tegoed: b.prijs.korting,
+  });
+}
 
 /** Tarief van de uitlater zelf, zonder toeslag: per wandelduur, of uurtarief maal aantal uren bij oppas */
 export function tariefVoor(uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur'>, dienst: Dienst, duur: number): number {

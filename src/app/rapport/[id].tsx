@@ -9,14 +9,13 @@ import { PrijsRegels } from '../../components/PrijsRegels';
 import { WandelFeed } from '../../components/WandelFeed';
 import { REVIEW_TAGS_OPPAS, REVIEW_TAGS_UITLATER } from '../../data/uitlaters';
 import { boekingOpKaart } from '../../lib/kaartLagen';
-import { euro } from '../../lib/prijs';
+import { euro, METHODE_NAAM } from '../../lib/prijs';
 import { formatAfstand, lengte } from '../../lib/route';
 import { dagTekst, duurTekst, tijdTekst } from '../../lib/tijd';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 
 const FOOIEN = [100, 200, 300, 500];
-const METHODE = { ideal: 'iDEAL | Wero', applepay: 'Apple Pay', kaart: 'creditcard' } as const;
 
 export default function Rapport() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -97,7 +96,7 @@ export default function Rapport() {
             tariefLabel={oppas ? `${u.voornaam}, ${duurTekst(b.duur)} oppas` : `Tarief ${u.voornaam}`}
             aantalHonden={b.hondIds.length}
             fooi={b.fooi}
-            totaalLabel={`Betaald met ${METHODE[b.betaalmethode]}`}
+            totaalLabel={`Betaald met ${METHODE_NAAM[b.betaalmethode]}`}
           />
         </Blok>
 

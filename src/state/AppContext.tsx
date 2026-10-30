@@ -6,7 +6,7 @@ import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
 import * as account from '../lib/account';
 import * as plekkenDb from '../lib/plekkenDb';
-import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
+import { annuleringskosten, berekenPrijs, euro, GRATIS, MAX_OPPAS_MINUTEN, prijsNaVerlengen, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
   ACCEPTEER_NA_MS,
@@ -149,7 +149,7 @@ interface AppActies {
   startWandeling: (id: string, code: string) => boolean;
   voegToe: (id: string, soort: GebeurtenisSoort, tekst?: string) => void;
   beeindig: (id: string) => void;
-  /** Oppas met een uur verlengen; in de echte app moet de oppas dit eerst bevestigen */
+  /** Oppas met een uur verlengen. In de demo telt het extra uur als betaald; echt gaat het pas in na betalen (betaling-starten, soort verlenging) */
   verleng: (id: string) => void;
   stuurBericht: (metId: string, rol: Rol, tekst: string) => void;
   blokkeer: (id: string) => void;
@@ -887,21 +887,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wijzigBoeking(id, (b) => {
         if (b.dienst !== 'oppas' || !['gepland', 'onderweg', 'aangekomen', 'bezig'].includes(b.status)) return b;
         const u = uitlaterUit(ref.current.state, b.uitlaterId);
-        if (!u) return b;
         const duur = b.duur + VERLENG_MINUTEN;
+        if (!u || duur > MAX_OPPAS_MINUTEN) return b;
         const nu = Date.now();
         return {
           ...b,
           duur,
-          // Zelfde verdienmodel, drukte en korting als bij het boeken
-          prijs: berekenPrijs(u, 'oppas', duur, b.hondIds.length, modelVoor(b.prijs.modelId), {
-            drukteFactor: b.prijs.drukteFactor,
-            plus: b.prijs.plus,
-            tegoed: b.prijs.korting,
-          }),
+          prijs: prijsNaVerlengen(u, b, modelVoor(b.prijs.modelId)),
           gebeurtenissen: [
             ...b.gebeurtenissen,
-            { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Verlengd tot ${duurTekst(duur)}` },
+            { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Extra uur betaald, verlengd tot ${duurTekst(duur)}` },
           ],
         };
       }),

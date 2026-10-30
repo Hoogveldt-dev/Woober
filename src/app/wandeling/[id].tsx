@@ -11,7 +11,8 @@ import { Kaart } from '../../components/Kaart';
 import { Knop, Melding } from '../../components/ui';
 import { WandelFeed } from '../../components/WandelFeed';
 import { boekingOpKaart } from '../../lib/kaartLagen';
-import { annuleringskosten, euro } from '../../lib/prijs';
+import { annuleringskosten, euro, MAX_OPPAS_MINUTEN, METHODE_NAAM, prijsNaVerlengen, VERLENG_MINUTEN } from '../../lib/prijs';
+import { modelVoor } from '../../lib/verdienmodel';
 import { deelPad, formatAfstand, lengte } from '../../lib/route';
 import { resterendeRitMin, verstrekenMin, wandelVoortgang } from '../../lib/simulatie';
 import { duurTekst, klokTekst, momentTekst, tijdTekst } from '../../lib/tijd';
@@ -56,6 +57,7 @@ export default function Wandeling() {
   const [bladHoogte, setBladHoogte] = useState(360);
   const [incident, setIncident] = useState(false);
   const [bevestigAnnuleren, setBevestigAnnuleren] = useState(false);
+  const [bevestigVerlengen, setBevestigVerlengen] = useState(false);
 
   const b = boekingen.find((x) => x.id === id);
   const u = b ? uitlater(b.uitlaterId) : undefined;
@@ -200,6 +202,7 @@ export default function Wandeling() {
       const minuten = Math.min(b.duur, Math.floor(verstrekenMin(b, nu)));
       if (oppas) {
         const eind = (b.gestart ?? nu) + b.duur * 60000;
+        const extraUur = prijsNaVerlengen(u, b, modelVoor(b.prijs.modelId)).totaal - b.prijs.totaal;
         inhoud = (
           <>
             <View style={s.etaRij}>
@@ -224,14 +227,38 @@ export default function Wandeling() {
             </ScrollView>
             <View style={s.knoppen}>
               <Knop titel="Bericht" variant="secundair" icoon="chatbubble" stijl={{ flex: 1 }} onPress={chat} />
-              <Knop titel="Verlengen" variant="secundair" icoon="add-circle" stijl={{ flex: 1 }} onPress={() => verleng(b.id)} />
+              <Knop
+                titel="Verlengen"
+                variant="secundair"
+                icoon="add-circle"
+                stijl={{ flex: 1 }}
+                uitgeschakeld={b.duur + VERLENG_MINUTEN > MAX_OPPAS_MINUTEN}
+                onPress={() => setBevestigVerlengen(true)}
+              />
             </View>
+            {bevestigVerlengen ? (
+              <View style={[s.bevestig, { backgroundColor: kleuren.primairVlak }]}>
+                <Text style={s.bevestigTekst}>
+                  Een uur langer, tot {tijdTekst(eind + VERLENG_MINUTEN * 60000)}, voor {euro(extraUur)} met {METHODE_NAAM[b.betaalmethode]}. Het uur gaat in
+                  zodra het betaald is; {u.voornaam} ziet het meteen.
+                </Text>
+                <Knop
+                  titel={`Betaal ${euro(extraUur)}`}
+                  icoon="add-circle"
+                  onPress={() => {
+                    verleng(b.id);
+                    setBevestigVerlengen(false);
+                  }}
+                />
+                <Knop titel="Toch niet" variant="tekst" onPress={() => setBevestigVerlengen(false)} />
+              </View>
+            ) : null}
             <Knop titel="Ik ben thuis" icoon="home" stijl={{ marginTop: ruimte(3) }} onPress={() => beeindig(b.id)} />
             <View style={s.demoRij}>
               <Knop titel="Incident melden" variant="tekst" icoon="alert-circle" tekstKleur={kleuren.nope} onPress={() => setIncident(true)} />
               <Knop titel="Half uur verder (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
             </View>
-            <Text style={s.hulp}>Verlengen gaat per uur. Ben je eerder thuis, dan betaal je de geboekte tijd.</Text>
+            <Text style={s.hulp}>Verlengen gaat per uur, tot 12 uur in totaal. Je betaalt het extra uur meteen. Ben je eerder thuis, dan betaal je de geboekte tijd.</Text>
           </>
         );
         break;

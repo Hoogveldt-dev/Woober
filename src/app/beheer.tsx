@@ -103,6 +103,7 @@ export default function Beheer() {
         />
         <MenuRij icoon="shield-checkmark" titel="Uitlaters verifiëren" sub="Identiteit, verzekering en rekening" onPress={() => router.push('/beheer-uitlaters')} />
         <MenuRij icoon="people" titel="Wachtlijst" sub="Wie het wil weten zodra Woober in de buurt start" onPress={() => router.push('/beheer-wachtlijst')} />
+        <MenuRij icoon="return-down-back" titel="Terugboekingen" sub="Betalingen die eigenaren via de bank lieten terugdraaien" onPress={() => router.push('/beheer-terugboekingen')} />
       </Blok>
 
       <Sectie>Teksten in de app</Sectie>

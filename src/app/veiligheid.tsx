@@ -60,7 +60,7 @@ export default function Veiligheid() {
           <Sectie>Oppas aan huis</Sectie>
           <Punt icoon="home" titel="Iemand in je huis" tekst="Kies voor oppas iemand die je al kent van een kennismaking. Leg huisregels, eten en de plek van de riem vast in je bericht." />
           <Punt icoon="videocam" titel="Camera's" tekst="Hangen er camera's in huis, meld dat bij het boeken. Iemand filmen zonder dat die het weet mag niet." />
-          <Punt icoon="time" titel="Later thuis" tekst="Verleng in de app met een uur. De oppas ziet het direct; het extra uur betaal je achteraf." />
+          <Punt icoon="time" titel="Later thuis" tekst="Verleng in de app met een uur. Je betaalt het extra uur meteen; zodra het betaald is, ziet de oppas het." />
         </>
       ) : (
         <>

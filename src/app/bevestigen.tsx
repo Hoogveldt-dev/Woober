@@ -6,7 +6,7 @@ import { HondenStapel, PersoonAvatar } from '../components/avatars';
 import { Blok, gedeeldeStijl, Rij, Sterren, Vinkje } from '../components/blokken';
 import { Chip, Knop, Label, Melding, Veld } from '../components/ui';
 import { PrijsRegels } from '../components/PrijsRegels';
-import { ANNULERINGSDEEL, euro, GRATIS_ANNULEREN_UUR } from '../lib/prijs';
+import { ANNULERINGSDEEL, euro, GRATIS_ANNULEREN_UUR, METHODE_NAAM } from '../lib/prijs';
 import { duurTekst, momentTekst, tijdTekst } from '../lib/tijd';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
@@ -164,9 +164,7 @@ export default function Bevestigen() {
             ? `${u.voornaam} bevestigt de vaste ${keer}. Je betaalt telkens pas na afloop.`
             : rest === 0
               ? `Je betaalt met je saldo. Annuleer je op tijd, dan komt alles terug op je saldo. Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
-              : methode === 'ideal'
-              ? `Met iDEAL | Wero betaal je direct. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur achteraf.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
-              : `We reserveren het bedrag nu en schrijven het pas af na afloop.${oppas ? ' Verleng je, dan komt het extra uur erbij.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
+              : `Je betaalt nu met ${METHODE_NAAM[methode]}. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur meteen in de app.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
         </Melding>
         <Melding type="goed">
           {oppas

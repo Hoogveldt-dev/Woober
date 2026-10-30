@@ -132,6 +132,7 @@ function Navigatie() {
         <Stack.Screen name="beheer-plek" options={{ headerShown: true, title: 'Plek' }} />
         <Stack.Screen name="beheer-uitlaters" options={{ headerShown: true, title: 'Uitlaters verifiëren' }} />
         <Stack.Screen name="beheer-wachtlijst" options={{ headerShown: true, title: 'Wachtlijst' }} />
+        <Stack.Screen name="beheer-terugboekingen" options={{ headerShown: true, title: 'Terugboekingen' }} />
         <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
       </Stack.Protected>
     </Stack>
