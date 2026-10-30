@@ -116,15 +116,15 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Uitlater of oppas kiezen (de "Kies je rit"-stap) | `src/app/boeken.tsx`, `src/lib/zoeken.ts` |
 | Profiel van een uitlater | `src/app/uitlater/[id].tsx` |
 | Kennismaking aanvragen | `src/app/kennismaking.tsx` |
-| Bevestigen en betalen | `src/app/bevestigen.tsx` |
-| Live volgen, ophaalcode, noodknop; bij oppas ook verlengen en "Ik ben thuis" | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
+| Bevestigen en betalen, met afspraken over het huis en afgeven op een ander punt | `src/app/bevestigen.tsx`, `src/lib/huis.ts`, `src/components/Huis.tsx` |
+| Live volgen, ophaalcode, noodknop; bij oppas ook verlengen (eerst betalen) en "Ik ben thuis" | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
 | Wandel- of oppasrapport, fooi, beoordeling | `src/app/rapport/[id].tsx` |
 | Activiteit en vaste wandelingen | `src/app/(tabs)/activiteit.tsx` |
 | Chat met signalering van betalen buiten de app | `src/app/chat/[id].tsx` |
 | Melden en blokkeren | `src/components/MeldenBlad.tsx` |
 | Uitlater: online gaan en verzoeken | `src/app/werk/index.tsx` |
 | Uitlater: opdracht uitvoeren | `src/app/opdracht/[id].tsx` |
-| Uitlater: verdiensten (onder Account), opdrachten, profiel, verificatie | `src/app/werk/*`, `src/app/verdiensten.tsx`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
+| Uitlater: saldo en verdiensten (onder Account), opdrachten, profiel met oppas bij jou thuis, verificatie met Mollie | `src/app/werk/*`, `src/app/saldo.tsx`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
 | Woober Fit voor uitlaters (tab Fit): stappen per dag, week en maand, met honden gewandeld, koppelingen met fitness-apps op slot | `src/app/werk/fit.tsx`, `src/components/Stappenteller.tsx`, `src/lib/fit.ts`, `src/lib/stappen.ts` |
 | Veiligheid en hulp | `src/app/veiligheid.tsx` |
 | Plekken: kaart met losloopgebieden, hondvriendelijke stranden, horeca en andere plekken, met reviews; gebruikers voegen zelf plekken toe | `src/app/(tabs)/plekken.tsx`, `src/app/plek/[id].tsx`, `src/app/plek-toevoegen.tsx`, `src/data/plekken.ts`, `src/lib/plekken.ts` |
@@ -132,6 +132,7 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Prijzen, servicekosten, commissie, annuleren | `src/lib/prijs.ts`, `src/components/PrijsRegels.tsx` |
 | Verdienmodel: fases, drukte, Woober Plus, tegoed | `src/lib/verdienmodel.ts`, doorrekenen in `src/app/verdienmodel.tsx` en inplannen in `src/app/beheer.tsx` (Account, Beheer, alleen voor beheerders) |
 | Simulatie van de andere kant | `src/lib/simulatie.ts`, `src/state/AppContext.tsx` |
+| Betalen met Mollie (echte accounts) en terugboekingen in Beheer | `src/lib/betalen.ts`, `src/app/betaald.tsx`, `src/app/beheer-terugboekingen.tsx`, `supabase/functions/` |
 | Databaseschema met RLS (concept) | `supabase/migrations/`, test: `npm run test:db` |
 
 ## Prijs en verdienmodel
@@ -285,7 +286,7 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Plekken als nepdata (`src/data/plekken.ts`) | **Klaar**: tabel `plekken` met reviews, gevuld door het team (17 onderzochte plekken in Nijmegen, `supabase/plekken/nijmegen.json`) en door gebruikers; een medewerker controleert in Beheer. De demo houdt de nepdata |
 | Melden en blokkeren lokaal | **Klaar voor plekken en reviews**: meldingen komen in Beheer, een medewerker beslist met een besluit. Melden van personen volgt met de echte boekingen |
 
-Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 115 controles). Belangrijkste regels:
+Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run test:db`, 292 controles). Belangrijkste regels:
 
 - Prijzen berekent de database uit het tarief van de uitlater (`tarief_voor()`) en het verdienmodel dat geldt (`bereken_prijs()`); de app stuurt nooit een bedrag mee. App en database rekenen tot op de cent hetzelfde.
 - Een hogere commissie gaat pas 15 dagen na aankondiging in; een ingepland model ligt vast.

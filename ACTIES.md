@@ -1,6 +1,6 @@
 # Woober: wat er nog moet gebeuren
 
-Stand van 30 oktober 2026, bijgewerkt bij de PR met Woober Fit (stap 5). De vinkjes kun je zelf afvinken.
+Stand van 30 oktober 2026, bijgewerkt bij de PR met Woober Fit, saldo, Mollie, oppas bij de oppas thuis en afgeven op een ander punt. De vinkjes kun je zelf afvinken.
 
 ## 1. Voordat je de PR samenvoegt
 
@@ -46,6 +46,8 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   4. Wat kosten iDEAL | Wero, Apple Pay, kaart, routing en uitbetalingen per stuk, en kan Balance Transfers boven 1.000 euro per maand?
   5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
   6. Wanneer telt een uitlater als actief voor de maandkosten: bij een betaling, een route of een uitbetaling? En kunnen we een uitlater pas aansluiten bij zijn eerste uitbetaling, met zijn geld tot dan ongerouteerd?
+  7. Kunnen we voor vaste afspraken een machtiging maken met de eerste iDEAL-betaling en daarna automatisch afschrijven (SEPA-incasso), samen met vertraagde routing?
+  8. Bij een volledige terugboeking haalt Mollie wat naar de uitlater ging bij hem terug: gebeurt dat ook bij vertraagde routing, en zien we dat in de API (veld `amountChargedBack`)?
   Is het antwoord van Mollie op vraag 1 nee, kies dan Stripe Connect: uitlaters zonder KvK moeten mee kunnen doen.
 - [ ] **Mollie instellen** zodra de antwoorden hierboven goed zijn: de 7 stappen in [README.md](README.md#betalen-met-mollie) (account en Connect for Marketplaces, OAuth-app, organisatietoken, Secrets in Supabase, functies uitrollen, de worker elke 5 minuten, eerst testen met de testsleutel). Vraag Mollie ook om vertraagde routing en Balance Transfers aan te zetten. Sla daarbij de pagina's Delayed routing en Balance transfers van docs.mollie.com op (zoals Processing payments), dan loopt Claude de aanroepen met "Controleren" ermee na, of laat docs.mollie.com toe in de netwerkinstellingen van Claude Code. Uitlaters kunnen daarna onder Verificatie hun Mollie-account koppelen; dat werkt al voordat boeken echt kan.
 - [ ] **Later, als eigenaren willen storten**: een offerte van Mangopay (wallet-partner met e-geldvergunning). Vraag naar een maandelijks minimum, opstartkosten en kosten per identiteitscontrole; die kunnen voor een start zonder omzet te hoog zijn.
@@ -53,8 +55,10 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 - [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Mollie, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
 - [ ] **Balk "Powered by Netlify"**: die ligt op telefoons over de tabbalk en komt niet uit onze code. Kijk in Netlify bij de site-instellingen of je die uit kunt zetten, of laat Claude ruimte maken.
+- [ ] **Jouw keuzes uit PLAN.md, Open vragen** (voorstellen staan erbij): of de oppas een verlenging eerst bevestigt en wat er gebeurt als de eigenaar te laat is, hoe vaste afspraken betalen, en (advies: niet) contant betalen.
+- [ ] **Oppas bij de oppas thuis laten meenemen bij de verzekering**: wie is aansprakelijk voor schade door een hond in het huis van de oppas, en dekt de verzekering van de oppas of van de eigenaar dat?
 - [ ] **Uit PLAN.md, nog open**: merkonderzoek naar de naam (BOIP en EUIPO), toets van de Wet platformwerk door een arbeidsrechtspecialist, en de verzekering voor uitlaters en oppassen.
-- [ ] **No-show melden laten meenemen in die toets**: een eigenaar kan melden dat een uitlater niet kwam of laat afzegde; een medewerker beoordeelt dat en de eigenaar krijgt dan zijn geld terug (staat in de demo en in de concept-voorwaarden). Vraag de specialist ook wat een medewerker bij herhaling mag doen, en of de zin "Afzeggen heeft geen gevolgen voor je account" bij uitlaters dan nog klopt. Tot die toets is er niets van zichtbaar voor andere gebruikers.
+- [ ] **No-show melden laten meenemen in die toets**: een eigenaar kan melden dat een uitlater niet kwam of laat afzegde; een medewerker beoordeelt dat en de eigenaar krijgt dan zijn geld terug (staat in de demo en in de concept-voorwaarden). Vraag de specialist ook wat een medewerker bij herhaling mag doen. In de app staat nu: "afzeggen wordt niet bijgehouden; zeg je minder dan 2 uur van tevoren af, dan kan de eigenaar dat melden en kijkt een medewerker ernaar". Tot die toets is er niets van zichtbaar voor andere gebruikers.
 
 ## 4. App Store en Google Play
 

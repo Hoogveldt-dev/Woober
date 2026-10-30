@@ -63,6 +63,7 @@ Testen: `npx expo start`, dan **Inloggen of account maken**. Op het web werken G
 - **De tijd loopt 30 keer sneller**, dus een wandeling van 30 minuten duurt een minuut. Oppas loopt 120 keer sneller: 3 uur duurt anderhalve minuut. Met **Sneller (demo)** spring je 5 minuten vooruit, bij oppas een half uur. Instelbaar in `src/lib/simulatie.ts`.
 - **De kaart is een verzonnen wijk** aan de Waal, getekend met SVG. Zo werkt alles zonder kaartsleutels, ook op het web. Routes lopen over de straten; wandelingen gaan rond de vijver in het Stadspark.
 - **De ophaalcode** zie je als eigenaar in de app; als uitlater staat de code in de demo onder het invulveld.
+- **Oppas bij de oppas thuis**: Fatima en Ellen ontvangen honden thuis. Kies bij Oppas "Bij de oppas thuis"; eerst kennismaken, daarna boeken.
 - **Verdienmodel**: de demo start in de fase Lancering, zonder servicekosten en commissie. Gebruikers zien het verdienmodel niet; alleen beheerders (zie hieronder). Actiecodes WOOBER5 en BUURT10 geven tegoed.
 
 ## Beheer
@@ -73,6 +74,7 @@ Een beheerder ziet onder Account het menu **Beheer**. Demo-gebruikers en gewone 
 - **Plekken en meldingen**: nieuwe plekken goedkeuren of verbergen, gemelde plekken en reviews afhandelen met een besluit, elke plek aanpassen of op de kaart verschuiven, en de onderzochte plekken in Nijmegen inladen (`supabase/plekken/nijmegen.json`; de coördinaten zoekt de app bij OpenStreetMap).
 - **Uitlaters verifiëren**: per uitlater identiteit, verzekering, rekening en eventueel VOG aanzetten, met het e-mailadres om stukken op te vragen. Pas met de eerste drie is een uitlater zichtbaar.
 - **Wachtlijst**: wie het wil weten zodra Woober in de buurt start, per postcodegebied.
+- **Terugboekingen**: betalingen die eigenaren via de bank lieten terugdraaien. Woober draagt het verlies; een medewerker neemt contact op met de eigenaar en legt een besluit vast.
 - **Teksten in de app**: de bewerkmodus en een lijst met alle teksten, zie hieronder.
 - **Verdienmodel**: het actieve model, een nieuw model inplannen (de database weigert terugwerkende kracht en een hogere commissie binnen 15 dagen) en de fases doorrekenen.
 
@@ -100,7 +102,8 @@ Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts`, gebruik `useTe
 | Uitlater kiezen op afstand, beoordeling of prijs | Verzoek met hond, afstand, moment en wat je verdient |
 | Nu, later of elke week boeken, 30 tot 60 minuten | Accepteren of weigeren, zonder gevolgen |
 | Oppas bij jou of bij de oppas thuis, 2 tot 5 uur, verlengen of eerder thuis; afspraken over je huis | Uitlaten, oppas of allebei aanbieden, met eigen uurtarief; honden ook thuis ontvangen |
-| Eerst kennismaken bij een nieuwe uitlater | Navigeren naar de eigenaar, ophaalcode controleren |
+| Eerst kennismaken bij een nieuwe uitlater, thuis of op een openbare plek | Navigeren naar de eigenaar, ophaalcode controleren |
+| De hond afgeven op een openbare plek, zonder je adres te delen | Afspraken over het huis van de eigenaar al bij het verzoek |
 | Live volgen met ophaalcode, route en foto's | Foto, plas, poep, water en notitie tijdens de wandeling |
 | Wandelrapport met fooi en beoordeling | Saldo onder Account: verdiensten, uitbetalen wanneer je wilt, betalen als eigenaar |
 | Chat, melden, blokkeren en noodknop | Eigen tarief, werkgebied, rooster en verificatie |
@@ -186,6 +189,6 @@ Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
 
 - Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`); tot dan alleen in de demo
 - Locatie tijdens de wandeling (`expo-location`)
-- Betalen in de echte boekflow (de koppeling met Mollie staat klaar, zie Betalen met Mollie)
+- Betalen in de echte boekflow (de koppeling met Mollie staat klaar, zie Betalen met Mollie), vaste afspraken automatisch betalen, en de oppas die een verlenging bevestigt (voorstellen in PLAN.md, Open vragen)
 - Pushmeldingen en foto's uploaden
 - Koppelingen van Woober Fit met Apple Gezondheid, Health Connect, Strava en Garmin
