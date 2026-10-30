@@ -36,13 +36,14 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 - [ ] **Juridisch laten toetsen**: gebruiksvoorwaarden (`/voorwaarden`) en privacyverklaring (`/privacy`) zijn concepten. Haal daarna de conceptwaarschuwing weg onder Beheer, Teksten.
 - [ ] **Verwerkersovereenkomsten** afsluiten of accepteren met Supabase en Netlify (AVG).
-- [ ] **Betaalpartner kiezen: Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief). Vraag Mollie, met Woober als marktplaats:
+- [ ] **Betaalpartner kiezen: Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief, en Eisen voor betalen en de wallet). Leg deze vragen voor aan Mollie (bijvoorbeeld via hun salesteam), met Woober als marktplaats:
   1. Kunnen uitlaters zonder KvK-inschrijving (particulieren) een verbonden account krijgen voor Mollie Connect for Marketplaces?
   2. Kunnen we met vertraagde routing het geld van één betaling in delen en op verschillende momenten routeren, ook naar een andere uitlater (voor betalen met saldo)?
   3. Kan Woober het uitbetaalschema van een verbonden account bepalen of een uitbetaling starten, of kiest de uitlater dat zelf in zijn Mollie-dashboard?
   4. Wat kosten iDEAL | Wero, Apple Pay, kaart, routing en uitbetalingen per stuk, en kan Balance Transfers boven 1.000 euro per maand?
   5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
-  Is het antwoord op vraag 1 nee, blijf dan bij Stripe, tenzij je alleen uitlaters met KvK wilt.
+  Is het antwoord van Mollie op vraag 1 nee, blijf dan bij Stripe: uitlaters zonder KvK moeten mee kunnen doen.
+- [ ] **Storten in een Woober Wallet door eigenaren: kies A, B of C** (PLAN.md, Eisen voor betalen en de wallet). Storten en 1:1 terugkrijgen is elektronisch geld, ook als het credits heet. Laat een jurist met kennis van de Wft en DNB-regels kiezen tussen storten bij de betaalpartner (B) en eigen tegoed onder een uitzondering (C). Tot die keuze betalen eigenaren per boeking (A); dat kan zonder vergunning.
 - [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Stripe, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
 - [ ] **Balk "Powered by Netlify"**: die ligt op telefoons over de tabbalk en komt niet uit onze code. Kijk in Netlify bij de site-instellingen of je die uit kunt zetten, of laat Claude ruimte maken.

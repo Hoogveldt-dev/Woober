@@ -201,6 +201,22 @@ Kan, maar nog niet beslissen voordat Mollie de open vragen in ACTIES.md (stap 3)
 - **Betalen met saldo bij Mollie:** het nog niet gerouteerde geld van de uitlater direct naar de andere uitlater routeren. Anders via Balance Transfers, maar daar geldt standaard een maximum van 1.000 euro per maand per verbonden account en de uitlater moet toestemming geven.
 - **Wat in Woober gelijk blijft:** het saldo, de regels in `src/lib/saldo.ts`, het grootboek en `20261030000000_saldo.sql` zijn niet aan Stripe gebonden. Bij een wissel worden alleen de kolommen `stripe_payment_intent` en `stripe_payout_id` algemeen (bijvoorbeeld `betaling_ref`, `uitbetaling_ref`), komt er een serverkoppeling voor Mollie in plaats van Stripe, en gaat "Stripe" uit de teksten (saldo, voorwaarden). De controle van identiteit en rekening van uitlaters doet Mollie bij het aansluiten; Stripe Identity (stap 5 in ACTIES.md) is dan niet nodig, de verzekering blijft handwerk.
 
+### Eisen voor betalen en de wallet (Kjell, 30 oktober 2026)
+
+1. Uitlaters zonder KvK moeten mee kunnen doen. Dat moet de betaalpartner dus ondersteunen; bij Stripe kan het, bij Mollie is het nog niet bevestigd.
+2. Een Woober Wallet waarop je geld stort en waarmee je betaalt, eventueel als credits zoals bij italki (1 euro wordt 1 credit, 1:1 terug te krijgen).
+3. De uitlater bepaalt wanneer er wordt uitbetaald.
+4. Betalen en uitbetalen kosten de gebruiker niets (Woober draagt de kosten van de betaalpartner), zonder maximum tenzij de wet er een vraagt.
+5. Betalen met iDEAL | Wero kan altijd.
+
+1, 3, 4 en 5 passen in wat er staat: het saldo van uitlaters bij de betaalpartner, uitbetalen op verzoek, en iDEAL | Wero bij elke boeking. De drempel van 10 euro voor een uitbetaling is een minimum, geen maximum.
+
+**Storten door eigenaren (eis 2) is juridisch de lastige.** Geld dat iemand vooraf stort, waarmee hij bij anderen (de uitlaters) betaalt en dat hij 1:1 terug kan krijgen, is elektronisch geld. Of het euro's of credits heet maakt niet uit: credits zoals bij italki zijn dat net zo goed. Wie dat uitgeeft, heeft in principe een vergunning van DNB als elektronischgeldinstelling nodig. Mogelijke wegen, van eenvoudig naar zwaar:
+
+- **A. Niet storten, per boeking betalen** (zoals nu): iDEAL | Wero, Apple Pay of kaart bij elke boeking; alleen uitlaters hebben een saldo, en dat staat bij de betaalpartner. Geen vergunning nodig. Advies voor de lancering.
+- **B. Storten bij de betaalpartner**: de storting is een betaling aan het marktplaatsaccount die de betaalpartner vasthoudt tot een boeking; wat binnen 90 dagen niet is gebruikt, gaat automatisch terug. Alleen als de betaalpartner dit zo wil uitvoeren en een jurist bevestigt dat Woober dan zelf geen elektronisch geld uitgeeft.
+- **C. Woober geeft zelf tegoed of credits uit** (italki): kan zonder vergunning alleen met een uitzondering, bijvoorbeeld voor een beperkt netwerk (alleen te gebruiken bij uitlaters die een overeenkomst met Woober hebben; melden bij DNB boven 1 miljoen euro per jaar) of voor kleine instellingen (vroeger maximaal 150 euro per gebruiker; de huidige regels nakijken). Terugbetalen dan alleen naar de rekening waarvan het geld kwam, vanwege witwasregels.
+
 ### Een fase wisselen
 
 1. Kies een bestaand model of maak een nieuw model aan in `verdienmodellen`.
