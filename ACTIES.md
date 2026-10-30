@@ -36,7 +36,8 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 - [ ] **Juridisch laten toetsen**: gebruiksvoorwaarden (`/voorwaarden`) en privacyverklaring (`/privacy`) zijn concepten. Haal daarna de conceptwaarschuwing weg onder Beheer, Teksten.
 - [ ] **Verwerkersovereenkomsten** afsluiten of accepteren met Supabase en Netlify (AVG).
-- [ ] **Betaalpartner kiezen: Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief, en Eisen voor betalen en de wallet). Leg deze vragen voor aan Mollie (bijvoorbeeld via hun salesteam), met Woober als marktplaats:
+- [ ] **Offerte en antwoorden van Mangopay** (aanbevolen partner voor de wallet, zie PLAN.md, Hoe anderen het doen, en de strategie). Vraag: kosten per opwaardering, betaling en uitbetaling bij iDEAL | Wero, Apple Pay en kaart; hun huidige koppeling voor iDEAL | Wero en Wero; welke identiteitscontrole particuliere uitlaters en eigenaren nodig hebben en vanaf welk bedrag; of eigenaren hun saldo terugkrijgen naar de oorspronkelijke betaalmethode; en of één wallet per persoon kan voor zowel betalen als ontvangen.
+- [ ] **Of toch Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief, en Eisen voor betalen en de wallet). Alleen als eigenaren niet hoeven te storten. Leg deze vragen dan voor aan Mollie (bijvoorbeeld via hun salesteam), met Woober als marktplaats:
   1. Kunnen uitlaters zonder KvK-inschrijving (particulieren) een verbonden account krijgen voor Mollie Connect for Marketplaces?
   2. Kunnen we met vertraagde routing het geld van één betaling in delen en op verschillende momenten routeren, ook naar een andere uitlater (voor betalen met saldo)?
   3. Kan Woober het uitbetaalschema van een verbonden account bepalen of een uitbetaling starten, of kiest de uitlater dat zelf in zijn Mollie-dashboard?

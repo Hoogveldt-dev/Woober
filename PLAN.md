@@ -218,6 +218,23 @@ Kan, maar nog niet beslissen voordat Mollie de open vragen in ACTIES.md (stap 3)
 - **C. Woober geeft zelf tegoed of credits uit** (italki): kan zonder vergunning alleen met een uitzondering, bijvoorbeeld voor een beperkt netwerk (alleen te gebruiken bij uitlaters die een overeenkomst met Woober hebben; melden bij DNB boven 1 miljoen euro per jaar) of voor kleine instellingen (vroeger maximaal 150 euro per gebruiker; de huidige regels nakijken). Terugbetalen dan alleen naar de rekening waarvan het geld kwam, vanwege witwasregels.
   - *Zo doet italki het* (betalingsvoorwaarden, gecontroleerd 30 oktober 2026): studenten kopen credits die alleen op italki te gebruiken zijn, krijgen ze niet terug in geld en kunnen ze niet opnemen; na 12 maanden zonder activiteit verlopen ze. Alleen leraren nemen hun verdiensten op. Juist doordat studenten niet kunnen opnemen, is het geen elektronisch geld maar tegoed binnen een beperkt netwerk; daarom heeft italki geen vergunning van DNB nodig. Voor Woober: eigenaren kopen credits zonder terugbetaling in geld (bij annuleren terug als credits), uitlaters nemen hun saldo op zoals nu. Laat de jurist ook naar het consumentenrecht kijken (niet terugbetalen en verlopen).
 
+### Hoe anderen het doen, en de strategie (onderzocht 30 oktober 2026)
+
+| Bedrijf | Wallet | Wie bewaart het geld | Terug te krijgen |
+| --- | --- | --- | --- |
+| Pawshake (dierenoppas, NL) | Geen. Eigenaar betaalt per boeking; Pawshake houdt het vast tot de boeking voorbij is en betaalt de oppas automatisch uit, min 19%, binnen ongeveer 7 dagen | Pawshake via de betaalpartner | Volgens het annuleringsbeleid van de oppas |
+| Uber (NL) | Uber Money: opwaarderen en ermee betalen | Uber Payments B.V., eigen e-geldvergunning van DNB (sinds 2019) | Altijd, naar de oorspronkelijke betaalmethode of per overboeking; niet contant; verloopt niet |
+| Vinted (EU) | Verkopers krijgen hun opbrengst op een saldo, en kunnen het opnemen of ermee kopen | Eerst Mangopay (e-geldinstelling, Luxemburg); sinds 5 oktober 2026 een eigen e-geldinstelling, Vinted Pay UAB (Litouwen) | Opnemen naar een eigen bankrekening, na identiteitscontrole |
+| italki (ter vergelijking) | Credits kopen en ermee betalen | italki zelf | Niet voor studenten; alleen leraren nemen op |
+
+**Strategie: doe het zoals Vinted begon.** Een wallet bij een partner die zelf een vergunning voor elektronisch geld heeft en gemaakt is voor marktplaatsen, zoals Mangopay. Dat voldoet aan alle vijf eisen hierboven: particulieren zonder KvK kunnen meedoen; eigenaren storten via iDEAL | Wero en betalen met hun saldo; ze krijgen het 1:1 terug naar hun rekening; de uitlater kiest zelf wanneer hij opneemt; en Woober heeft geen eigen vergunning nodig, omdat de partner het elektronisch geld uitgeeft. Eén wallet per persoon, voor beide rollen: wat je als uitlater verdient, kun je als eigenaar uitgeven, zoals nu al met het saldo.
+
+- Stripe en Mollie zijn gemaakt voor verkopers met een eigen account, niet voor wallets van kopers. Voor het saldo van uitlaters werken ze, voor storten door eigenaren niet goed. Laat eigenaren niet storten, dan blijft Stripe een goede keuze.
+- Eigen credits zonder terugbetaling (italki) zijn juridisch eenvoudiger, maar eigenaren raken dan hun geld kwijt als ze stoppen. Dat past niet bij eis 2 en is lastig onder het consumentenrecht.
+- Een eigen vergunning, zoals Uber en later Vinted, pas als Woober groot is: dat vraagt eigen vermogen, toezicht en een complianceteam.
+- Wat het kost: Mangopay werkt met een offerte, en hun huidige koppeling voor iDEAL | Wero moet je navragen (de oude staat als verouderd in hun documentatie). Voor opnemen eist Mangopay een identiteitscontrole; die doet Woober voor uitlaters toch al.
+- In de app en de database verandert weinig: het saldo en het grootboek blijven; er komt opwaarderen bij voor eigenaren, met terugbetalen naar de oorspronkelijke betaalmethode.
+
 ### Een fase wisselen
 
 1. Kies een bestaand model of maak een nieuw model aan in `verdienmodellen`.
