@@ -19,7 +19,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   - E-mailtemplate Magic Link: zet `{{ .Token }}` in de tekst, anders krijgt niemand een inlogcode.
   - SMTP: een eigen mailprovider (bijvoorbeeld Postmark of Resend) met afzender op woober.nl. Zonder eigen SMTP stuurt Supabase maar een paar mails per uur.
 - [ ] **Google**: OAuth-client in Google Cloud aanmaken en Client ID en Secret in Supabase zetten.
-- [ ] **Apple**: lidmaatschap Apple Developer, App ID `nl.woober.app` met Sign in with Apple, een Services ID voor web en Android, een sleutel (`.p8`) en het geheim in Supabase. Dat geheim verloopt na 6 maanden: zet een herinnering.
+- [ ] **Apple** (de knop in `src/app/aanmelden.tsx` staat nu grijs met een slotje; haal het slotje weg zodra dit klaar is): lidmaatschap Apple Developer, App ID `nl.woober.app` met Sign in with Apple, een Services ID voor web en Android, een sleutel (`.p8`) en het geheim in Supabase. Dat geheim verloopt na 6 maanden: zet een herinnering.
 - [ ] **Jezelf beheerder maken**: log één keer in op de app en voer in de SQL-editor uit:
   `insert into public.beheerders (gebruiker_id) select id from auth.users where email = 'jouw@adres.nl';`
   Daarna uit- en weer inloggen; onder Account staat dan Beheer.
