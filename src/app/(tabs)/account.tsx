@@ -5,6 +5,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HondAvatar, PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie } from '../../components/blokken';
+import { RolWissel } from '../../components/RolWissel';
 import { Chip, Knop, Kop, Melding, Veld } from '../../components/ui';
 import { euro } from '../../lib/prijs';
 import { leeftijdTekst } from '../../lib/tijd';
@@ -15,7 +16,7 @@ import { useTekst } from '../../state/Teksten';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, wisselRol, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [bevestig, setBevestig] = useState(false);
   const contact = useTekst('contact.email');
   const [code, setCode] = useState('');
@@ -38,6 +39,8 @@ export default function Account() {
             </Text>
           </View>
         </View>
+
+        <RolWissel />
 
         <Sectie actie={{ titel: 'Toevoegen', onPress: () => router.push({ pathname: '/hond/[id]', params: { id: 'nieuw' } }) }}>Mijn honden</Sectie>
         <Blok>
@@ -127,12 +130,6 @@ export default function Account() {
 
         <Sectie>Woober</Sectie>
         <Blok>
-          <MenuRij
-            icoon="bicycle"
-            titel="Zelf uitlaten of oppassen"
-            sub={mijnProfiel ? 'Wissel naar werkmodus' : 'Maak een profiel en verdien bij'}
-            onPress={() => wisselRol('uitlater')}
-          />
           <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
           <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />

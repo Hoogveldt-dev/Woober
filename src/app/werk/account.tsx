@@ -5,6 +5,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Sterren } from '../../components/blokken';
+import { RolWissel } from '../../components/RolWissel';
 import { Badge, Knop, Kop } from '../../components/ui';
 import { DUREN, euro } from '../../lib/prijs';
 import { verdiendOp } from '../../lib/verdiensten';
@@ -14,7 +15,7 @@ import { useTekst } from '../../state/Teksten';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, honden, wisselRol, accountVerwijderen, uitloggen, modus, beheerder, boekingen } = useApp();
+  const { gebruiker, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, boekingen } = useApp();
   const [bevestig, setBevestig] = useState(false);
   const [nu] = useState(() => Date.now());
   const contact = useTekst('contact.email');
@@ -35,6 +36,8 @@ export default function UitlaterAccount() {
             {klaar ? <Badge tekst="GEVERIFIEERD" icoon="shield-checkmark" /> : <Badge tekst="VERIFICATIE NODIG" icoon="alert" kleur={kleuren.waarschuwing} />}
           </View>
         </View>
+
+        <RolWissel />
 
         <Blok>
           <MenuRij icoon="wallet" titel="Verdiensten" sub={`Laatste 7 dagen: ${euro(week)}`} onPress={() => router.push('/verdiensten')} />
@@ -59,7 +62,6 @@ export default function UitlaterAccount() {
             sub={klaar ? 'Identiteit, verzekering en rekening in orde' : 'Nog niet compleet'}
             onPress={() => router.push('/verificatie')}
           />
-          <MenuRij icoon="paw" titel="Mijn eigen hond laten uitlaten" sub={honden.length ? 'Wissel naar eigenaarmodus' : 'Maak een hondenprofiel aan'} onPress={() => wisselRol('eigenaar')} />
           <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, incidenten, regels" onPress={() => router.push('/veiligheid')} />
           <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
           <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
