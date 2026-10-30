@@ -93,7 +93,7 @@ export default function Saldo() {
         ) : null}
       </View>
       <Text style={[gedeeldeStijl.hulp, { marginBottom: ruimte(6) }]}>
-        Je geld staat bij onze betaalpartner Stripe, niet bij Woober. Uitbetalen kan vanaf {euro(MIN_UITBETALING)}, of je hele saldo in één keer. Staat geld {UITBETAAL_DAGEN}{' '}
+        Je geld staat bij onze betaalpartner, een betaalinstelling met een vergunning, niet bij Woober. Uitbetalen kan vanaf {euro(MIN_UITBETALING)}, of je hele saldo in één keer. Staat geld {UITBETAAL_DAGEN}{' '}
         dagen op je saldo, dan maken we het automatisch naar je rekening over.
       </Text>
 

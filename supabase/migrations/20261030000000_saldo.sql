@@ -1,10 +1,10 @@
 -- Saldo van uitlaters (de wallet). Wat een uitlater verdient, blijft staan tot hij het zelf laat uitbetalen, in één
 -- keer in plaats van na elke wandeling. Hij kan het ook gebruiken om als eigenaar zelf een uitlater of oppas te betalen.
 --
--- Het geld zelf blijft bij Stripe: Connect met handmatige uitbetalingen houdt het op de Stripe-rekening van de
--- uitlater tot een uitbetaling wordt gevraagd. Zo bewaart Woober geen geld van gebruikers (zie PLAN.md, Betalen).
--- Deze migratie houdt bij wat er staat, wat gereserveerd is en wat is gevraagd; het serverproces voor Stripe leest
--- de tabel uitbetalingen. Dezelfde regels staan in src/lib/saldo.ts.
+-- Het geld zelf blijft bij de betaalpartner, niet bij Woober (zie PLAN.md, Betalen): bij Mollie Connect met
+-- vertraagde routing is het saldo wat nog niet naar de uitlater is gerouteerd, bij Stripe Connect met handmatige
+-- uitbetalingen wat op zijn account staat. Deze migratie houdt bij wat er staat, wat gereserveerd is en wat is
+-- gevraagd; het serverproces voor de betaalpartner leest de tabel uitbetalingen. Dezelfde regels staan in src/lib/saldo.ts.
 
 -- Deel van de prijs dat de eigenaar met zijn saldo als uitlater betaalt; de rest gaat via de betaalmethode
 alter table public.boekingen add column met_saldo integer not null default 0 check (met_saldo >= 0);
@@ -19,7 +19,8 @@ create table public.uitbetalingen (
   uitlater_id uuid references public.profielen (id) on delete set null,
   bedrag integer not null check (bedrag > 0),
   status text not null default 'aangevraagd' check (status in ('aangevraagd', 'onderweg', 'betaald', 'mislukt')),
-  stripe_payout_id text,
+  -- Kenmerk bij de betaalpartner (route of uitbetaling)
+  extern_id text,
   aangemaakt timestamptz not null default now()
 );
 create index on public.uitbetalingen (uitlater_id, aangemaakt);

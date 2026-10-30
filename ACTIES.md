@@ -36,14 +36,14 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 - [ ] **Juridisch laten toetsen**: gebruiksvoorwaarden (`/voorwaarden`) en privacyverklaring (`/privacy`) zijn concepten. Haal daarna de conceptwaarschuwing weg onder Beheer, Teksten.
 - [ ] **Verwerkersovereenkomsten** afsluiten of accepteren met Supabase en Netlify (AVG).
-- [ ] **Offerte en antwoorden van Mangopay** (aanbevolen partner voor de wallet, zie PLAN.md, Hoe anderen het doen, en de strategie). Vraag: kosten per opwaardering, betaling en uitbetaling bij iDEAL | Wero, Apple Pay en kaart; hun huidige koppeling voor iDEAL | Wero en Wero; welke identiteitscontrole particuliere uitlaters en eigenaren nodig hebben en vanaf welk bedrag; of eigenaren hun saldo terugkrijgen naar de oorspronkelijke betaalmethode; en of één wallet per persoon kan voor zowel betalen als ontvangen.
-- [ ] **Of toch Stripe of Mollie** (zie PLAN.md, Mollie Connect als alternatief, en Eisen voor betalen en de wallet). Alleen als eigenaren niet hoeven te storten. Leg deze vragen dan voor aan Mollie (bijvoorbeeld via hun salesteam), met Woober als marktplaats:
+- [ ] **Offerte en antwoorden van Mollie voor Connect for Marketplaces** (de gekozen weg voor de lancering, zie PLAN.md, Hoe anderen het doen, en de strategie). Vraag hun salesteam, met Woober als marktplaats van uitlaters en oppassen, ook om een offerte met de kosten per aangesloten en per actieve uitlater, routering en uitbetalingen, en of de eerste uitbetalingen van een uitlater gratis zijn:
   1. Kunnen uitlaters zonder KvK-inschrijving (particulieren) een verbonden account krijgen voor Mollie Connect for Marketplaces?
   2. Kunnen we met vertraagde routing het geld van één betaling in delen en op verschillende momenten routeren, ook naar een andere uitlater (voor betalen met saldo)?
   3. Kan Woober het uitbetaalschema van een verbonden account bepalen of een uitbetaling starten, of kiest de uitlater dat zelf in zijn Mollie-dashboard?
   4. Wat kosten iDEAL | Wero, Apple Pay, kaart, routing en uitbetalingen per stuk, en kan Balance Transfers boven 1.000 euro per maand?
   5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
-  Is het antwoord van Mollie op vraag 1 nee, blijf dan bij Stripe: uitlaters zonder KvK moeten mee kunnen doen.
+  Is het antwoord van Mollie op vraag 1 nee, kies dan Stripe Connect: uitlaters zonder KvK moeten mee kunnen doen.
+- [ ] **Later, als eigenaren willen storten**: een offerte van Mangopay (wallet-partner met e-geldvergunning). Vraag naar een maandelijks minimum, opstartkosten en kosten per identiteitscontrole; die kunnen voor een start zonder omzet te hoog zijn.
 - [ ] **Storten in een Woober Wallet door eigenaren: kies A, B of C** (PLAN.md, Eisen voor betalen en de wallet). Storten en 1:1 terugkrijgen is elektronisch geld, ook als het credits heet. Laat een jurist met kennis van de Wft en DNB-regels kiezen tussen storten bij de betaalpartner (B) en eigen tegoed onder een uitzondering (C). Tot die keuze betalen eigenaren per boeking (A); dat kan zonder vergunning.
 - [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Stripe, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
@@ -104,7 +104,7 @@ Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 2. **Pushmeldingen** met `expo-notifications`. Nodig van jou: het EAS-project uit stap 4 en de pushsleutel van Apple.
 3. **Locatie en foto's tijdens de wandeling** met `expo-location` en Supabase Storage. Nodig: een testversie, want Expo Go volstaat dan niet meer.
 4. **Betalen** met Stripe Connect of Mollie Connect (jouw keuze in stap 3) en iDEAL | Wero, eerst in testmodus, met het saldo van uitlaters: handmatige uitbetalingen, uitbetalen op verzoek, automatisch na 90 dagen, en betalen met saldo via een afschrijving van het Connect-account (zie PLAN.md, Betalen met Stripe Connect). Het saldo staat al in de demo en in de database. Nodig van jou: een account bij Stripe of Mollie op naam van de onderneming (met KvK).
-5. **Verificatie automatiseren** met Stripe Identity en polis uploaden; tot dan doe je het met de hand in Beheer.
+5. **Verificatie automatiseren** met de identiteitscontrole van de betaalpartner (Mollie doet die bij het aansluiten, anders Stripe Identity) en polis uploaden; tot dan doe je het met de hand in Beheer.
 6. **Besloten test** met een handvol uitlaters en eigenaren in Nijmegen.
 
 Los daarvan, zodra jij stap 5 hebt gedaan: de **koppelingen van Woober Fit**. Apple Gezondheid en Health Connect op de telefoon zelf (dan kan ook de stappenteller op Android, die staat nu uit); Strava en Garmin via Supabase Edge Functions.

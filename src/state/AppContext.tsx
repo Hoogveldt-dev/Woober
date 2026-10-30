@@ -1122,7 +1122,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const vraagUitbetalingAan = useCallback(
     (bedrag: number) => {
       const s = ref.current.state;
-      // Echt geld komt pas met Stripe (ACTIES.md); tot dan staat er bij echte accounts niets op het saldo
+      // Echt geld komt pas met de betaalpartner (ACTIES.md); tot dan staat er bij echte accounts niets op het saldo
       if (s.modus === 'echt') return { gelukt: false, tekst: 'Uitbetalen kan zodra betalen in de app echt werkt.' };
       if (!s.mijnProfiel?.verificatie.uitbetaling) return { gelukt: false, tekst: 'Koppel eerst je rekening onder Verificatie en uitbetaling.' };
       const fout = uitbetalingFout(bedrag, saldoVan(s.boekingen, s.uitbetalingen));

@@ -14,7 +14,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
   {
     id: 'identiteit',
     titel: 'Identiteit',
-    tekst: 'Foto van je paspoort of ID-kaart en een selfie. Gecontroleerd door Stripe Identity; Woober bewaart zelf geen kopie.',
+    tekst: 'Foto van je paspoort of ID-kaart en een selfie. Gecontroleerd door onze betaalpartner; Woober bewaart zelf geen kopie.',
     icoon: 'id-card',
     verplicht: true,
   },
@@ -28,7 +28,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
   {
     id: 'uitbetaling',
     titel: 'Rekening voor uitbetaling',
-    tekst: 'Je eigen IBAN via Stripe Connect. Werk je als bedrijf, dan vul je hier ook je KvK-nummer in.',
+    tekst: 'Je eigen IBAN, gekoppeld via onze betaalpartner. Werk je als bedrijf, dan vul je hier ook je KvK-nummer in.',
     icoon: 'card',
     verplicht: true,
   },
@@ -94,7 +94,7 @@ export default function VerificatieScherm() {
           <Melding type="info">
             {modus === 'echt'
               ? uitlegEcht
-              : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
+              : 'In de echte app regelt onze betaalpartner de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
           </Melding>
         </Bewerkbaar>
       )}
