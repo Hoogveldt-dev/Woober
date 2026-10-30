@@ -5,9 +5,9 @@ import { koppelstatus } from '../_shared/regels.ts';
 
 /**
  * Het vaste werk met Mollie, elke paar minuten aangeroepen door Supabase Cron (README) met de kop x-woober-geheim:
- * 1. terugbetalen bij annuleren, weigeren of dubbel betalen;
+ * 1. terugbetalen bij annuleren, weigeren, dubbel betalen of een verlenging die niet doorging;
  * 2. automatisch uitbetalen voordat geld 80 dagen wacht (Mollie zet ongerouteerd geld na 90 dagen naar Woober);
- * 3. uitbetalingen routeren naar uitlaters die bij Mollie zijn aangesloten;
+ * 3. uitbetalingen routeren naar uitlaters die bij Mollie zijn aangesloten, ook de aanvullingen na een terugboeking;
  * 4. bijhouden hoe ver uitlaters zijn met aansluiten.
  * Alles is veilig om te herhalen: Mollie krijgt per actie een vaste Idempotency-Key.
  */

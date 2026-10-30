@@ -8,6 +8,8 @@ import { euroWaarde } from './regels.ts';
  *
  * Controleer bij het instellen de aanroepen met een opmerking "Controleren" tegen docs.mollie.com: die site was
  * tijdens het bouwen niet bereikbaar, en Mollie moet vertraagde routing en Balance Transfers zelf voor je aanzetten.
+ * Wel nagelezen (Connect for Marketplaces, Processing payments): de marktplaats draagt terugboekingen, en bij een
+ * volledige terugboeking haalt Mollie wat naar verkopers ging bij hen terug (verwerk_betaling vult de uitlater aan).
  */
 
 const API = 'https://api.mollie.com/v2';
@@ -41,6 +43,8 @@ export interface MollieBetaling {
   id: string;
   status: string;
   amountRefunded?: { value: string };
+  /** Controleren: totaal teruggeboekt via de bank; ontbreekt als er niets is teruggeboekt */
+  amountChargedBack?: { value: string };
   _links: { checkout?: { href: string } };
 }
 

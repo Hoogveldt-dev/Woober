@@ -27,6 +27,12 @@ export function onzeStatus(mollie: string): OnzeStatus {
   return 'open';
 }
 
+/** Waarvoor een eigenaar betaalt: de boeking, een extra uur oppas of een fooi. Onbekend is de boeking. */
+export type BetaalSoort = 'boeking' | 'verlenging' | 'fooi';
+export function betaalSoort(waarde: unknown): BetaalSoort {
+  return waarde === 'verlenging' || waarde === 'fooi' ? waarde : 'boeking';
+}
+
 /** Betaalmethode in Woober naar de naam bij Mollie; iDEAL | Wero heet bij Mollie nog ideal */
 export const MOLLIE_METHODE = { ideal: 'ideal', applepay: 'applepay', kaart: 'creditcard' } as const;
 export type Betaalmethode = keyof typeof MOLLIE_METHODE;

@@ -1,4 +1,4 @@
-import { euroWaarde, koppelstatus, maakStaat, naarCenten, onzeStatus, terugUitStaat, veiligTerugAdres } from './regels.ts';
+import { betaalSoort, euroWaarde, koppelstatus, maakStaat, naarCenten, onzeStatus, terugUitStaat, veiligTerugAdres } from './regels.ts';
 
 function gelijk(a: unknown, b: unknown) {
   if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${JSON.stringify(a)} is niet ${JSON.stringify(b)}`);
@@ -48,4 +48,12 @@ Deno.test('state met terugadres', () => {
   const staat = maakStaat('abc123', 'woober://verificatie?mollie=1');
   gelijk(terugUitStaat(staat), 'woober://verificatie?mollie=1');
   gelijk(terugUitStaat('zonderpunt'), null);
+});
+
+Deno.test('soort betaling', () => {
+  gelijk(betaalSoort('verlenging'), 'verlenging');
+  gelijk(betaalSoort('fooi'), 'fooi');
+  gelijk(betaalSoort('boeking'), 'boeking');
+  gelijk(betaalSoort(undefined), 'boeking');
+  gelijk(betaalSoort('iets anders'), 'boeking');
 });
