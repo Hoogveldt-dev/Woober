@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Bewerkbaar } from '../../components/Bewerkbaar';
 import { Blok, gedeeldeStijl, Sectie, Tegel } from '../../components/blokken';
 import { Stappenteller } from '../../components/Stappenteller';
 import { Knop, Kop } from '../../components/ui';
@@ -52,7 +53,9 @@ export default function WooberFit() {
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
       <ScrollView contentContainerStyle={gedeeldeStijl.inhoud}>
         <Kop>Woober Fit</Kop>
-        {intro.trim() ? <Text style={[gedeeldeStijl.sub, { marginTop: ruimte(1) }]}>{intro}</Text> : null}
+        <Bewerkbaar sleutels="fit.intro" leeg={!intro.trim()} stijl={{ marginTop: ruimte(1) }}>
+          <Text style={gedeeldeStijl.sub}>{intro}</Text>
+        </Bewerkbaar>
         <View style={{ height: ruimte(5) }} />
 
         <Sectie>Stappen</Sectie>

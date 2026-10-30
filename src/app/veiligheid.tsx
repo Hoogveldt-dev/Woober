@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentProps } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { gedeeldeStijl, Sectie } from '../components/blokken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
@@ -32,16 +33,20 @@ export default function Veiligheid() {
         <Ionicons name="call" size={22} color="#fff" />
         <View style={{ flex: 1 }}>
           <Text style={s.noodTitel}>Noodgeval</Text>
-          <Text style={s.noodTekst}>{nood}</Text>
+          <Bewerkbaar sleutels="veiligheid.nood">
+            <Text style={s.noodTekst}>{nood}</Text>
+          </Bewerkbaar>
         </View>
       </View>
-      <Text style={s.contact}>
-        Vraag of probleem zonder haast? Mail{' '}
-        <Text style={s.contactLink} onPress={() => Linking.openURL(`mailto:${contact}`)}>
-          {contact}
+      <Bewerkbaar sleutels="contact.email">
+        <Text style={s.contact}>
+          Vraag of probleem zonder haast? Mail{' '}
+          <Text style={s.contactLink} onPress={() => Linking.openURL(`mailto:${contact}`)}>
+            {contact}
+          </Text>
+          .
         </Text>
-        .
-      </Text>
+      </Bewerkbaar>
 
       {rol === 'eigenaar' ? (
         <>

@@ -40,6 +40,9 @@ export const TEKSTEN = {
     standaard: 'Je e-mailadres zien andere gebruikers nooit. Woober gebruikt het alleen om je in te laten loggen en je over je boekingen te berichten.',
     lang: true,
   },
+  'start.titel_eigenaar': { groep: 'Startscherm', label: 'Titel voor eigenaren', standaard: 'Uitlaten en oppas in jouw buurt' },
+  'start.knop_wachtlijst': { groep: 'Startscherm', label: 'Knop voor de wachtlijst', standaard: 'Laat het me weten' },
+  'start.op_wachtlijst': { groep: 'Startscherm', label: 'Tekst als je op de wachtlijst staat', standaard: 'Je staat op de lijst. We mailen je zodra het kan.' },
   'start.binnenkort_eigenaar': {
     groep: 'Startscherm',
     label: 'Melding voor eigenaren',

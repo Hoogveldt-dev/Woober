@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { BewerkBalk } from '../components/Bewerkbaar';
 import { MeldingBanner } from '../components/merk';
 import { AppProvider, useApp } from '../state/AppContext';
 import { TekstenProvider } from '../state/Teksten';
@@ -125,6 +126,7 @@ function Navigatie() {
       <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && beheerder} redirectTo={startpunt}>
         <Stack.Screen name="beheer" options={{ headerShown: true, title: 'Beheer' }} />
         <Stack.Screen name="beheer-teksten" options={{ headerShown: true, title: 'Teksten' }} />
+        <Stack.Screen name="beheer-voorbeeld" options={{ headerShown: true, title: 'Voorbeeld' }} />
         <Stack.Screen name="beheer-plekken" options={{ headerShown: true, title: 'Plekken en meldingen' }} />
         <Stack.Screen name="beheer-plek" options={{ headerShown: true, title: 'Plek' }} />
         <Stack.Screen name="beheer-uitlaters" options={{ headerShown: true, title: 'Uitlaters verifiëren' }} />
@@ -150,6 +152,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <Navigatie />
           <MeldingBanner />
+          <BewerkBalk />
         </AppProvider>
       </TekstenProvider>
     </SafeAreaProvider>

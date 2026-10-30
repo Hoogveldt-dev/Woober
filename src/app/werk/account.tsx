@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PersoonAvatar } from '../../components/avatars';
+import { Bewerkbaar } from '../../components/Bewerkbaar';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Sterren } from '../../components/blokken';
 import { RolWissel } from '../../components/RolWissel';
 import { Badge, Knop, Kop } from '../../components/ui';
@@ -63,7 +64,9 @@ export default function UitlaterAccount() {
             onPress={() => router.push('/verificatie')}
           />
           <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, incidenten, regels" onPress={() => router.push('/veiligheid')} />
-          <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
+          <Bewerkbaar sleutels="contact.email">
+            <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
+          </Bewerkbaar>
           <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
           <MenuRij icoon="reader" titel="Voorwaarden" sub="Gebruiksvoorwaarden" onPress={() => router.push('/voorwaarden')} />
           {beheerder ? <MenuRij icoon="construct" titel="Beheer" sub="Verdienmodel en andere instellingen, alleen voor het team" onPress={() => router.push('/beheer')} /> : null}

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { type ComponentProps } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { gedeeldeStijl } from '../components/blokken';
 import { Badge, Knop, Melding } from '../components/ui';
 import { klaarVoorWerk, useApp } from '../state/AppContext';
@@ -89,11 +90,13 @@ export default function VerificatieScherm() {
           <Knop titel="Naar de kaart" icoon="navigate" onPress={() => router.replace('/werk')} stijl={{ marginTop: ruimte(3) }} />
         </>
       ) : (
-        <Melding type="info">
-          {modus === 'echt'
-            ? uitlegEcht
-            : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
-        </Melding>
+        <Bewerkbaar sleutels="verificatie.echt">
+          <Melding type="info">
+            {modus === 'echt'
+              ? uitlegEcht
+              : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
+          </Melding>
+        </Bewerkbaar>
       )}
     </ScrollView>
   );

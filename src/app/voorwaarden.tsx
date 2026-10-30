@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { Melding } from '../components/ui';
+import type { TekstSleutel } from '../lib/teksten';
 import { useTekst } from '../state/Teksten';
 import { kleuren, ruimte } from '../theme';
 
@@ -109,11 +111,22 @@ export default function Voorwaarden() {
   return (
     <ScrollView contentContainerStyle={s.inhoud}>
       <Text style={s.kop}>Gebruiksvoorwaarden</Text>
-      <Text style={s.versie}>Versie {versie}</Text>
-      {concept.trim() ? <Melding type="waarschuwing">{concept}</Melding> : null}
+      <Bewerkbaar sleutels="voorwaarden.versie">
+        <Text style={s.versie}>Versie {versie}</Text>
+      </Bewerkbaar>
+      <Bewerkbaar sleutels="voorwaarden.concept" leeg={!concept.trim()}>
+        <Melding type="waarschuwing">{concept}</Melding>
+      </Bewerkbaar>
       {secties(gegevens).map((sectie) => (
         <View key={sectie.titel} style={s.sectie}>
-          <Text style={s.titel}>{sectie.titel}</Text>
+          {/* Naam, KvK, adres en e-mail staan midden in de tekst; de hamer staat bij de kop */}
+          {sectie.titel === '1. Wat Woober is' ? (
+            <Bewerkbaar sleutels={['privacy.organisatie', 'privacy.kvk', 'privacy.adres', 'contact.email'] as TekstSleutel[]}>
+              <Text style={s.titel}>{sectie.titel}</Text>
+            </Bewerkbaar>
+          ) : (
+            <Text style={s.titel}>{sectie.titel}</Text>
+          )}
           {sectie.punten?.map((p) => (
             <View key={p} style={s.punt}>
               <Ionicons name="ellipse" size={6} color={kleuren.primair} style={{ marginTop: 8 }} />
