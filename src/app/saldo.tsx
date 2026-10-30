@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Blok, gedeeldeStijl, Rij, Sectie } from '../components/blokken';
 import { Knop, Melding, Veld } from '../components/ui';
@@ -19,7 +19,14 @@ const GRAFIEK_HOOGTE = 120;
  */
 export default function Saldo() {
   const router = useRouter();
-  const { boekingen, uitbetalingen, klant, uitlater, verdienmodel, saldo, vraagUitbetalingAan, mijnProfiel } = useApp();
+  const { boekingen, uitbetalingen, klant, uitlater, verdienmodel, saldo, vraagUitbetalingAan, mijnProfiel, herlaadSaldo } = useApp();
+  // Echte accounts: het saldo staat in de database en verandert ook buiten de app (uitbetaald, gerouteerd)
+  useFocusEffect(
+    useCallback(() => {
+      herlaadSaldo();
+    }, [herlaadSaldo]),
+  );
+  const [bezig, setBezig] = useState(false);
   const [nu] = useState(() => Date.now());
   const [anderBedrag, setAnderBedrag] = useState<string | null>(null);
   const [uitslag, setUitslag] = useState<{ gelukt: boolean; tekst: string } | null>(null);
@@ -37,8 +44,10 @@ export default function Saldo() {
   const rekening = mijnProfiel?.verificatie.uitbetaling ?? false;
   const lijst = mutaties(boekingen, uitbetalingen, (b) => (b.mijnRol === 'uitlater' ? klant(b.klantId)?.voornaam : uitlater(b.uitlaterId)?.voornaam) ?? 'iemand').slice(0, 20);
 
-  const betaalUit = (bedrag: number) => {
-    const u = vraagUitbetalingAan(bedrag);
+  const betaalUit = async (bedrag: number) => {
+    setBezig(true);
+    const u = await vraagUitbetalingAan(bedrag);
+    setBezig(false);
     setUitslag(u);
     if (u.gelukt) setAnderBedrag(null);
   };
@@ -57,7 +66,7 @@ export default function Saldo() {
           <Knop titel="Eerst je rekening koppelen" variant="secundair" icoon="card" onPress={() => router.push('/verificatie')} />
         ) : anderBedrag === null ? (
           <View style={{ gap: ruimte(2) }}>
-            <Knop titel={`Alles uitbetalen, ${euro(saldo)}`} icoon="arrow-down-circle" uitgeschakeld={saldo <= 0} onPress={() => betaalUit(saldo)} />
+            <Knop titel={`Alles uitbetalen, ${euro(saldo)}`} icoon="arrow-down-circle" uitgeschakeld={saldo <= 0 || bezig} onPress={() => betaalUit(saldo)} />
             {saldo > MIN_UITBETALING ? (
               <Knop
                 titel="Ander bedrag"
@@ -82,7 +91,7 @@ export default function Saldo() {
               placeholder={`Vanaf ${euro(MIN_UITBETALING)}`}
               autoFocus
             />
-            <Knop titel="Uitbetalen" icoon="arrow-down-circle" uitgeschakeld={!anderBedrag.trim()} onPress={() => betaalUit(centen(anderBedrag))} />
+            <Knop titel="Uitbetalen" icoon="arrow-down-circle" uitgeschakeld={!anderBedrag.trim() || bezig} onPress={() => betaalUit(centen(anderBedrag))} />
             <Knop titel="Annuleren" variant="tekst" onPress={() => setAnderBedrag(null)} stijl={{ marginTop: ruimte(1) }} />
           </View>
         )}
@@ -93,8 +102,9 @@ export default function Saldo() {
         ) : null}
       </View>
       <Text style={[gedeeldeStijl.hulp, { marginBottom: ruimte(6) }]}>
-        Je geld staat bij onze betaalpartner, een betaalinstelling met een vergunning, niet bij Woober. Uitbetalen kan vanaf {euro(MIN_UITBETALING)}, of je hele saldo in één keer. Staat geld {UITBETAAL_DAGEN}{' '}
-        dagen op je saldo, dan maken we het automatisch naar je rekening over.
+        Je geld staat bij onze betaalpartner Mollie, een betaalinstelling met een vergunning van De Nederlandsche Bank, niet bij Woober. Uitbetalen kan vanaf{' '}
+        {euro(MIN_UITBETALING)}, of je hele saldo in één keer; het gaat naar je eigen Mollie-account, en Mollie maakt het over naar je bank volgens het schema dat je daar
+        kiest. Staat geld {UITBETAAL_DAGEN} dagen op je saldo, dan maken we het automatisch over.
       </Text>
 
       <Sectie>Verdiend, laatste 7 dagen</Sectie>

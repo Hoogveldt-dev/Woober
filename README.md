@@ -117,6 +117,60 @@ Echte accounts zien een echte kaart: Leaflet met de achtergrondkaart van PDOK (K
 
 Uitlaters hebben de tab Fit, met bovenaan Woober Fit; hun verdiensten staan onder Account. In de demo zijn de stappen verzonnen (elke dag steeds dezelfde). Met een echt account telt de iPhone ze met de bewegingssensor (`expo-sensors`, zit in Expo Go): de telefoon kent de laatste 7 dagen, en Woober bewaart de dagtotalen op het toestel zodat week en maand gevuld blijven. Er gaat niets naar Supabase. Op Android en het web kan het nog niet; daarvoor is Health Connect nodig. Daarom staat het recht op bewegingsgegevens op Android uit in `app.json` (`blockedPermissions`). Koppelingen met Apple Gezondheid, Health Connect, Strava en Garmin staan op slot; zie [ACTIES.md](ACTIES.md).
 
+## Betalen met Mollie
+
+Eigenaren betalen per boeking via Mollie (iDEAL | Wero, Apple Pay of kaart). Mollie houdt het geld vast; het saldo van een uitlater is wat nog niet naar zijn eigen Mollie-account is gerouteerd. Uitbetalen routeert het, en Mollie maakt het over naar zijn bank volgens het schema dat hij in Mollie kiest. De keuzes staan in [PLAN.md](PLAN.md#hoe-anderen-het-doen-en-de-strategie-onderzocht-30-oktober-2026).
+
+**Wat er staat**
+- Database: `supabase/migrations/20261031000000_mollie.sql` met de tabellen `betalingen`, `mollie_koppelingen` en `mollie_routes`, en de functies die uitrekenen wat er terug moet en wat er gerouteerd wordt (oudste betalingen eerst). Getest met `npm run test:db`.
+- Edge Functions in `supabase/functions/` (Deno), gecontroleerd met `npm run check:functions`:
+  - `betaling-starten`: betaalpagina voor een boeking of fooi van de ingelogde eigenaar.
+  - `mollie-webhook`: Mollie meldt een wijziging; de functie haalt de stand zelf op en verwerkt die.
+  - `mollie-aansluiten` en `mollie-oauth`: een uitlater koppelt zijn Mollie-account (OAuth). Klaar bij Mollie maakt zijn rekening geverifieerd.
+  - `betalingen-verwerken`: elke paar minuten terugbetalen, automatisch uitbetalen na 80 dagen, routes en overboekingen naar uitlaters, en de stand van het aansluiten.
+- App: `src/lib/betalen.ts`, koppelen onder Verificatie, het Saldo-scherm voor echte accounts, en `/betaald` na de betaalpagina.
+
+**Nog niet**: de echte boekflow (die roept `startBetaling()` aan; komt met Echt boeken), een aparte betaling voor een verlengde oppas (tot dan legt Woober het verschil bij via een overboeking), terugboekingen door de bank (chargebacks), en boekingen die meer dan 80 dagen vooruit worden betaald.
+
+**Instellen** (eenmalig; ACTIES.md, stap 3):
+1. Mollie-account op naam van de onderneming; zet Mollie Connect for Marketplaces aan en vraag Mollie om vertraagde routing (bruto-afrekening) en Balance Transfers.
+2. Mollie, Developers, Apps: een OAuth-app met redirect URI `https://hnvafpbxhkxpvwwsgoba.supabase.co/functions/v1/mollie-oauth`.
+3. Mollie, Developers: een organisatietoken met rechten voor Balance Transfers, en het organisatie-ID (`org_...`) van Woober.
+4. Supabase, Edge Functions, Secrets: `MOLLIE_API_KEY` (eerst de `test_`-sleutel), `MOLLIE_CLIENT_ID`, `MOLLIE_CLIENT_SECRET`, `MOLLIE_ORG_TOKEN`, `MOLLIE_ORG_ID`, `APP_URL` (`https://woober.nl`) en `WOOBER_GEHEIM` (een lange willekeurige tekst). `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` zet Supabase zelf.
+5. Functies uitrollen (of laat Claude het doen via de Supabase-koppeling). De webhook, de OAuth-terugkeer en de worker zonder JWT-controle, want Mollie en de cron sturen geen inlogsleutel mee:
+
+```bash
+npx supabase functions deploy betaling-starten --project-ref hnvafpbxhkxpvwwsgoba
+```
+```bash
+npx supabase functions deploy mollie-aansluiten --project-ref hnvafpbxhkxpvwwsgoba
+```
+```bash
+npx supabase functions deploy mollie-webhook --no-verify-jwt --project-ref hnvafpbxhkxpvwwsgoba
+```
+```bash
+npx supabase functions deploy mollie-oauth --no-verify-jwt --project-ref hnvafpbxhkxpvwwsgoba
+```
+```bash
+npx supabase functions deploy betalingen-verwerken --no-verify-jwt --project-ref hnvafpbxhkxpvwwsgoba
+```
+
+6. De worker elke 5 minuten laten draaien: zet onder Database, Extensions `pg_cron` en `pg_net` aan en voer in de SQL-editor uit (met je eigen `WOOBER_GEHEIM`):
+
+```sql
+select cron.schedule('betalingen-verwerken', '*/5 * * * *', $$
+  select net.http_post(
+    url := 'https://hnvafpbxhkxpvwwsgoba.supabase.co/functions/v1/betalingen-verwerken',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-woober-geheim', 'JOUW_WOOBER_GEHEIM'),
+    body := '{}'::jsonb
+  );
+$$);
+```
+
+7. Testen met de testsleutel van Mollie; daarna `MOLLIE_API_KEY` vervangen door de `live_`-sleutel.
+
+Aanroepen naar Mollie staan op één plek, `supabase/functions/_shared/mollie.ts`. Die met "Controleren" (routes en Balance Transfers) moet je bij het instellen naast de documentatie van Mollie leggen: die was tijdens het bouwen niet bereikbaar.
+
 ## Builds voor de stores
 
 `eas.json` heeft een profiel `preview` (testversie om te delen, op Android een apk) en `production`. Eerst één keer `npx eas-cli@latest init` om het project aan je Expo-account te koppelen, daarna bijvoorbeeld `npx eas-cli@latest build --profile preview --platform all`. Zie [ACTIES.md](ACTIES.md).
@@ -127,6 +181,6 @@ Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
 
 - Echte boekingen, chat en statuswijzigingen via de databasefuncties en Realtime (schema klaar in `supabase/migrations/`); tot dan alleen in de demo
 - Locatie tijdens de wandeling (`expo-location`)
-- Betalen via Stripe Connect of Mollie Connect, met iDEAL | Wero
+- Betalen in de echte boekflow (de koppeling met Mollie staat klaar, zie Betalen met Mollie)
 - Pushmeldingen en foto's uploaden
 - Koppelingen van Woober Fit met Apple Gezondheid, Health Connect, Strava en Garmin

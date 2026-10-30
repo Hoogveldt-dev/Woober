@@ -62,6 +62,14 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
     ],
   },
   {
+    titel: 'Betalen en uitbetalen',
+    alineas: [
+      'Betalingen en uitbetalingen lopen via Mollie B.V. in Amsterdam, een betaalinstelling met een vergunning van De Nederlandsche Bank. Je betaalgegevens geef je op de betaalpagina van Mollie, niet aan Woober. Woober bewaart per betaling alleen het kenmerk, het bedrag, de betaalmethode en of het gelukt is.',
+      'Als uitlater koppel je een eigen account bij Mollie; Mollie controleert daarbij je identiteit en je rekening. Woober bewaart alleen het kenmerk van je Mollie-account, hoe ver het aansluiten is en een sleutel om dat bij Mollie op te vragen.',
+      'Mollie verwerkt deze gegevens ook zelf, volgens zijn eigen privacyverklaring. Grondslag voor Woober: de overeenkomst met jou.',
+    ],
+  },
+  {
     titel: 'Woober Fit',
     alineas: [
       'Op een iPhone kan Woober je stappen tellen met de bewegingssensor van je telefoon, alleen als je dat zelf aanzet en toestemming geeft. Woober bewaart je stappen per dag op je telefoon, zodat je ook je week en maand ziet. Ze gaan niet naar Woober of naar anderen, en verdwijnen van je telefoon als je uitlogt of je account verwijdert. Je toestemming intrekken kan in de instellingen van je iPhone, bij Woober.',

@@ -13,6 +13,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   4. `20261029000000_lancering.sql`
   5. `20261029010000_rechten.sql` (later toegevoegd: zet functies dicht voor wie niet is ingelogd)
   6. `20261030000000_saldo.sql` (saldo van uitlaters: uitbetalen wanneer je wilt en betalen met je saldo)
+  7. `20261031000000_mollie.sql` (betalen via Mollie; zonder sleutels van Mollie gebeurt er nog niets)
 
   Twee manieren: zeg in een sessie met Claude dat je klaar staat en keur de vraag van Supabase direct goed (die liep steeds na 60 seconden af), of plak elk bestand zelf in de SQL-editor van Supabase (project Woober) en klik op Run. Daarna staan onder Database, Migrations de nieuwe namen.
 - [ ] **Inloggen instellen in Supabase** (Authentication). Stappen staan in [README.md](README.md#inloggen-met-apple-en-google-instellen):
@@ -44,6 +45,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   5. Wanneer kunnen Nederlandse klanten via Mollie met Wero zelf betalen, en verandert er dan iets in de koppeling?
   6. Wanneer telt een uitlater als actief voor de maandkosten: bij een betaling, een route of een uitbetaling? En kunnen we een uitlater pas aansluiten bij zijn eerste uitbetaling, met zijn geld tot dan ongerouteerd?
   Is het antwoord van Mollie op vraag 1 nee, kies dan Stripe Connect: uitlaters zonder KvK moeten mee kunnen doen.
+- [ ] **Mollie instellen** zodra de antwoorden hierboven goed zijn: de 7 stappen in [README.md](README.md#betalen-met-mollie) (account en Connect for Marketplaces, OAuth-app, organisatietoken, Secrets in Supabase, functies uitrollen, de worker elke 5 minuten, eerst testen met de testsleutel). Vraag Mollie ook om vertraagde routing en Balance Transfers aan te zetten. Uitlaters kunnen daarna onder Verificatie hun Mollie-account koppelen; dat werkt al voordat boeken echt kan.
 - [ ] **Later, als eigenaren willen storten**: een offerte van Mangopay (wallet-partner met e-geldvergunning). Vraag naar een maandelijks minimum, opstartkosten en kosten per identiteitscontrole; die kunnen voor een start zonder omzet te hoog zijn.
 - [ ] **Storten in een Woober Wallet door eigenaren: kies A, B of C** (PLAN.md, Eisen voor betalen en de wallet). Storten en 1:1 terugkrijgen is elektronisch geld, ook als het credits heet. Laat een jurist met kennis van de Wft en DNB-regels kiezen tussen storten bij de betaalpartner (B) en eigen tegoed onder een uitzondering (C). Tot die keuze betalen eigenaren per boeking (A); dat kan zonder vergunning.
 - [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Stripe, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.

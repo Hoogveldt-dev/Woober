@@ -88,6 +88,7 @@ function Navigatie() {
 
       <Stack.Protected guard={eigenaarKlaar} redirectTo={startpunt}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="betaald" options={{ headerShown: true, title: 'Betalen' }} />
       </Stack.Protected>
 
       {/* Boeken en alles wat erbij hoort is nog nagespeeld; echte accounts kunnen hier nog niet komen (stap 3 in PLAN.md) */}

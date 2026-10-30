@@ -22,6 +22,7 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import * as betalen from '../lib/betalen';
 import { saldoVan, uitbetalingFout } from '../lib/saldo';
 import { afgerondeOpdrachten, verdiend } from '../lib/verdiensten';
 import { wisStappen } from '../lib/stappen';
@@ -93,6 +94,8 @@ interface AppState {
   tegoed: number;
   /** Uitbetalingen van het saldo als uitlater naar de eigen rekening (src/lib/saldo.ts) */
   uitbetalingen: Uitbetaling[];
+  /** Echte accounts: saldo uit de database (mijn_saldo); de demo rekent het zelf uit */
+  saldoEcht: number;
   gebruikteCodes: string[];
   /** Losloopgebieden, stranden en horeca met reviews van gebruikers */
   plekken: Plek[];
@@ -167,7 +170,9 @@ interface AppActies {
 
   /** Saldo als uitlater: verdiend min uitbetaald en min wat je ermee betaalde als eigenaar. Eigen geld, geen tegoed van Woober. */
   saldo: number;
-  vraagUitbetalingAan: (bedrag: number) => { gelukt: boolean; tekst: string };
+  vraagUitbetalingAan: (bedrag: number) => Promise<{ gelukt: boolean; tekst: string }>;
+  /** Echte accounts: saldo en uitbetalingen opnieuw ophalen, bijvoorbeeld bij het openen van het saldo */
+  herlaadSaldo: () => Promise<void>;
   /** Het actieve verdienmodel */
   verdienmodel: Verdienmodel;
   /** Prijs volgens het actieve verdienmodel, inclusief drukte en abonnement; met tegoed als metTegoed */
@@ -216,6 +221,7 @@ const LEEG: AppState = {
   plus: false,
   tegoed: 0,
   uitbetalingen: [],
+  saldoEcht: 0,
   gebruikteCodes: [],
   plekken: maakDemoPlekken(),
 };
@@ -1118,25 +1124,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openVerzoek = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && b.status === 'aangevraagd'), [state.boekingen]);
   const actieveOpdracht = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && LOPEND.includes(b.status)), [state.boekingen]);
 
-  const saldo = useMemo(() => saldoVan(state.boekingen, state.uitbetalingen), [state.boekingen, state.uitbetalingen]);
+  const saldo = useMemo(
+    () => (state.modus === 'echt' ? state.saldoEcht : saldoVan(state.boekingen, state.uitbetalingen)),
+    [state.modus, state.saldoEcht, state.boekingen, state.uitbetalingen],
+  );
+  const herlaadSaldo = useCallback(async () => {
+    if (!echt() || !ref.current.state.mijnProfiel) return;
+    try {
+      const [saldoEcht, uitbetalingen] = await Promise.all([betalen.mijnSaldo(), betalen.mijnUitbetalingen()]);
+      setState((s) => ({ ...s, saldoEcht, uitbetalingen }));
+    } catch (e) {
+      meldFout(e);
+    }
+  }, [echt, setState, meldFout]);
   const vraagUitbetalingAan = useCallback(
-    (bedrag: number) => {
+    async (bedrag: number) => {
       const s = ref.current.state;
-      // Echt geld komt pas met de betaalpartner (ACTIES.md); tot dan staat er bij echte accounts niets op het saldo
-      if (s.modus === 'echt') return { gelukt: false, tekst: 'Uitbetalen kan zodra betalen in de app echt werkt.' };
       if (!s.mijnProfiel?.verificatie.uitbetaling) return { gelukt: false, tekst: 'Koppel eerst je rekening onder Verificatie en uitbetaling.' };
+      if (s.modus === 'echt') {
+        // De database controleert saldo en minimum; de server routeert het daarna via Mollie (betalingen-verwerken)
+        const fout = uitbetalingFout(bedrag, s.saldoEcht);
+        if (fout) return { gelukt: false, tekst: fout };
+        try {
+          await betalen.vraagUitbetalingAan(bedrag);
+        } catch (e) {
+          return { gelukt: false, tekst: e instanceof Error ? e.message : 'Uitbetalen lukte niet.' };
+        }
+        await herlaadSaldo();
+        return { gelukt: true, tekst: `${euro(bedrag)} is onderweg naar je Mollie-account. Mollie maakt het over naar je bank volgens het schema dat je daar kiest.` };
+      }
       const fout = uitbetalingFout(bedrag, saldoVan(s.boekingen, s.uitbetalingen));
       if (fout) return { gelukt: false, tekst: fout };
       setState((st) => ({ ...st, uitbetalingen: [...st.uitbetalingen, { id: nieuwId('ub'), bedrag, tijd: Date.now(), status: 'onderweg' }] }));
       return { gelukt: true, tekst: `${euro(bedrag)} is onderweg naar je rekening. Meestal staat het er binnen een paar werkdagen.` };
     },
-    [setState],
+    [setState, herlaadSaldo],
   );
 
   const waarde: Context = {
     ...state,
     saldo,
     vraagUitbetalingAan,
+    herlaadSaldo,
     aanmelden,
     demoStart,
     uitloggen,

@@ -12,8 +12,9 @@ import { afgerondeOpdrachten, verdiend } from './verdiensten';
 
 /** Minimaal uit te betalen, zodat er geen kleine overboekingen nodig zijn. Je hele saldo kan altijd. */
 export const MIN_UITBETALING = 1000;
-/** Mollie en Stripe houden geld hooguit zo lang vast; wat langer op het saldo staat, maakt Woober automatisch over */
-export const UITBETAAL_DAGEN = 90;
+/** Wat zo lang op het saldo staat, maakt Woober automatisch over: ruim voor de 90 dagen waarna Mollie ongerouteerd geld
+ * zelf naar Woober zet. Zelfde grens als maak_automatische_uitbetalingen() in 20261031000000_mollie.sql. */
+export const UITBETAAL_DAGEN = 80;
 
 const LOPEND_OF_KLAAR: Boeking['status'][] = ['aangevraagd', 'gepland', 'onderweg', 'aangekomen', 'bezig', 'afgerond'];
 

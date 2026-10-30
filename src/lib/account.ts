@@ -17,13 +17,13 @@ export function terugAdres() {
   return Platform.OS === 'web' ? `${window.location.origin}/aanmelden` : Linking.createURL('auth');
 }
 
-/** Gooit een fout met een Nederlandse tekst; geeft niets terug als de gebruiker zelf stopt */
 /**
  * Inloggen met Apple staat met een slotje op het inlogscherm tot Kjell Apple heeft ingesteld (ACTIES.md, stap 1).
  * Zet dit dan op true; de code eronder is klaar.
  */
 export const APPLE_INLOGGEN_KLAAR = false;
 
+/** Gooit een fout met een Nederlandse tekst; geeft niets terug als de gebruiker zelf stopt */
 export async function inloggenMetApple(): Promise<{ voornaam?: string } | null> {
   if (Platform.OS === 'ios') {
     // Op iPhone en iPad het eigen venster van Apple; de nonce voorkomt dat iemand een oud token hergebruikt
