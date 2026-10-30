@@ -14,6 +14,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   5. `20261029010000_rechten.sql` (later toegevoegd: zet functies dicht voor wie niet is ingelogd)
   6. `20261030000000_saldo.sql` (saldo van uitlaters: uitbetalen wanneer je wilt en betalen met je saldo)
   7. `20261031000000_mollie.sql` (betalen via Mollie; zonder sleutels van Mollie gebeurt er nog niets)
+  8. `20261101000000_oppas_en_afgeven.sql` (oppas bij de oppas thuis, afspraken over het huis, afgeven op een ander punt)
 
   Twee manieren: zeg in een sessie met Claude dat je klaar staat en keur de vraag van Supabase direct goed (die liep steeds na 60 seconden af), of plak elk bestand zelf in de SQL-editor van Supabase (project Woober) en klik op Run. Daarna staan onder Database, Migrations de nieuwe namen.
 - [ ] **Inloggen instellen in Supabase** (Authentication). Stappen staan in [README.md](README.md#inloggen-met-apple-en-google-instellen):

@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HondenStapel } from '../../components/avatars';
 import { ActieKnop, Blad, RondeKnop, Sterren, SterrenKiezer, Tegel, useNu } from '../../components/blokken';
+import { AfsprakenTip, HuisAfspraken } from '../../components/Huis';
 import { IncidentBlad } from '../../components/IncidentBlad';
 import { Kaart } from '../../components/Kaart';
 import { Chip, Knop, Melding } from '../../components/ui';
@@ -44,6 +45,9 @@ export default function Opdracht() {
   const hondNamen = honden.map((h) => h.naam).join(' en ');
   const kennismaking = b.soort === 'kennismaking';
   const oppas = b.dienst === 'oppas';
+  // De eigenaar brengt de hond bij jou thuis, of geeft hem mee op een afgiftepunt: dan zie je het adres niet
+  const bijMij = oppas && b.oppasPlek === 'bij_oppas';
+  const huisAfspraken = b.huisinfo ? <HuisAfspraken info={b.huisinfo} /> : null;
   const laag = boekingOpKaart(b, nu, mijnProfiel, honden[0].kleur, { ophaalSoort: 'klant', uitlaterAlsIk: true, toonPlan: true });
   const terug = () => (router.canGoBack() ? router.back() : router.replace('/werk'));
   const chat = () => router.push({ pathname: '/chat/[id]', params: { id: k.id } });
@@ -69,8 +73,12 @@ export default function Opdracht() {
       inhoud = (
         <>
           <Text style={s.titel}>Verzoek van {k.voornaam}</Text>
-          <Text style={s.sub}>{momentTekst(b.moment, nu)}</Text>
+          <Text style={s.sub}>
+            {momentTekst(b.moment, nu)}
+            {bijMij ? `, bij jou thuis` : b.afgifte ? `, ophalen bij ${b.afgifte.omschrijving}` : ''}
+          </Text>
           {hondInfo}
+          {huisAfspraken}
           <View style={s.knoppen}>
             <Knop titel="Weigeren" variant="secundair" stijl={{ flex: 1 }} onPress={() => { weiger(b.id); terug(); }} />
             <Knop titel="Accepteren" icoon="checkmark" stijl={{ flex: 1.5 }} onPress={() => accepteer(b.id)} />
@@ -85,17 +93,30 @@ export default function Opdracht() {
             {kennismaking ? 'Kennismaking' : oppas ? `Oppas ${duurTekst(b.duur)}` : 'Wandeling'} {momentTekst(b.moment, nu)}
           </Text>
           <Text style={s.sub}>
-            {k.voornaam}, {b.adres}
+            {bijMij ? `${k.voornaam} brengt ${hondNamen} bij jou thuis` : `${k.voornaam}, ${b.afgifte ? `ophalen bij ${b.afgifte.omschrijving}` : b.adres}`}
           </Text>
           {hondInfo}
-          <View style={s.detail}>
-            <Ionicons name={b.sleutel === 'kastje' ? 'key' : 'home'} size={16} color={kleuren.gedempt} />
-            <Text style={s.detailTekst}>{SLEUTEL[b.sleutel]}</Text>
-          </View>
+          {huisAfspraken}
+          {!bijMij && !b.afgifte ? (
+            <View style={s.detail}>
+              <Ionicons name={b.sleutel === 'kastje' ? 'key' : 'home'} size={16} color={kleuren.gedempt} />
+              <Text style={s.detailTekst}>{SLEUTEL[b.sleutel]}</Text>
+            </View>
+          ) : null}
+          {oppas ? (
+            <AfsprakenTip
+              tekst={
+                bijMij
+                  ? `Vraag ${k.voornaam} in de chat naar eten, slapen en gewoontes, en spreek af hoe laat ${k.voornaam} ophaalt.`
+                  : `Spreek met ${k.voornaam} in de chat af wat je in huis mag gebruiken en waar eten en riem liggen. Dan staat het voor jullie allebei op papier.`
+              }
+              onChat={chat}
+            />
+          ) : null}
           {kennismaking ? (
             <Knop titel="Kennismaking gehad (demo)" icoon="checkmark" variant="secundair" onPress={() => rondKennismakingAf(b.id)} />
           ) : (
-            <Knop titel="Nu vertrekken (demo)" icoon="bicycle" variant="secundair" onPress={() => startNu(b.id)} />
+            <Knop titel={bijMij ? `${k.voornaam} komt eraan (demo)` : 'Nu vertrekken (demo)'} icoon={bijMij ? 'home' : 'bicycle'} variant="secundair" onPress={() => startNu(b.id)} />
           )}
           <Knop titel="Afzeggen" variant="tekst" onPress={() => { annuleer(b.id); terug(); }} />
           <Text style={s.klein}>Afzeggen wordt niet bijgehouden. Zeg je minder dan 2 uur van tevoren af, dan kan {k.voornaam} dat melden en kijkt een medewerker van Woober ernaar.</Text>
@@ -109,8 +130,8 @@ export default function Opdracht() {
         <>
           <View style={s.etaRij}>
             <View style={{ flex: 1 }}>
-              <Text style={s.titel}>{aangekomen ? `Je bent bij ${k.voornaam}` : `Onderweg naar ${k.voornaam}`}</Text>
-              <Text style={s.sub}>{b.adres}</Text>
+              <Text style={s.titel}>{bijMij ? `${k.voornaam} komt eraan` : aangekomen ? `Je bent bij ${k.voornaam}` : `Onderweg naar ${k.voornaam}`}</Text>
+              <Text style={s.sub}>{bijMij ? `Met ${hondNamen}, bij jou thuis` : (b.afgifte?.omschrijving ?? b.adres)}</Text>
             </View>
             {!aangekomen ? (
               <View style={s.eta}>
@@ -121,7 +142,7 @@ export default function Opdracht() {
           </View>
           {hondInfo}
           {b.notitie ? <Melding type="info">{b.notitie}</Melding> : null}
-          <Knop titel="Ik ben er" icoon="location" uitgeschakeld={!aangekomen} onPress={() => ikBenEr(b.id)} />
+          <Knop titel={bijMij ? `${k.voornaam} is er` : 'Ik ben er'} icoon="location" uitgeschakeld={!aangekomen} onPress={() => ikBenEr(b.id)} />
           {!aangekomen ? <Knop titel="Sneller (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} /> : null}
         </>
       );

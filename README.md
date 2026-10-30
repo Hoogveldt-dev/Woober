@@ -1,6 +1,6 @@
 # Woober
 
-Klikbare demo van Woober, het zusje van Woofer: hondeneigenaren boeken een uitlater of een oppas aan huis uit de buurt zoals je bij Uber een rit boekt, en volgen het live. Bovenin kies je **Uitlaten** of **Oppas**, de rest werkt hetzelfde. Het plan staat in [PLAN.md](PLAN.md).
+Klikbare demo van Woober, het zusje van Woofer: hondeneigenaren boeken een uitlater of een oppas uit de buurt zoals je bij Uber een rit boekt, en volgen het live. Bovenin kies je **Uitlaten** of **Oppas**, de rest werkt hetzelfde. Het plan staat in [PLAN.md](PLAN.md).
 
 Gebouwd met Expo (SDK 58) en Expo Router, in de huisstijl van Woofer. Dezelfde code draait als iOS-app, Android-app en web app.
 
@@ -99,7 +99,7 @@ Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts`, gebruik `useTe
 | Kaart met uitlaters in de buurt en hun reistijd | Online gaan met één knop |
 | Uitlater kiezen op afstand, beoordeling of prijs | Verzoek met hond, afstand, moment en wat je verdient |
 | Nu, later of elke week boeken, 30 tot 60 minuten | Accepteren of weigeren, zonder gevolgen |
-| Oppas aan huis, 2 tot 5 uur, verlengen of eerder thuis | Uitlaten, oppas of allebei aanbieden, met eigen uurtarief |
+| Oppas bij jou of bij de oppas thuis, 2 tot 5 uur, verlengen of eerder thuis; afspraken over je huis | Uitlaten, oppas of allebei aanbieden, met eigen uurtarief; honden ook thuis ontvangen |
 | Eerst kennismaken bij een nieuwe uitlater | Navigeren naar de eigenaar, ophaalcode controleren |
 | Live volgen met ophaalcode, route en foto's | Foto, plas, poep, water en notitie tijdens de wandeling |
 | Wandelrapport met fooi en beoordeling | Saldo onder Account: verdiensten, uitbetalen wanneer je wilt, betalen als eigenaar |

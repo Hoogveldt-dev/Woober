@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState as AppStatus } from 'react-native';
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { maakDemoPlekken } from '../data/plekken';
-import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
+import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START, PARK_INGANG } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
 import * as account from '../lib/account';
 import * as plekkenDb from '../lib/plekkenDb';
@@ -30,6 +30,7 @@ import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
+  Afgifte,
   AfspraakMelding,
   AppMelding,
   Beoordeling,
@@ -41,7 +42,9 @@ import type {
   Gebruiker,
   Gesprek,
   Hond,
+  HuisInfo,
   Klant,
+  OppasPlek,
   PrijsOpbouw,
   Moment,
   NieuwePlek,
@@ -106,7 +109,11 @@ export interface Aanvraag {
   uitlaterId: string;
   hondIds: string[];
   duur: number;
-  cameraInHuis?: boolean;
+  /** Alleen bij oppas */
+  oppasPlek?: OppasPlek;
+  huisinfo?: HuisInfo;
+  /** Alleen bij uitlaten: afgeven op een ander punt dan thuis */
+  afgifte?: Afgifte;
   moment: Moment;
   sleutel: Sleutel;
   notitie: string;
@@ -135,7 +142,8 @@ interface AppActies {
   zetPlus: (aan: boolean) => void;
   /** Geeft een melding terug voor de gebruiker */
   verzilverCode: (code: string) => { gelukt: boolean; tekst: string };
-  vraagKennismakingAan: (uitlaterId: string, tijdstip: number, bericht: string) => string;
+  /** Kennismaken bij jou thuis, of op een openbare plek (afgifte) */
+  vraagKennismakingAan: (uitlaterId: string, tijdstip: number, bericht: string, afgifte?: Afgifte) => string;
   annuleer: (id: string) => void;
   startNu: (id: string) => void;
   versnel: (id: string) => void;
@@ -246,6 +254,7 @@ export function standaardProfiel(voornaam: string): Uitlater {
     ervaring: '',
     professioneel: false,
     diensten: ['uitlaten'],
+    oppasPlekken: ['bij_eigenaar'],
     oppasPerUur: 1100,
     tarieven: { 30: 1200, 45: 1600, 60: 1900 },
     toeslagExtraHond: 500,
@@ -640,18 +649,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       serie = { id: serieId, uitlaterId: a.uitlaterId, dienst: a.dienst, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs: zonderTegoed };
       moment = { type: 'later', tijdstip: volgendeKeer(a.moment.dagen, a.moment.tijd, Date.now()) };
     }
+    // Bij de oppas thuis brengt de eigenaar de hond; op een afgiftepunt geeft de eigenaar hem zelf mee
+    const bijOppas = a.dienst === 'oppas' && a.oppasPlek === 'bij_oppas';
+    const afgifte = a.dienst === 'uitlaten' ? a.afgifte : undefined;
     const b = basisBoeking({
       mijnRol: 'eigenaar',
       dienst: a.dienst,
       uitlaterId: a.uitlaterId,
       hondIds: a.hondIds,
       duur: a.duur,
-      cameraInHuis: a.cameraInHuis,
+      oppasPlek: a.dienst === 'oppas' ? (a.oppasPlek ?? 'bij_eigenaar') : undefined,
+      huisinfo: a.dienst === 'oppas' && !bijOppas ? a.huisinfo : undefined,
+      afgifte,
       moment,
       serieId,
-      ophaalPunt: s.gebruiker.thuis,
-      adres: s.gebruiker.adres,
-      sleutel: a.sleutel,
+      ophaalPunt: bijOppas ? u.positie : (afgifte?.punt ?? s.gebruiker.thuis),
+      adres: bijOppas ? (u.huis?.adres ?? `Bij ${u.voornaam} thuis, ${u.wijk}`) : (afgifte?.omschrijving ?? s.gebruiker.adres),
+      sleutel: bijOppas || afgifte ? 'thuis' : a.sleutel,
       notitie: a.notitie,
       betaalmethode: a.betaalmethode,
       prijs,
@@ -668,7 +682,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return b.id;
   }, [setState]);
 
-  const vraagKennismakingAan = useCallback((uitlaterId: string, tijdstip: number, bericht: string) => {
+  const vraagKennismakingAan = useCallback((uitlaterId: string, tijdstip: number, bericht: string, afgifte?: Afgifte) => {
     const s = ref.current.state;
     const u = uitlaterUit(s, uitlaterId);
     if (!s.gebruiker || !u) return '';
@@ -679,8 +693,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hondIds: s.honden.map((h) => h.id),
       duur: 30,
       moment: { type: 'later', tijdstip },
-      ophaalPunt: s.gebruiker.thuis,
-      adres: s.gebruiker.adres,
+      afgifte,
+      ophaalPunt: afgifte?.punt ?? s.gebruiker.thuis,
+      adres: afgifte?.omschrijving ?? s.gebruiker.adres,
       notitie: bericht,
       startPositie: u.positie,
     });
@@ -1284,6 +1299,10 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
       ? { type: 'later', tijdstip: tijdstipOp(1, oppas ? '19:30' : '12:30') }
       : { type: 'nu' };
   const dienst: Dienst = oppas ? 'oppas' : 'uitlaten';
+  // Afwisselend: thuis ontvangen als de oppas dat aanbiedt, camera's in huis, en bij uitlaten soms een afgiftepunt
+  const bijOppas = oppas && profiel.oppasPlekken.includes('bij_oppas') && (!profiel.oppasPlekken.includes('bij_eigenaar') || volgnummer % 2 === 0);
+  const camera = volgnummer % 2 === 1;
+  const afgifte = !oppas && !kennismaking && volgnummer % 3 === 2 ? { omschrijving: 'Ingang van het park, bij het hek', punt: PARK_INGANG } : undefined;
   return basisBoeking({
     mijnRol: 'uitlater',
     soort: kennismaking ? 'kennismaking' : 'betaald',
@@ -1293,9 +1312,15 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
     hondIds: k.honden.map((h) => h.id),
     duur,
     moment,
-    ophaalPunt: k.positie,
-    adres: k.adres,
-    sleutel: volgnummer % 2 === 0 ? 'thuis' : 'kastje',
+    oppasPlek: oppas ? (bijOppas ? 'bij_oppas' : 'bij_eigenaar') : undefined,
+    huisinfo:
+      oppas && !bijOppas
+        ? { camera, cameraWaar: camera ? 'Woonkamer en hal, alleen beeld' : '', voorzieningen: ['wifi', 'koffie_thee', 'tv'], huisregels: 'Boven is privé. Niet roken in huis.' }
+        : undefined,
+    afgifte,
+    ophaalPunt: bijOppas ? profiel.positie : (afgifte?.punt ?? k.positie),
+    adres: bijOppas ? 'Bij jou thuis' : (afgifte?.omschrijving ?? k.adres),
+    sleutel: bijOppas || afgifte || volgnummer % 2 === 0 ? 'thuis' : 'kastje',
     notitie: k.honden[0].bijzonderheden,
     prijs: kennismaking ? GRATIS : berekenPrijs(profiel, dienst, duur, k.honden.length, modelVoor(s.verdienmodelId), prijsExtra(s, dienst, moment)),
     startPositie: profiel.positie,

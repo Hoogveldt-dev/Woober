@@ -229,7 +229,7 @@ function Gegevens() {
 
         <Label>Ik wil</Label>
         <View style={s.rollen}>
-          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Hulp voor mijn hond" tekst="Uitlaten of oppas aan huis, door iemand uit de buurt." />
+          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Hulp voor mijn hond" tekst="Uitlaten of oppas, door iemand uit de buurt." />
           <RolKaart actief={rol === 'uitlater'} onPress={() => setRol('uitlater')} icoon="walk" titel="Uitlaten of oppassen" tekst="Bepaal zelf je tarief, werkgebied en wanneer je werkt." />
         </View>
         {toon(fouten.rol) ? <Text style={s.fout}>{fouten.rol}</Text> : null}

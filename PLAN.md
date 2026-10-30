@@ -9,7 +9,7 @@ Woober is het zusje van Woofer. Woofer brengt fokkers bij elkaar; Woober brengt 
 Woober heeft twee diensten, zoals Uber verschillende ritsoorten heeft. Zelfde app, zelfde systeem, andere selectie:
 
 - **Uitlaten**: een wandeling van 30, 45 of 60 minuten, met live route.
-- **Oppas aan huis**: iemand komt bij je thuis op je hond passen, 2 tot 5 uur, te verlengen. Spontaan een avondje weg? Eén tik en de oppas is onderweg.
+- **Oppas**: iemand past 2 tot 5 uur op je hond, te verlengen: bij jou thuis, of bij de oppas thuis als die honden thuis ontvangt. Spontaan een avondje weg? Eén tik en de oppas is onderweg.
 
 Zelfde huisstijl als Woofer (kleuren, verloop, knoppen, lettertype, toon), maar een eigen merk, een eigen repository en straks een eigen database.
 
@@ -267,10 +267,11 @@ Verder: meldingen en schorsingen beoordeelt altijd een mens, met uitleg en de mo
 
 Twee punten blijven voor een arbeidsrechtspecialist: of de "Nu"-knop met snelle reactie als sturing kan worden gezien, en of oppas aan huis (en mogelijk uitlaten) onder de Regeling dienstverlening aan huis valt, waarbij de eigenaar als particuliere opdrachtgever lichtere werkgeversplichten heeft.
 
-### Extra bij oppas aan huis
+### Extra bij oppas
 
-- **Iemand in je huis**: daarom altijd eerst een kennismaking, de code bij de deur, en huisregels in het bericht.
-- **Camera's**: de eigenaar meldt vooraf of er camera's hangen. Iemand filmen zonder dat die het weet mag niet; de oppas ziet het vóór de afspraak.
+- **Iemand in je huis**: daarom altijd eerst een kennismaking en de code bij de deur. Bij het boeken geeft de eigenaar aan wat de oppas mag gebruiken (wifi, koffie en thee, tv, iets uit de koelkast) en wat privé is; de rest spreken ze af in de chat, zodat het voor allebei terug te lezen is. De app wijst daar na het accepteren op.
+- **Camera's**: de eigenaar meldt vooraf of er camera's hangen, waar, en of ze geluid opnemen. Iemand filmen zonder dat die het weet mag niet; de oppas ziet het al bij het verzoek.
+- **Bij de oppas thuis**: wie niemand in huis wil, kiest een oppas die honden thuis ontvangt. Die beschrijft het huis in het profiel (minstens 40 tekens, met tuin, eigen huisdieren, kinderen, rookvrij) zonder adres; de eigenaar ziet het adres na accepteren, en de oppas het adres van de eigenaar niet.
 - **Verzekering**: de aansprakelijkheidsverzekering van de oppas moet ook schade in het huis dekken, niet alleen schade door de hond. Navragen bij verzekeraars; mogelijk een collectieve polis via Woober.
 - **Locatie**: alleen tijdens het plasrondje om het blok; binnen is de positie gewoon het adres.
 
@@ -322,7 +323,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 ## Bewust nog niet in de demo
 
 - Groepswandelingen met honden van verschillende eigenaren
-- Logeeropvang bij de oppas thuis en overnachten (oppas tot in de nacht kan wel, tot 5 uur, te verlengen)
+- Overnachten (logeeropvang); oppas overdag of 's avonds bij de oppas thuis kan wel, tot 5 uur, te verlengen
 - Direct boeken zonder acceptatie
 - Abonnement voor uitlaters
 - Het serverproces dat drukte berekent (tabel en regels staan klaar)
@@ -335,6 +336,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - **Tabs voor eigenaren (oktober 2026)**: de eerste tab heet Zoeken; Uitlaten of Oppas kies je bovenin het startscherm. Een eigen tab voor Oppas is afgewezen: zes tabs passen niet goed op een telefoon, het startscherm zou dubbel bestaan en de uitlater-kant is ook niet gesplitst. Overwogen is Activiteit naar Account te verplaatsen en de vrije tab te gebruiken voor Honden (profiel, eerdere wandelingen en rapporten per hond). Voorlopig blijft Activiteit een eigen tab, omdat geplande boekingen en de teller dan direct zichtbaar zijn, zoals bij Uber. Gaat Activiteit later toch naar Account, laat dan de eerstvolgende geplande boeking ook op Zoeken zien.
 - **Wisselen van rol en bewerken in de app (oktober 2026)**: bovenaan Account staat bij beide rollen een keuze Eigenaar of Uitlater, naar het voorbeeld van italki; de losse menuregels om te wisselen zijn weg. Beheerders passen teksten aan in een bewerkmodus met een hamertje bij elke aanpasbare tekst, in plaats van alleen in een lange lijst.
 - **Woober Fit voor uitlaters (oktober 2026)**: mensen letten steeds meer op hun gezondheid, en daar sluit Woober op aan met het idee "ga wandelen en neem een hond mee". Woober Fit is voor uitlaters, die het meest lopen: een eigen tab Fit met stappen per dag, week en maand, hoeveel je deze week met honden wandelde, en koppelingen met Apple Fitness, Google Fit, Strava en Garmin (eerst op slot). Verdiensten ging daarvoor van een eigen tab naar Account, zoals een portemonnee in het accountmenu. Eerst stond Woober Fit kort in de tab Activiteit van eigenaren; dat is teruggedraaid, Activiteit blijft het boekingsoverzicht. Stappen blijven op de telefoon en worden nooit gebruikt om uitlaters te beoordelen.
+- **Oppas bij de oppas thuis en afgeven elders (oktober 2026)**: zodat er niet altijd iemand anders uren in je huis zit, kan een oppas honden ook thuis ontvangen, met een beschrijving van het huis in het profiel. Eigenaren kiezen bij het boeken Bij mij thuis of Bij de oppas thuis. Bij uitlaten en kennismaken kan de eigenaar de hond afgeven op een openbare plek in de buurt, bijvoorbeeld als die het adres nog niet wil delen; de eigenaar is er dan zelf bij het afgeven en ophalen. Bij oppas bij de eigenaar thuis staan camera's (waar, met of zonder geluid), wat de oppas mag gebruiken en wat privé is bij de boeking; de rest in de chat.
 
 ## Open vragen
 
@@ -345,7 +347,9 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - [ ] Btw over servicekosten, boekingskosten, commissie en Plus, en hoe dat werkt voor uitlaters onder de kleineondernemersregeling.
 - [ ] Misbruik van welkomst- en uitnodigingstegoed met meerdere accounts: controleren op betaalmiddel of telefoonnummer?
 - [ ] Oppas: minimaal 2 uur? Nachtoppas (blijven slapen) toevoegen, en zo ja met een vast nachttarief?
-- [ ] Verlengen: mag de oppas weigeren, en wat als de eigenaar dan niet op tijd thuis is?
+- [ ] Verlengen: mag de oppas weigeren, en wat als de eigenaar dan niet op tijd thuis is? Voorstel: de eigenaar vraagt het extra uur aan en betaalt meteen; de oppas bevestigt met één tik. Weigert de oppas of komt er geen antwoord voor de oude eindtijd, dan gaat het geld vanzelf terug en ziet de eigenaar dat direct. Vraag het zo vroeg mogelijk (de app herinnert er een half uur voor het einde aan). Te laat zonder bevestigd uur: bij de eigenaar thuis mag de oppas op de afgesproken tijd gaan (de hond is thuis); bij de oppas thuis blijft de hond daar en betaalt de eigenaar de extra tijd achteraf tegen het eigen uurtarief van de oppas, per begonnen half uur.
+- [ ] Vaste afspraken betalen: elke keer vooraf, het geld gaat pas na afloop naar de uitlater (zo werkt vertraagd routeren al). Voorstel: de eerste keer met iDEAL | Wero, waarmee Mollie een machtiging aanmaakt; de volgende keren schrijft Mollie automatisch af (SEPA-incasso), een paar dagen voor de wandeling. Een incasso kan de eigenaar 8 weken lang laten terugboeken; dat draagt Woober, zoals andere terugboekingen. Navragen bij Mollie of dit samengaat met Connect for Marketplaces.
+- [ ] Contant betalen in de eerste fase? Advies: niet doen. Zonder betaling via de app geen review (alleen na een betaalde wandeling), geen terugbetaling bij een no-show, geen bewijs voor de verzekering en geen overzicht voor de belasting. Tijdens de lancering houdt Woober niets in, dus er is geen reden om buiten de app te betalen.
 - [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.
 - [ ] Verzekering per uitlater of collectief via Woober?
 - [ ] Alleen particuliere uitlaters, of ook bedrijven met KvK? De demo laat beide zien.

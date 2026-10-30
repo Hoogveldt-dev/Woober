@@ -45,7 +45,7 @@ const secties = (g: Gegevens): Sectie[] => [
     punten: [
       'Je geeft eerlijke informatie over je hond: gedrag, gezondheid, medicijnen, angsten en hoe die met andere honden omgaat.',
       'Je blijft als eigenaar aansprakelijk voor schade die je hond veroorzaakt (artikel 6:179 Burgerlijk Wetboek). Een aansprakelijkheidsverzekering voor je hond is verstandig.',
-      'Bij oppas aan huis meld je vooraf of er camera’s hangen. Iemand filmen zonder dat die het weet, mag niet.',
+      'Bij oppas bij jou thuis meld je vooraf of er camera’s hangen, waar, en of ze geluid opnemen. Iemand filmen of opnemen zonder dat die het weet, mag niet.',
       'Je geeft je hond alleen mee aan iemand die de juiste ophaalcode noemt.',
     ],
   },
@@ -57,6 +57,7 @@ const secties = (g: Gegevens): Sectie[] => [
       'Voordat eigenaren je zien, controleert Woober je identiteit, je aansprakelijkheidsverzekering en je rekening. Een Verklaring Omtrent het Gedrag is niet verplicht.',
       'Je volgt de regels van de gemeente, zoals aanlijnen, opruimen en het maximum aantal honden tegelijk, en nooit meer dan acht honden.',
       'Je neemt een hond alleen mee na de juiste ophaalcode en deelt je locatie alleen tijdens de wandeling, met de eigenaar van die hond.',
+      'Ontvang je honden bij jou thuis, dan beschrijf je je huis eerlijk en zorg je dat het veilig is voor honden. Je adres ziet een eigenaar pas na een geaccepteerde boeking, en alleen voor die boeking.',
     ],
   },
   {

@@ -1,6 +1,6 @@
 # Woober
 
-Zusje van Woofer: hondeneigenaren boeken in Uber-stijl een uitlater of een oppas aan huis uit de buurt en volgen het live. Uitlaten en oppas zijn twee diensten in dezelfde app (`Dienst` in `src/types.ts`). Lancering in Nederland via App Store, Google Play en web. Het plan staat in @PLAN.md.
+Zusje van Woofer: hondeneigenaren boeken in Uber-stijl een uitlater of een oppas (bij de eigenaar of bij de oppas thuis) uit de buurt en volgen het live. Uitlaten en oppas zijn twee diensten in dezelfde app (`Dienst` in `src/types.ts`). Lancering in Nederland via App Store, Google Play en web. Het plan staat in @PLAN.md.
 
 Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app/`).
 
@@ -19,6 +19,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 - Echte accounts kunnen nog niet boeken: startscherm `src/components/StartEcht.tsx` (plekken en wachtlijst); boek-, chat- en opdrachtroutes zijn in `src/app/_layout.tsx` alleen open in de demo. Plekken in de database: `src/lib/plekkenDb.ts`.
 - Woober Fit, de tab Fit van uitlaters (`src/app/werk/fit.tsx`): stappenteller `src/components/Stappenteller.tsx`, rekenwerk en demo-stappen `src/lib/fit.ts`, stappen van de iPhone `src/lib/stappen.ts` (`expo-sensors`, alleen op het toestel bewaard, gewist bij uitloggen). Koppelingen met Apple Gezondheid, Health Connect, Strava en Garmin staan op slot; wat Kjell ervoor moet doen staat in `ACTIES.md`. Op Android staat het recht op bewegingsgegevens uit in `app.json` (`blockedPermissions`) tot Health Connect er is.
 - Saldo (wallet) en verdiensten van de uitlater: scherm `src/app/saldo.tsx` (onder Account en via het bedrag op het werkscherm), regels in `src/lib/saldo.ts` en `src/lib/verdiensten.ts`, betalen met saldo in `src/app/bevestigen.tsx`, database `20261030000000_saldo.sql` (zelfde regels als de app; getest met `npm run test:db`).
+- Oppas bij de eigenaar of bij de oppas thuis, afspraken over het huis en afgeven op een ander punt: regels en teksten in `src/lib/huis.ts`, weergave in `src/components/Huis.tsx`, database `20261101000000_oppas_en_afgeven.sql`.
 - Wisselen tussen eigenaar en uitlater: `src/components/RolWissel.tsx`, bovenaan Account bij beide rollen.
 - Betalen met Mollie (Connect for Marketplaces, vertraagde routing): database `20261031000000_mollie.sql`, Edge Functions in `supabase/functions/` (Deno; aanroepen naar Mollie alleen in `_shared/mollie.ts`, pure regels in `_shared/regels.ts`), app `src/lib/betalen.ts`, koppelen in `src/app/verificatie.tsx`, terugkomen na betalen `src/app/betaald.tsx`, terugboekingen in `src/app/beheer-terugboekingen.tsx`. Controleer met `npm run check:functions`; instellen in de README. De app-typecheck en lint slaan `supabase/functions` over.
 - No-show of late afzegging melden (eigenaar, bij de boeking): `src/components/AfspraakMelden.tsx`, wanneer de knop verschijnt in `meldbareAfspraak()` in `src/lib/prijs.ts`. Een medewerker beoordeelt de melding en hoort de uitlater; geen tellingen of percentages, en andere gebruikers zien er niets van. Nu alleen in de demo.
@@ -31,7 +32,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 ## Afspraken
 - Marktplaats, geen centrale (Wet platformwerk): de uitlater kiest zelf tarief, werkgebied en tijden; de eigenaar kiest de uitlater; weigeren en afzeggen hebben geen gevolgen en worden niet geteld. Voeg geen automatische toewijzing, vaste prijzen, acceptatiegraad of automatische schorsing toe zonder dat Kjell erom vraagt.
 - Meldingen en schorsingen beoordeelt altijd een mens.
-- Toon andere gebruikers nooit e-mail of adres. Het adres van een eigenaar ziet een uitlater pas na een geaccepteerde boeking.
+- Toon andere gebruikers nooit e-mail of adres. Het adres van een eigenaar ziet een uitlater pas na een geaccepteerde boeking, en nooit als de hond op een ander punt wordt afgegeven of bij de oppas thuis is; dan ziet de eigenaar na accepteren het adres van de oppas. Afspraken over het huis (camera's, voorzieningen, wat privé is) ziet de oppas al bij het verzoek.
 - Locatie van de uitlater alleen tijdens een wandeling, alleen voor de eigenaar van die wandeling, en niet gebruiken om uitlaters te beoordelen.
 - Reviews alleen na een betaalde wandeling.
 - Fitnessgegevens van Woober Fit blijven op de telefoon. Stuur ze alleen naar Supabase als Kjell een koppeling via een server goedkeurt, pas dan de privacyverklaring aan, en gebruik ze nooit voor reclame of om uitlaters te beoordelen.

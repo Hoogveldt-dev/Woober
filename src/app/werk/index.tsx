@@ -6,6 +6,7 @@ import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HondenStapel } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, useNu } from '../../components/blokken';
+import { HuisAfspraken } from '../../components/Huis';
 import { Kaart, type KaartMarker, type KaartRoute } from '../../components/Kaart';
 import { Badge, Knop, Melding } from '../../components/ui';
 import { boekingOpKaart } from '../../lib/kaartLagen';
@@ -127,6 +128,7 @@ function WerkDemo() {
     const afstand = lengte(routeTussen(ik, openVerzoek.ophaalPunt));
     const kennismaking = openVerzoek.soort === 'kennismaking';
     const oppas = openVerzoek.dienst === 'oppas';
+    const bijMij = oppas && openVerzoek.oppasPlek === 'bij_oppas';
     inhoud = (
       <>
         <View style={s.verzoekKop}>
@@ -165,10 +167,13 @@ function WerkDemo() {
             </View>
           ) : null}
           <View style={s.feit}>
-            <Ionicons name={openVerzoek.sleutel === 'kastje' ? 'key' : 'home'} size={15} color={kleuren.tekst} />
-            <Text style={s.feitTekst}>{openVerzoek.sleutel === 'kastje' ? 'Sleutelkastje' : 'Eigenaar thuis'}</Text>
+            <Ionicons name={bijMij ? 'bed' : openVerzoek.afgifte ? 'location' : openVerzoek.sleutel === 'kastje' ? 'key' : 'home'} size={15} color={kleuren.tekst} />
+            <Text style={s.feitTekst}>
+              {bijMij ? 'Bij jou thuis' : openVerzoek.afgifte ? openVerzoek.afgifte.omschrijving : openVerzoek.sleutel === 'kastje' ? 'Sleutelkastje' : 'Eigenaar thuis'}
+            </Text>
           </View>
         </View>
+        {openVerzoek.huisinfo ? <HuisAfspraken info={openVerzoek.huisinfo} /> : null}
         {openVerzoek.notitie ? (
           <View style={s.notitie}>
             <Ionicons name="information-circle" size={16} color={kleuren.info} />
@@ -187,7 +192,8 @@ function WerkDemo() {
           <Text style={s.verdienSub}>
             Jouw tarief {euro(openVerzoek.prijs.tarief + openVerzoek.prijs.toeslag)}
             {openVerzoek.prijs.drukteUitlater > 0 ? `, plus ${euro(openVerzoek.prijs.drukteUitlater)} drukte-bonus` : ''}
-            {openVerzoek.prijs.commissie > 0 ? `, min ${euro(openVerzoek.prijs.commissie)} commissie` : ', zonder commissie'}. Het adres zie je na accepteren.
+            {openVerzoek.prijs.commissie > 0 ? `, min ${euro(openVerzoek.prijs.commissie)} commissie` : ', zonder commissie'}.
+            {bijMij ? ` ${verzoekKlant.voornaam} brengt de honden bij je.` : openVerzoek.afgifte ? ' Je haalt de hond op bij dit punt.' : ' Het adres zie je na accepteren.'}
           </Text>
         ) : null}
         <View style={s.knoppen}>

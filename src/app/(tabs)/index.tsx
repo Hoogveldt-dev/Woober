@@ -21,7 +21,7 @@ import { useTekst } from '../../state/Teksten';
 
 const DIENSTEN: { id: Dienst; titel: string; sub: string; icoon: 'dog-service' | 'sofa' }[] = [
   { id: 'uitlaten', titel: 'Uitlaten', sub: '30 tot 60 minuten', icoon: 'dog-service' },
-  { id: 'oppas', titel: 'Oppas', sub: 'bij jou thuis', icoon: 'sofa' },
+  { id: 'oppas', titel: 'Oppas', sub: 'bij jou of de oppas', icoon: 'sofa' },
 ];
 
 /** Echte accounts zien de kaart met plekken en de wachtlijst; de demo het volledige boeken */

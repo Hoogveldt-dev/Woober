@@ -43,8 +43,13 @@ export function uitlaterOpties(
   prijsVoor: PrijsFunctie,
 ): UitlaterOptie[] {
   const lijst = uitlaters
-    // Andere selectie per dienst, zoals ritsoorten bij Uber: alleen wie deze dienst aanbiedt
-    .filter((u) => !geblokkeerd.includes(u.id) && u.diensten.includes(concept.dienst))
+    // Andere selectie per dienst, zoals ritsoorten bij Uber: alleen wie deze dienst aanbiedt, bij oppas op deze plek
+    .filter(
+      (u) =>
+        !geblokkeerd.includes(u.id) &&
+        u.diensten.includes(concept.dienst) &&
+        (concept.dienst !== 'oppas' || u.oppasPlekken.includes(concept.oppasPlek ?? 'bij_eigenaar')),
+    )
     .map((u): UitlaterOptie => {
       const route = routeTussen(u.positie, thuis);
       const afstandM = lengte(route);

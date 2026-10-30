@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import { DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
-import type { Beschikbaarheid, Dienst, Gebruiker, Hond, Rol, Uitlater, Vervoer } from '../types';
+import type { Beschikbaarheid, Dienst, Gebruiker, Hond, HuisKenmerk, OppasPlek, Rol, Uitlater, Vervoer } from '../types';
 import { supabase } from './supabase';
 
 // Accounts in Supabase: inloggen met Apple, Google of een code per e-mail, en het eigen profiel, adres,
@@ -202,6 +202,9 @@ export async function bewaarUitlaatprofiel(p: Uitlater) {
     bedrijfsnaam: p.bedrijfsnaam ?? null,
     diensten: p.diensten,
     oppas_per_uur: p.diensten.includes('oppas') ? p.oppasPerUur : 0,
+    oppas_plekken: p.oppasPlekken,
+    huis_omschrijving: p.huis?.omschrijving ?? '',
+    huis_kenmerken: p.huis?.kenmerken ?? [],
     tarief_30: p.tarieven[30],
     tarief_45: p.tarieven[45],
     tarief_60: p.tarieven[60],
@@ -270,6 +273,8 @@ function naarUitlater(r: Record<string, unknown>, voornaam: string): Uitlater {
     diensten,
     tarieven: { 30: Number(r.tarief_30), 45: Number(r.tarief_45), 60: Number(r.tarief_60) },
     oppasPerUur: Number(r.oppas_per_uur) || 1100,
+    oppasPlekken: (r.oppas_plekken as OppasPlek[] | null) ?? ['bij_eigenaar'],
+    huis: r.huis_omschrijving ? { omschrijving: String(r.huis_omschrijving), kenmerken: (r.huis_kenmerken as HuisKenmerk[] | null) ?? [] } : undefined,
     toeslagExtraHond: Number(r.toeslag_extra_hond),
     maxHonden: Number(r.max_honden),
     werkgebiedKm: Number(r.werkgebied_km),
@@ -295,5 +300,6 @@ function vertaal(bericht: string): string {
   if (m.includes('provider is not enabled') || m.includes('unsupported provider')) return 'Deze manier van inloggen staat nog niet aan. Gebruik voorlopig je e-mailadres.';
   if (m.includes('network') || m.includes('fetch')) return 'Geen verbinding. Controleer je internet en probeer het opnieuw.';
   if (m.includes('postcode')) return 'Vul een Nederlandse postcode in, bijv. 6511 AB.';
+  if (m.includes('huis_beschreven')) return 'Beschrijf je huis in minstens 40 tekens als je honden thuis ontvangt.';
   return 'Er ging iets mis. Probeer het nog eens.';
 }
