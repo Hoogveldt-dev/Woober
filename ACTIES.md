@@ -1,6 +1,6 @@
 # Woober: wat er nog moet gebeuren
 
-Stand van 29 oktober 2026, bij de PR met echte accounts, plekken, beheer en voorwaarden. De vinkjes kun je zelf afvinken.
+Stand van 30 oktober 2026, bijgewerkt bij de PR met Woober Fit (stap 5). De vinkjes kun je zelf afvinken.
 
 ## 1. Voordat je de PR samenvoegt
 
@@ -45,7 +45,31 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 - [ ] Expo-account en `npx eas-cli@latest init` in deze map, zodat `eas.json` aan je project hangt. Daarna kan Claude een testversie bouwen met `npx eas-cli@latest build --profile preview --platform all`.
 - [ ] Storevermelding: naam, beschrijving, schermafbeeldingen, link naar `https://woober.nl/privacy`, de privacyvragen van beide stores en een testaccount voor de reviewers.
 
-## 5. Wat ik in deze sessie niet kon doen, en waarom
+## 5. Woober Fit: koppelingen instellen
+
+In de tab Activiteit (Woober Fit) staan Apple Fitness, Google Fit, Strava en Garmin nu met een slotje. De stappenteller zelf werkt al: in de demo met verzonnen stappen, bij echte accounts op de iPhone met de bewegingssensor van de telefoon. Die stappen blijven op de telefoon. Per koppeling heb ik dit van jou nodig; daarna bouwt Claude hem (stap 7).
+
+- [ ] **Volgorde kiezen.** Mijn advies: eerst Apple Gezondheid en Health Connect. Die lezen op de telefoon zelf, zonder server, en de stappen hoeven niet naar Woober. Daarna Strava, Garmin als laatste.
+- [ ] **Apple Fitness, via Apple Gezondheid (HealthKit).** Apple Fitness heeft geen eigen koppeling; de gegevens staan in Apple Gezondheid.
+  - Apple Developer-lidmaatschap (stap 4) en bij App ID `nl.woober.app` de capability **HealthKit** aanzetten.
+  - In App Store Connect bij de privacyvragen aangeven dat de app gezondheids- en fitnessgegevens leest en dat die niet voor reclame worden gebruikt.
+  - Testen kan alleen met een testversie (development build), niet in Expo Go.
+- [ ] **Google Fit, via Health Connect.** Google stopt eind 2026 met de koppelingen van Google Fit; Health Connect is de opvolger op Android en leest ook wat Google Fit, Samsung Health en andere apps bijhouden.
+  - Google Play Console-account (stap 4).
+  - In de Play Console de verklaring voor Health Connect invullen: welke gegevens (stappen, afstand, activiteiten) en waarom. Google beoordeelt dat met de hand.
+  - Testen met een testversie op een Android-telefoon met Health Connect.
+- [ ] **Strava.**
+  - Een app aanmaken op [strava.com/settings/api](https://www.strava.com/settings/api): naam Woober, website `https://woober.nl`, Authorization Callback Domain `woober.nl`. Volgens Strava heb je daarvoor een Strava-abonnement nodig.
+  - Client ID en Client Secret als geheim in Supabase zetten (Edge Functions, Secrets) of in een sessie aan Claude geven om dat te doen. Nooit in de app.
+  - De API Agreement van Strava lezen (laatst bijgewerkt op 1 juni 2026). Woober toont iemands Strava-gegevens alleen aan die persoon zelf.
+  - Een nieuwe Strava-app kan maar een paar sporters koppelen (volgens de documentatie tot 10). Vraag daarna een review aan bij Strava.
+- [ ] **Garmin.**
+  - Aanvraag bij het Garmin Connect Developer Program ([developer.garmin.com](https://developer.garmin.com)), op naam van de onderneming (KvK), met het doel en hoe we met privacy omgaan. Garmin beoordeelt elke aanvraag zelf.
+  - Let op: volgens berichten uit september 2026 neemt Garmin tijdelijk geen nieuwe aanvragen aan. Kijk op de site of het formulier weer open is.
+  - Na goedkeuring de sleutels als geheim in Supabase.
+- [ ] **Juridisch meenemen** (stap 3): stappen en activiteiten kunnen onder de AVG als gezondheidsgegevens gelden. Laat toetsen wat er nodig is voordat een koppeling echt wordt. Strava en Garmin lopen via een server, dus dan bewaart Woober wel gegevens in Supabase; Claude past daarvoor de privacyverklaring aan.
+
+## 6. Wat ik in deze sessie niet kon doen, en waarom
 
 | Wat | Waarom | Wat er nu staat |
 | --- | --- | --- |
@@ -56,8 +80,10 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 | Officiële losloopgebieden van de gemeente | data.overheid.nl en nijmegen.nl zijn hier geblokkeerd | Sta die domeinen toe bij Network access van de omgeving, dan haalt Claude de open data op |
 | De app op een iPhone of Android testen | Geen simulator hier; de kaart in de app (WebView) en het Apple-inlogvenster werken alleen in de app zelf | Op het web getest; test op je telefoon met Expo Go of een testversie |
 | Kaarttegels zien | PDOK is hier geblokkeerd, de kaart bleef grijs | Spelden, kiezen en verschuiven getest; op je telefoon laadt PDOK gewoon |
+| Stappenteller op een iPhone testen (30 oktober) | Geen iPhone of simulator hier | Op het web getest met de demo. Open op je iPhone Woober Fit met een echt account en tik op Stappen tellen aanzetten |
+| Documentatie van Expo lezen (30 oktober) | docs.expo.dev is hier geblokkeerd | Gebouwd op de uitleg in het pakket `expo-sensors` zelf (versie 58) |
 
-## 6. Wat er daarna gebouwd moet worden (door Claude)
+## 7. Wat er daarna gebouwd moet worden (door Claude)
 
 Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 
@@ -67,3 +93,5 @@ Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 4. **Betalen** met Stripe Connect en iDEAL, eerst in testmodus. Nodig van jou: een Stripe-account op naam van de onderneming (met KvK).
 5. **Verificatie automatiseren** met Stripe Identity en polis uploaden; tot dan doe je het met de hand in Beheer.
 6. **Besloten test** met een handvol uitlaters en eigenaren in Nijmegen.
+
+Los daarvan, zodra jij stap 5 hebt gedaan: de **koppelingen van Woober Fit**. Apple Gezondheid en Health Connect op de telefoon zelf (dan kan ook de stappenteller op Android, die staat nu uit); Strava en Garmin via Supabase Edge Functions.

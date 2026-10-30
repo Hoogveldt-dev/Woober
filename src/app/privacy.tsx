@@ -60,6 +60,13 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
     ],
   },
   {
+    titel: 'Woober Fit',
+    alineas: [
+      'Op een iPhone kan Woober je stappen tellen met de bewegingssensor van je telefoon, alleen als je dat zelf aanzet en toestemming geeft. Woober bewaart je stappen per dag op je telefoon, zodat je ook je week en maand ziet. Ze gaan niet naar Woober of naar anderen, en verdwijnen van je telefoon als je uitlogt of je account verwijdert. Je toestemming intrekken kan in de instellingen van je iPhone, bij Woober.',
+      'Koppelingen met Apple Gezondheid, Google Fit, Strava en Garmin zijn er nog niet. Komen ze er, dan passen we deze verklaring eerst aan.',
+    ],
+  },
+  {
     titel: 'Nog in opbouw',
     alineas: [
       'Boeken, chatten en betalen zijn nog niet beschikbaar. De demo op het welkomscherm laat zien hoe het gaat werken; wat je in de demo doet, blijft alleen op je eigen apparaat en verdwijnt als je de app sluit. Zodra boeken, locatie tijdens een wandeling, foto’s of betalen echt worden, passen we deze verklaring aan en laten we het je weten.',

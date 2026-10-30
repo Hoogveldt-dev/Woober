@@ -99,12 +99,17 @@ Onder Beheer, **Teksten in de app** pas je zonder nieuwe versie teksten aan: een
 | Wandelrapport met fooi en beoordeling | Verdiensten per dag en per week |
 | Chat, melden, blokkeren en noodknop | Eigen tarief, werkgebied, rooster en verificatie |
 | Tegoed, actiecodes en Woober Plus | Commissie en drukte-bonus per fase zichtbaar |
+| Woober Fit: stappen per dag, week en maand | |
 
 Een overzicht van schermen en bestanden staat in [PLAN.md](PLAN.md#wat-de-demo-laat-zien).
 
 ## De kaart
 
 Echte accounts zien een echte kaart: Leaflet met de achtergrondkaart van PDOK (Kadaster), gratis en zonder sleutel. Op het web draait die in een afgeschermde iframe, in de app in een WebView (`react-native-webview`, zit in Expo Go). Leaflet zit als tekst in de app (`src/lib/leaflet.gen.ts`, opnieuw maken met `npm run kaart:leaflet`), zodat er niets van een CDN komt. De demo houdt de getekende wijk.
+
+## Woober Fit
+
+De tab Activiteit heet bovenaan Woober Fit. In de demo zijn de stappen verzonnen (elke dag steeds dezelfde). Met een echt account telt de iPhone ze met de bewegingssensor (`expo-sensors`, zit in Expo Go): de telefoon kent de laatste 7 dagen, en Woober bewaart de dagtotalen op het toestel zodat week en maand gevuld blijven. Er gaat niets naar Supabase. Op Android en het web kan het nog niet; daarvoor is Health Connect nodig. Daarom staat het recht op bewegingsgegevens op Android uit in `app.json` (`blockedPermissions`). Koppelingen met Apple Gezondheid, Health Connect, Strava en Garmin staan op slot; zie [ACTIES.md](ACTIES.md).
 
 ## Builds voor de stores
 
@@ -118,3 +123,4 @@ Zie [ACTIES.md](ACTIES.md) voor wat nog moet gebeuren, en door wie.
 - Locatie tijdens de wandeling (`expo-location`)
 - Betalen via Stripe Connect en iDEAL
 - Pushmeldingen en foto's uploaden
+- Koppelingen van Woober Fit met Apple Gezondheid, Health Connect, Strava en Garmin

@@ -54,6 +54,19 @@ export const TEKSTEN = {
     hulp: 'Op het startscherm van echte uitlaters. Leeg laten om niets te tonen.',
     lang: true,
   },
+  'fit.intro': {
+    groep: 'Woober Fit',
+    label: 'Tekst onder de titel',
+    standaard: 'Ga wandelen en neem een hond mee. Hier zie je hoeveel je loopt, per dag, week en maand.',
+    hulp: 'Bovenaan de tab Activiteit. Leeg laten om niets te tonen.',
+    lang: true,
+  },
+  'fit.hond_mee': {
+    groep: 'Woober Fit',
+    label: 'Uitleg bij Neem een hond mee',
+    standaard: 'Wandelen houdt je fit, en met een hond erbij ga je ook als het regent. Laat honden uit de buurt uit en verdien er wat bij. Jij kiest wanneer en voor welk tarief.',
+    lang: true,
+  },
   'verificatie.echt': {
     groep: 'Uitlaters',
     label: 'Uitleg bij verificatie',
@@ -83,7 +96,7 @@ export const TEKSTEN = {
   'privacy.kvk': { groep: 'Privacyverklaring', label: 'KvK-nummer', standaard: '[KvK-nummer]' },
   'privacy.adres': { groep: 'Privacyverklaring', label: 'Vestigingsadres', standaard: '[Vestigingsadres]' },
   'privacy.email': { groep: 'Privacyverklaring', label: 'E-mailadres voor privacyvragen', standaard: '[privacy@woober.nl]' },
-  'privacy.versie': { groep: 'Privacyverklaring', label: 'Datum van deze versie', standaard: '28 oktober 2026' },
+  'privacy.versie': { groep: 'Privacyverklaring', label: 'Datum van deze versie', standaard: '30 oktober 2026' },
   'privacy.concept': {
     groep: 'Privacyverklaring',
     label: 'Waarschuwing bovenaan',
