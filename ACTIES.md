@@ -47,7 +47,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 ## 5. Woober Fit: koppelingen instellen
 
-In de tab Activiteit (Woober Fit) staan Apple Fitness, Google Fit, Strava en Garmin nu met een slotje. De stappenteller zelf werkt al: in de demo met verzonnen stappen, bij echte accounts op de iPhone met de bewegingssensor van de telefoon. Die stappen blijven op de telefoon. Per koppeling heb ik dit van jou nodig; daarna bouwt Claude hem (stap 7).
+In de tab Fit van uitlaters (Woober Fit) staan Apple Fitness, Google Fit, Strava en Garmin nu met een slotje. De stappenteller zelf werkt al: in de demo met verzonnen stappen, bij echte accounts op de iPhone met de bewegingssensor van de telefoon. Die stappen blijven op de telefoon. Per koppeling heb ik dit van jou nodig; daarna bouwt Claude hem (stap 7).
 
 - [ ] **Volgorde kiezen.** Mijn advies: eerst Apple Gezondheid en Health Connect. Die lezen op de telefoon zelf, zonder server, en de stappen hoeven niet naar Woober. Daarna Strava, Garmin als laatste.
 - [ ] **Apple Fitness, via Apple Gezondheid (HealthKit).** Apple Fitness heeft geen eigen koppeling; de gegevens staan in Apple Gezondheid.
@@ -80,7 +80,7 @@ In de tab Activiteit (Woober Fit) staan Apple Fitness, Google Fit, Strava en Gar
 | Officiële losloopgebieden van de gemeente | data.overheid.nl en nijmegen.nl zijn hier geblokkeerd | Sta die domeinen toe bij Network access van de omgeving, dan haalt Claude de open data op |
 | De app op een iPhone of Android testen | Geen simulator hier; de kaart in de app (WebView) en het Apple-inlogvenster werken alleen in de app zelf | Op het web getest; test op je telefoon met Expo Go of een testversie |
 | Kaarttegels zien | PDOK is hier geblokkeerd, de kaart bleef grijs | Spelden, kiezen en verschuiven getest; op je telefoon laadt PDOK gewoon |
-| Stappenteller op een iPhone testen (30 oktober) | Geen iPhone of simulator hier | Op het web getest met de demo. Open op je iPhone Woober Fit met een echt account en tik op Stappen tellen aanzetten |
+| Stappenteller op een iPhone testen (30 oktober) | Geen iPhone of simulator hier | Op het web getest met de demo. Open op je iPhone met een echt uitlateraccount de tab Fit en tik op Stappen tellen aanzetten |
 | Documentatie van Expo lezen (30 oktober) | docs.expo.dev is hier geblokkeerd | Gebouwd op de uitleg in het pakket `expo-sensors` zelf (versie 58) |
 
 ## 7. Wat er daarna gebouwd moet worden (door Claude)

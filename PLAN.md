@@ -119,13 +119,13 @@ De demo draait als iOS-app, Android-app en web app. Alle gegevens zijn nepdata i
 | Bevestigen en betalen | `src/app/bevestigen.tsx` |
 | Live volgen, ophaalcode, noodknop; bij oppas ook verlengen en "Ik ben thuis" | `src/app/wandeling/[id].tsx`, `src/components/IncidentBlad.tsx` |
 | Wandel- of oppasrapport, fooi, beoordeling | `src/app/rapport/[id].tsx` |
-| Woober Fit (tab Activiteit): stappen per dag, week en maand, koppelingen met fitness-apps op slot, Neem een hond mee | `src/app/(tabs)/activiteit.tsx`, `src/components/Stappenteller.tsx`, `src/lib/fit.ts`, `src/lib/stappen.ts` |
-| Afspraken (nu, gepland en vaste wandelingen, de eerstvolgende op Zoeken) en geschiedenis onder Account | `src/app/afspraken.tsx`, `src/app/geschiedenis.tsx` |
+| Activiteit en vaste wandelingen | `src/app/(tabs)/activiteit.tsx` |
 | Chat met signalering van betalen buiten de app | `src/app/chat/[id].tsx` |
 | Melden en blokkeren | `src/components/MeldenBlad.tsx` |
 | Uitlater: online gaan en verzoeken | `src/app/werk/index.tsx` |
 | Uitlater: opdracht uitvoeren | `src/app/opdracht/[id].tsx` |
-| Uitlater: verdiensten, opdrachten, profiel, verificatie | `src/app/werk/*`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
+| Uitlater: verdiensten (onder Account), opdrachten, profiel, verificatie | `src/app/werk/*`, `src/app/verdiensten.tsx`, `src/components/UitlaterFormulier.tsx`, `src/app/verificatie.tsx` |
+| Woober Fit voor uitlaters (tab Fit): stappen per dag, week en maand, met honden gewandeld, koppelingen met fitness-apps op slot | `src/app/werk/fit.tsx`, `src/components/Stappenteller.tsx`, `src/lib/fit.ts`, `src/lib/stappen.ts` |
 | Veiligheid en hulp | `src/app/veiligheid.tsx` |
 | Plekken: kaart met losloopgebieden, hondvriendelijke stranden, horeca en andere plekken, met reviews; gebruikers voegen zelf plekken toe | `src/app/(tabs)/plekken.tsx`, `src/app/plek/[id].tsx`, `src/app/plek-toevoegen.tsx`, `src/data/plekken.ts`, `src/lib/plekken.ts` |
 | Kaart van de demowijk met routes | `src/components/Kaart.tsx`, `src/data/stad.ts`, `src/lib/route.ts` |
@@ -283,7 +283,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 ## Genomen beslissingen
 
 - **Tabs voor eigenaren (oktober 2026)**: de eerste tab heet Zoeken; Uitlaten of Oppas kies je bovenin het startscherm. Een eigen tab voor Oppas is afgewezen: zes tabs passen niet goed op een telefoon, het startscherm zou dubbel bestaan en de uitlater-kant is ook niet gesplitst. Overwogen is Activiteit naar Account te verplaatsen en de vrije tab te gebruiken voor Honden (profiel, eerdere wandelingen en rapporten per hond). Voorlopig blijft Activiteit een eigen tab, omdat geplande boekingen en de teller dan direct zichtbaar zijn, zoals bij Uber. Gaat Activiteit later toch naar Account, laat dan de eerstvolgende geplande boeking ook op Zoeken zien.
-- **Activiteit wordt Woober Fit (oktober 2026)**: mensen letten steeds meer op hun gezondheid, en daar sluit Woober op aan met het idee "ga wandelen en neem een hond mee". De tab heet nog steeds Activiteit, maar bovenaan staat Woober Fit: je stappen per dag, week en maand en koppelingen met Apple Fitness, Google Fit, Strava en Garmin (eerst op slot). Boekingen verhuisden: de eerstvolgende geplande boeking en de teller staan op Zoeken, het overzicht van lopende, geplande en vaste afspraken op Afspraken, en eerdere boekingen onder Account, Geschiedenis. Stappen blijven op de telefoon en worden nooit gebruikt om uitlaters te beoordelen.
+- **Woober Fit voor uitlaters (oktober 2026)**: mensen letten steeds meer op hun gezondheid, en daar sluit Woober op aan met het idee "ga wandelen en neem een hond mee". Woober Fit is voor uitlaters, die het meest lopen: een eigen tab Fit met stappen per dag, week en maand, hoeveel je deze week met honden wandelde, en koppelingen met Apple Fitness, Google Fit, Strava en Garmin (eerst op slot). Verdiensten ging daarvoor van een eigen tab naar Account, zoals een portemonnee in het accountmenu. Eerst stond Woober Fit kort in de tab Activiteit van eigenaren; dat is teruggedraaid, Activiteit blijft het boekingsoverzicht. Stappen blijven op de telefoon en worden nooit gebruikt om uitlaters te beoordelen.
 
 ## Open vragen
 
@@ -301,7 +301,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - [ ] Plekken: willen we horeca later laten betalen voor een uitgelichte plek, of blijft de kaart neutraal? En mag de eigenaar van een zaak zijn plek claimen en aanpassen?
 - [ ] Mag Woober een VOG vragen? In de demo optioneel.
 - [ ] Pilotstad: Nijmegen?
-- [ ] Woober Fit ook voor uitlaters, die het meest lopen? En later een dagdoel dat je zelf kiest, of uitdagingen met de buurt?
+- [ ] Woober Fit later ook voor eigenaren die zelf met hun hond lopen? En een dagdoel dat je zelf kiest, of uitdagingen met de buurt?
 - [ ] **Naam**: Woober lijkt in klank en schrijfwijze op Uber. Laat een merkenonderzoek doen (BOIP en EUIPO) voordat je investeert in het merk; grote merken treden vaak op tegen namen die op hun merk lijken.
 
 Dit plan is geen juridisch advies; laat het juridisch kader toetsen voor de lancering.
