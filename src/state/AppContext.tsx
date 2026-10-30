@@ -22,6 +22,8 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import { saldoVan, uitbetalingFout } from '../lib/saldo';
+import { afgerondeOpdrachten, verdiend } from '../lib/verdiensten';
 import { wisStappen } from '../lib/stappen';
 import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
@@ -47,6 +49,7 @@ import type {
   Rol,
   Serie,
   Sleutel,
+  Uitbetaling,
   Uitlater,
   Verificatie,
 } from '../types';
@@ -88,6 +91,8 @@ interface AppState {
   plus: boolean;
   /** Tegoed van de eigenaar in centen, betaald door Woober (welkomst, uitnodiging, actiecode) */
   tegoed: number;
+  /** Uitbetalingen van het saldo als uitlater naar de eigen rekening (src/lib/saldo.ts) */
+  uitbetalingen: Uitbetaling[];
   gebruikteCodes: string[];
   /** Losloopgebieden, stranden en horeca met reviews van gebruikers */
   plekken: Plek[];
@@ -103,6 +108,8 @@ export interface Aanvraag {
   sleutel: Sleutel;
   notitie: string;
   betaalmethode: Betaalmethode;
+  /** Zoveel als kan van de prijs betalen met je saldo als uitlater */
+  metSaldo?: boolean;
 }
 
 interface AppActies {
@@ -158,6 +165,9 @@ interface AppActies {
   verwijderPlek: (id: string) => void;
   accountVerwijderen: () => Promise<void>;
 
+  /** Saldo als uitlater: verdiend min uitbetaald en min wat je ermee betaalde als eigenaar. Eigen geld, geen tegoed van Woober. */
+  saldo: number;
+  vraagUitbetalingAan: (bedrag: number) => { gelukt: boolean; tekst: string };
   /** Het actieve verdienmodel */
   verdienmodel: Verdienmodel;
   /** Prijs volgens het actieve verdienmodel, inclusief drukte en abonnement; met tegoed als metTegoed */
@@ -205,6 +215,7 @@ const LEEG: AppState = {
   drukteNagebootst: false,
   plus: false,
   tegoed: 0,
+  uitbetalingen: [],
   gebruikteCodes: [],
   plekken: maakDemoPlekken(),
 };
@@ -525,6 +536,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const eigenaarHistorie = demoGeschiedenisEigenaar(DEMO_THUIS, DEMO_ADRES, uitlaters);
     const uitlaterHistorie = demoGeschiedenisUitlater(profiel);
     const nu = Date.now();
+    // Wat ouder is dan een week, is in de demo al uitbetaald; het saldo is dan wat je deze week verdiende
+    const alUitbetaald = afgerondeOpdrachten(uitlaterHistorie)
+      .filter((b) => (b.beeindigd ?? 0) < nu - 7 * 86400000)
+      .reduce((t, b) => t + verdiend(b), 0);
     setState((oud) => ({
       ...LEEG,
       verdienmodelId: oud.verdienmodelId,
@@ -536,6 +551,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       uitlaters,
       bekend: DEMO_BEKEND,
       boekingen: [...eigenaarHistorie, ...uitlaterHistorie],
+      uitbetalingen: alUitbetaald > 0 ? [{ id: nieuwId('ub'), bedrag: alUitbetaald, tijd: nu - 7 * 86400000, status: 'betaald' }] : [],
       gesprekken: [
         {
           id: 'u1',
@@ -608,6 +624,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Een vaste afspraak krijgt telkens de prijs zonder tegoed; het tegoed gaat alleen van de eerste keer af
     const zonderTegoed = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, extraPrijs);
     const prijs = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, { ...extraPrijs, tegoed: s.tegoed });
+    // Saldo is eigen geld van de uitlater en geen korting: de prijs blijft gelijk, alleen een deel komt van het saldo
+    const metSaldo = a.metSaldo ? Math.max(0, Math.min(saldoVan(s.boekingen, s.uitbetalingen), prijs.totaal)) : 0;
     let serieId: string | undefined;
     let moment = a.moment;
     let serie: Serie | null = null;
@@ -631,6 +649,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notitie: a.notitie,
       betaalmethode: a.betaalmethode,
       prijs,
+      metSaldo: metSaldo || undefined,
       startPositie: u.positie,
     });
     setState((st) => ({
@@ -1099,8 +1118,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openVerzoek = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && b.status === 'aangevraagd'), [state.boekingen]);
   const actieveOpdracht = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && LOPEND.includes(b.status)), [state.boekingen]);
 
+  const saldo = useMemo(() => saldoVan(state.boekingen, state.uitbetalingen), [state.boekingen, state.uitbetalingen]);
+  const vraagUitbetalingAan = useCallback(
+    (bedrag: number) => {
+      const s = ref.current.state;
+      // Echt geld komt pas met Stripe (ACTIES.md); tot dan staat er bij echte accounts niets op het saldo
+      if (s.modus === 'echt') return { gelukt: false, tekst: 'Uitbetalen kan zodra betalen in de app echt werkt.' };
+      if (!s.mijnProfiel?.verificatie.uitbetaling) return { gelukt: false, tekst: 'Koppel eerst je rekening onder Verificatie en uitbetaling.' };
+      const fout = uitbetalingFout(bedrag, saldoVan(s.boekingen, s.uitbetalingen));
+      if (fout) return { gelukt: false, tekst: fout };
+      setState((st) => ({ ...st, uitbetalingen: [...st.uitbetalingen, { id: nieuwId('ub'), bedrag, tijd: Date.now(), status: 'onderweg' }] }));
+      return { gelukt: true, tekst: `${euro(bedrag)} is onderweg naar je rekening. Meestal staat het er binnen een paar werkdagen.` };
+    },
+    [setState],
+  );
+
   const waarde: Context = {
     ...state,
+    saldo,
+    vraagUitbetalingAan,
     aanmelden,
     demoStart,
     uitloggen,

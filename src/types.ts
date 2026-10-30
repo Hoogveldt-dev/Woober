@@ -189,6 +189,14 @@ export interface AfspraakMelding {
   status: 'open' | 'terecht' | 'niet_terecht';
 }
 
+/** Geld van het saldo van een uitlater naar diens eigen rekening */
+export interface Uitbetaling {
+  id: string;
+  bedrag: number;
+  tijd: number;
+  status: 'onderweg' | 'betaald';
+}
+
 export interface Boeking {
   id: string;
   /** Betaalde boeking (uitlaten of oppas, zie dienst) of een gratis kennismaking */
@@ -228,6 +236,8 @@ export interface Boeking {
   basisDuur?: number;
   beeindigd?: number;
   annuleringskosten?: number;
+  /** Deel van de prijs dat de eigenaar betaalt met zijn eigen saldo als uitlater (src/lib/saldo.ts); de rest via de betaalmethode */
+  metSaldo?: number;
   /** Wie de boeking annuleerde */
   geannuleerdDoor?: Rol;
   afspraakMelding?: AfspraakMelding;

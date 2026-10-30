@@ -17,7 +17,7 @@ import { useTekst } from '../../state/Teksten';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, saldo, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [bevestig, setBevestig] = useState(false);
   const contact = useTekst('contact.email');
   const [code, setCode] = useState('');
@@ -79,6 +79,7 @@ export default function Account() {
           <Sectie>Tegoed en acties</Sectie>
           <Blok>
             <Rij label="Jouw tegoed" waarde={euro(tegoed)} sterk />
+            {saldo > 0 ? <Rij label="Saldo uit uitlaten" waarde={euro(saldo)} /> : null}
             {verdienmodel.uitnodigingstegoed > 0 ? <Rij label="Jouw uitnodigingscode" waarde={uitnodigCode} /> : null}
           </Blok>
           {verdienmodel.uitnodigingstegoed > 0 ? (

@@ -20,12 +20,13 @@ const METHODES: { id: Betaalmethode; titel: string; icoon: ComponentProps<typeof
 
 export default function Bevestigen() {
   const router = useRouter();
-  const { concept, uitlater, honden, gebruiker, betaalmethode, vraagAan, prijsVoor, tegoed } = useApp();
+  const { concept, uitlater, honden, gebruiker, betaalmethode, vraagAan, prijsVoor, tegoed, saldo } = useApp();
   const u = concept?.uitlaterId ? uitlater(concept.uitlaterId) : undefined;
   const [sleutel, setSleutel] = useState<Sleutel>('thuis');
   const [notitie, setNotitie] = useState('');
   const [methode, setMethode] = useState<Betaalmethode>(betaalmethode);
   const [camera, setCamera] = useState(false);
+  const [metSaldo, setMetSaldo] = useState(saldo > 0);
   const [nu] = useState(() => Date.now());
 
   if (!concept || !u || !gebruiker) return <Redirect href="/" />;
@@ -37,6 +38,9 @@ export default function Bevestigen() {
   const wekelijks = concept.moment.type === 'wekelijks';
   const keer = oppas ? 'oppas' : 'wandeling';
   const start = concept.moment.type === 'later' ? concept.moment.tijdstip : concept.moment.type === 'nu' ? nu : null;
+  // Eigen saldo als uitlater; bij een vaste afspraak alleen voor de eerste keer, net als tegoed
+  const vanSaldo = metSaldo ? Math.min(saldo, prijs.totaal) : 0;
+  const rest = prijs.totaal - vanSaldo;
 
   const verstuur = () => {
     const id = vraagAan({
@@ -49,6 +53,7 @@ export default function Bevestigen() {
       notitie: notitie.trim(),
       betaalmethode: methode,
       cameraInHuis: oppas ? camera : undefined,
+      metSaldo: vanSaldo > 0,
     });
     if (!id) return;
     router.dismissAll();
@@ -110,7 +115,22 @@ export default function Bevestigen() {
         />
 
         <Label>Betalen</Label>
-        <View style={[s.methodes, { marginBottom: ruimte(5) }]}>
+        {saldo > 0 ? (
+          <>
+            <Vinkje aan={metSaldo} onPress={() => setMetSaldo((m) => !m)}>
+              Betaal met je saldo als uitlater ({euro(saldo)})
+            </Vinkje>
+            {metSaldo ? (
+              <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(1), marginBottom: ruimte(3) }]}>
+                {rest > 0
+                  ? `${euro(vanSaldo)} van je saldo${wekelijks ? ', alleen bij de eerste keer' : ''}, de rest (${euro(rest)}) met de betaalmethode hieronder.`
+                  : `Je saldo dekt alles${wekelijks ? ' voor de eerste keer' : ''}. Annuleer je, dan komt het terug op je saldo.`}{' '}
+                {u.voornaam} krijgt evenveel.
+              </Text>
+            ) : null}
+          </>
+        ) : null}
+        <View style={[s.methodes, { marginBottom: ruimte(5) }, rest === 0 && { opacity: 0.45 }]} pointerEvents={rest === 0 ? 'none' : 'auto'}>
           {METHODES.map((m) => (
             <Pressable key={m.id} onPress={() => setMethode(m.id)} accessibilityRole="radio" accessibilityState={{ selected: methode === m.id }} style={s.methode}>
               <Ionicons name={m.icoon} size={20} color={kleuren.tekst} />
@@ -142,7 +162,9 @@ export default function Bevestigen() {
         <Melding type="info">
           {wekelijks
             ? `${u.voornaam} bevestigt de vaste ${keer}. Je betaalt telkens pas na afloop.`
-            : methode === 'ideal'
+            : rest === 0
+              ? `Je betaalt met je saldo. Annuleer je op tijd, dan komt alles terug op je saldo. Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
+              : methode === 'ideal'
               ? `Met iDEAL betaal je direct. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur achteraf.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
               : `We reserveren het bedrag nu en schrijven het pas af na afloop.${oppas ? ' Verleng je, dan komt het extra uur erbij.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
         </Melding>

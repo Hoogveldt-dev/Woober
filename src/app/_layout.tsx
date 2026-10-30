@@ -103,7 +103,7 @@ function Navigatie() {
       <Stack.Protected guard={uitlaterKlaar} redirectTo={startpunt}>
         <Stack.Screen name="werk" />
         <Stack.Screen name="verificatie" options={{ headerShown: true, title: 'Verificatie' }} />
-        <Stack.Screen name="verdiensten" options={{ headerShown: true, title: 'Verdiensten' }} />
+        <Stack.Screen name="saldo" options={{ headerShown: true, title: 'Saldo' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={uitlaterKlaar && modus === 'demo'} redirectTo={startpunt}>

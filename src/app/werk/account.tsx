@@ -9,20 +9,17 @@ import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Sterren } from '../../compon
 import { RolWissel } from '../../components/RolWissel';
 import { Badge, Knop, Kop } from '../../components/ui';
 import { DUREN, euro } from '../../lib/prijs';
-import { verdiendOp } from '../../lib/verdiensten';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 import { useTekst } from '../../state/Teksten';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, boekingen } = useApp();
+  const { gebruiker, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, saldo } = useApp();
   const [bevestig, setBevestig] = useState(false);
-  const [nu] = useState(() => Date.now());
   const contact = useTekst('contact.email');
   if (!gebruiker || !mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
-  const week = Array.from({ length: 7 }, (_, i) => verdiendOp(boekingen, new Date(nu - i * 86400000))).reduce((t, b) => t + b, 0);
 
   return (
     <SafeAreaView style={gedeeldeStijl.scherm} edges={['top']}>
@@ -41,7 +38,7 @@ export default function UitlaterAccount() {
         <RolWissel />
 
         <Blok>
-          <MenuRij icoon="wallet" titel="Verdiensten" sub={`Laatste 7 dagen: ${euro(week)}`} onPress={() => router.push('/verdiensten')} />
+          <MenuRij icoon="wallet" titel={`Saldo ${euro(saldo)}`} sub="Verdiensten, uitbetalen wanneer je wilt" onPress={() => router.push('/saldo')} />
         </Blok>
 
         <Sectie actie={{ titel: 'Wijzigen', onPress: () => router.push('/profiel-uitlater') }}>Mijn tarief</Sectie>

@@ -102,7 +102,7 @@ Een tekst aanpasbaar maken: voeg hem toe in `src/lib/teksten.ts`, gebruik `useTe
 | Oppas aan huis, 2 tot 5 uur, verlengen of eerder thuis | Uitlaten, oppas of allebei aanbieden, met eigen uurtarief |
 | Eerst kennismaken bij een nieuwe uitlater | Navigeren naar de eigenaar, ophaalcode controleren |
 | Live volgen met ophaalcode, route en foto's | Foto, plas, poep, water en notitie tijdens de wandeling |
-| Wandelrapport met fooi en beoordeling | Verdiensten per dag en per week |
+| Wandelrapport met fooi en beoordeling | Saldo onder Account: verdiensten, uitbetalen wanneer je wilt, betalen als eigenaar |
 | Chat, melden, blokkeren en noodknop | Eigen tarief, werkgebied, rooster en verificatie |
 | Tegoed, actiecodes en Woober Plus | Commissie en drukte-bonus per fase zichtbaar |
 | | Woober Fit: stappen per dag, week en maand |

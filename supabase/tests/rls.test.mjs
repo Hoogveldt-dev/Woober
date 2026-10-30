@@ -398,12 +398,46 @@ check('cijfers voor beheer', cf.rows?.[0]?.wachtlijst === 1 && cf.rows?.[0]?.acc
 check('gewone gebruiker ziet geen cijfers', !!(await als(E, `select * from public.beheer_cijfers()`)).fout);
 check('beheerder verwijdert plek', (await als(U, `delete from public.plekken where id = '${WP}' returning id`)).rows?.length === 1);
 await db.exec(`delete from public.verdienmodel_planning where toelichting = 'Test'; delete from public.beheerders`);
+// Saldo (wallet) van uitlaters
+const mijnSaldo = async (wie) => (await als(wie, `select public.mijn_saldo() as s`)).rows?.[0]?.s;
+const S = await mijnSaldo(U);
+check('saldo uitlater is wat ze verdiende', S > 1000 && S === (await woober(`select sum(bedrag)::int as s from public.grootboek where rekening = 'uitlater' and persoon_id = '${U}'`)).rows[0].s, String(S));
+check('eigenaar zonder werk heeft geen saldo', (await mijnSaldo(E)) === 0);
+check('saldo van een ander niet op te vragen', !!(await als(E, `select public.saldo_van('${U}')`)).fout);
+check('uitbetalen onder 10 euro kan niet', /vanaf 10 euro/.test((await als(U, `select public.vraag_uitbetaling_aan(500)`)).fout ?? ''));
+check('niet meer uitbetalen dan je saldo', /saldo/.test((await als(U, `select public.vraag_uitbetaling_aan(${S + 1})`)).fout ?? ''));
+check('zonder gekoppelde rekening geen uitbetaling', /rekening/.test((await als(E, `select public.vraag_uitbetaling_aan(1000)`)).fout ?? ''));
+check('uitbetaling niet zelf in te voeren', !!(await als(U, `insert into public.uitbetalingen (uitlater_id, bedrag) values ('${U}', 100)`)).fout);
+check('account verwijderen kan niet met saldo', /saldo/.test((await als(U, `select public.verwijder_mijn_account()`)).fout ?? ''));
+check('hele saldo uitbetalen', !(await als(U, `select public.vraag_uitbetaling_aan(${S})`)).fout);
+check('saldo daarna nul', (await mijnSaldo(U)) === 0);
+check('eigen uitbetaling zichtbaar', (await als(U, `select bedrag from public.uitbetalingen`)).rows?.[0]?.bedrag === S);
+check('uitbetaling van een ander onzichtbaar', (await als(E, `select * from public.uitbetalingen`)).rows?.length === 0);
+// Een eigenaar die ook uitlater is, betaalt met zijn saldo
+await woober(`insert into public.grootboek (gebeurtenis, rekening, persoon_id, bedrag) values ('afgerond', 'uitlater', '${E}', 1500)`);
+const sb = (await boek(E, LUNA)).rows?.[0]?.id;
+const sbTotaal = (await als(E, `select totaal from public.boekingen where id = '${sb}'`)).rows?.[0]?.totaal;
+check('met_saldo niet zelf aan te passen', !!(await als(E, `update public.boekingen set met_saldo = 1 where id = '${sb}'`)).fout);
+check('niet meer met saldo dan de prijs', !!(await als(E, `select public.betaal_met_saldo('${sb}', ${sbTotaal + 1})`)).fout);
+check('met saldo betalen voor een ander kan niet', !!(await als(X, `select public.betaal_met_saldo('${sb}', 100)`)).fout);
+check('met saldo betalen', !(await als(E, `select public.betaal_met_saldo('${sb}', ${Math.min(1500, sbTotaal)})`)).fout);
+check('saldo gereserveerd tijdens de boeking', (await mijnSaldo(E)) === 1500 - Math.min(1500, sbTotaal));
+check('gereserveerd saldo niet uit te betalen', !!(await als(E, `select public.vraag_uitbetaling_aan(1500)`)).fout);
+await rondAf(E, sb);
+const gs = (await woober(`select sum(bedrag)::int as s, count(*) filter (where gebeurtenis = 'betaald_met_saldo')::int as n from public.grootboek where boeking_id = '${sb}'`)).rows[0];
+check('grootboek: met saldo betaald en per boeking nul', gs.s === 0 && gs.n === 2, JSON.stringify(gs));
+check('saldo na afronden', (await mijnSaldo(E)) === 1500 - Math.min(1500, sbTotaal));
+const sb2 = (await boek(E, LUNA)).rows?.[0]?.id;
+await als(E, `select public.betaal_met_saldo('${sb2}', 100)`);
+await als(E, `select public.wijzig_status('${sb2}', 'geannuleerd')`);
+check('bij annuleren komt het saldo terug', (await mijnSaldo(E)) === 1500 - Math.min(1500, sbTotaal));
+await woober(`insert into public.grootboek (gebeurtenis, rekening, persoon_id, bedrag) values ('afgerond', 'uitlater', '${E}', -(select public.saldo_van('${E}')))`);
 // Rechten op functies
 const alsAnon = async (q) => {
   await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
   try { return { rows: (await db.query(q)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
 };
-for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`]) {
+for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`, `public.mijn_saldo()`, `public.vraag_uitbetaling_aan(1000)`]) {
   check(`zonder account geen ${f.split('(')[0]}`, /permission denied/.test((await alsAnon(`select ${f}`)).fout ?? ''));
 }
 check('zonder account wel teksten lezen', !(await alsAnon(`select * from public.teksten`)).fout);

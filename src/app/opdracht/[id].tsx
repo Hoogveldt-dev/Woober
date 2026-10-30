@@ -302,7 +302,7 @@ export default function Opdracht() {
           {!kennismaking ? (
             <>
               <Text style={s.sub}>
-                {oppas ? `${k.voornaam} is weer thuis.` : `${hondNamen} is weer thuis.`} Je ontvangt {euro(b.prijs.uitbetaling + b.fooi)}, via Stripe op je rekening.
+                {oppas ? `${k.voornaam} is weer thuis.` : `${hondNamen} is weer thuis.`} Er staat {euro(b.prijs.uitbetaling + b.fooi)} bij op je saldo.
               </Text>
               <View style={s.tegels}>
                 <Tegel klein waarde={duurTekst(Math.max(1, Math.round(verstrekenMin(b, nu))))} label="duur" />

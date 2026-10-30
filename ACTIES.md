@@ -12,6 +12,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   3. `20261028030000_teksten.sql`
   4. `20261029000000_lancering.sql`
   5. `20261029010000_rechten.sql` (later toegevoegd: zet functies dicht voor wie niet is ingelogd)
+  6. `20261030000000_saldo.sql` (saldo van uitlaters: uitbetalen wanneer je wilt en betalen met je saldo)
 
   Twee manieren: zeg in een sessie met Claude dat je klaar staat en keur de vraag van Supabase direct goed (die liep steeds na 60 seconden af), of plak elk bestand zelf in de SQL-editor van Supabase (project Woober) en klik op Run. Daarna staan onder Database, Migrations de nieuwe namen.
 - [ ] **Inloggen instellen in Supabase** (Authentication). Stappen staan in [README.md](README.md#inloggen-met-apple-en-google-instellen):
@@ -19,7 +20,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
   - E-mailtemplate Magic Link: zet `{{ .Token }}` in de tekst, anders krijgt niemand een inlogcode.
   - SMTP: een eigen mailprovider (bijvoorbeeld Postmark of Resend) met afzender op woober.nl. Zonder eigen SMTP stuurt Supabase maar een paar mails per uur.
 - [ ] **Google**: OAuth-client in Google Cloud aanmaken en Client ID en Secret in Supabase zetten.
-- [ ] **Apple**: lidmaatschap Apple Developer, App ID `nl.woober.app` met Sign in with Apple, een Services ID voor web en Android, een sleutel (`.p8`) en het geheim in Supabase. Dat geheim verloopt na 6 maanden: zet een herinnering.
+- [ ] **Apple**: lidmaatschap Apple Developer, App ID `nl.woober.app` met Sign in with Apple, een Services ID voor web en Android, een sleutel (`.p8`) en het geheim in Supabase. Dat geheim verloopt na 6 maanden: zet een herinnering. Tot dit klaar is, staat Doorgaan met Apple met een slotje op het inlogscherm; zeg het tegen Claude, dan gaat het slotje eraf (`APPLE_INLOGGEN_KLAAR` in `src/lib/account.ts`).
 - [ ] **Jezelf beheerder maken**: log één keer in op de app en voer in de SQL-editor uit:
   `insert into public.beheerders (gebruiker_id) select id from auth.users where email = 'jouw@adres.nl';`
   Daarna uit- en weer inloggen; onder Account staat dan Beheer.
@@ -35,6 +36,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 - [ ] **Juridisch laten toetsen**: gebruiksvoorwaarden (`/voorwaarden`) en privacyverklaring (`/privacy`) zijn concepten. Haal daarna de conceptwaarschuwing weg onder Beheer, Teksten.
 - [ ] **Verwerkersovereenkomsten** afsluiten of accepteren met Supabase en Netlify (AVG).
+- [ ] **Saldo laten toetsen**: uitlaters houden hun verdiensten op een saldo en kunnen ermee betalen als eigenaar. Het geld staat bij Stripe, niet bij Woober, zodat Woober geen vergunning van DNB nodig heeft als betaalinstelling. Laat een jurist met kennis van betaalregels (Wft, PSD2) bevestigen dat dit zo klopt, ook voor het betalen met saldo, en de alinea over het saldo in de voorwaarden nakijken.
 - [ ] **Zoekmachines toelaten**: in `public/index.html` staat nog `noindex`. Laat Claude dat weghalen zodra de teksten definitief zijn.
 - [ ] **Balk "Powered by Netlify"**: die ligt op telefoons over de tabbalk en komt niet uit onze code. Kijk in Netlify bij de site-instellingen of je die uit kunt zetten, of laat Claude ruimte maken.
 - [ ] **Uit PLAN.md, nog open**: merkonderzoek naar de naam (BOIP en EUIPO), toets van de Wet platformwerk door een arbeidsrechtspecialist, en de verzekering voor uitlaters en oppassen.
@@ -45,6 +47,7 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 - [ ] Accounts bij Apple Developer (99 dollar per jaar) en Google Play Console (eenmalig 25 dollar).
 - [ ] Expo-account en `npx eas-cli@latest init` in deze map, zodat `eas.json` aan je project hangt. Daarna kan Claude een testversie bouwen met `npx eas-cli@latest build --profile preview --platform all`.
 - [ ] Storevermelding: naam, beschrijving, schermafbeeldingen, link naar `https://woober.nl/privacy`, de privacyvragen van beide stores en een testaccount voor de reviewers.
+- [ ] **Inloggen met Apple aan vóór de eerste inzending bij Apple**: wie inloggen met Google aanbiedt, moet van Apple ook een inlogoptie bieden waarbij je je e-mailadres kunt afschermen. Doorgaan met Apple doet dat; zie stap 1.
 
 ## 5. Woober Fit: koppelingen instellen
 
@@ -91,7 +94,7 @@ Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 1. **Echt boeken**: geverifieerde uitlaters op de kaart, boeken met `vraag_boeking_aan`, accepteren, onderweg en ophaalcode met `wijzig_status` en `start_wandeling`, live bijwerken met Realtime, chat via de tabel `berichten`, en personen melden en blokkeren. Ook de melding van een no-show of late afzegging (nu alleen in de demo, `src/components/AfspraakMelden.tsx`): naar de tabel `meldingen` met de boeking erbij, in Beheer met een besluit, de uitlater kan reageren, en bij gelijk het geld terug via Stripe zodra betalen er is. Daarna gaat de wachtlijst over in "je kunt nu boeken".
 2. **Pushmeldingen** met `expo-notifications`. Nodig van jou: het EAS-project uit stap 4 en de pushsleutel van Apple.
 3. **Locatie en foto's tijdens de wandeling** met `expo-location` en Supabase Storage. Nodig: een testversie, want Expo Go volstaat dan niet meer.
-4. **Betalen** met Stripe Connect en iDEAL, eerst in testmodus. Nodig van jou: een Stripe-account op naam van de onderneming (met KvK).
+4. **Betalen** met Stripe Connect en iDEAL, eerst in testmodus, met het saldo van uitlaters: handmatige uitbetalingen, uitbetalen op verzoek, automatisch na 90 dagen, en betalen met saldo via een afschrijving van het Connect-account (zie PLAN.md, Betalen met Stripe Connect). Het saldo staat al in de demo en in de database. Nodig van jou: een Stripe-account op naam van de onderneming (met KvK).
 5. **Verificatie automatiseren** met Stripe Identity en polis uploaden; tot dan doe je het met de hand in Beheer.
 6. **Besloten test** met een handvol uitlaters en eigenaren in Nijmegen.
 
