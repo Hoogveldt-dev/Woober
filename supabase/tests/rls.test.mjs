@@ -134,10 +134,26 @@ await betaal(O);
 for (const st of ['onderweg', 'aangekomen']) await als(U, `select public.wijzig_status('${O}', '${st}')`);
 const oc = await als(E, `select code from public.ophaalcodes where boeking_id = '${O}'`);
 check('oppas start met de code', (await als(U, `select public.start_wandeling('${O}', '${oc.rows[0].code}') as g`)).rows?.[0]?.g === true);
-check('eigenaar verlengt een uur', !(await als(E, `select public.verleng_oppas('${O}')`)).fout);
+// Verlengen: het extra uur gaat pas in als het betaald is (supabase/functions/betaling-starten met soort verlenging)
+check('direct verlengen zonder betalen kan niet', !!(await als(E, `select public.verleng_oppas('${O}')`)).fout);
+const ov = (await db.query(`select * from public.betaling_voor($1, $2, 'verlenging')`, [O, E])).rows[0];
+check('verlengen kost het extra uur', ov?.bedrag === 1100 && ov?.verlengd_tot === 240 && /een uur langer oppas/.test(ov?.omschrijving ?? ''), JSON.stringify(ov));
+check('uitlater kan niet verlengen', /hoort niet bij jou/.test((await db.query(`select * from public.betaling_voor($1, $2, 'verlenging')`, [O, U]).then(() => '', (e) => e.message))));
+await db.query(`select public.registreer_betaling('tr_verleng1', $1, 'verlenging', $2, 'kaart', $3)`, [O, ov.bedrag, ov.verlengd_tot]);
+check('verlengen wacht op de betaling', (await als(E, `select duur from public.boekingen where id = '${O}'`)).rows?.[0]?.duur === 180);
+await db.query(`select public.verwerk_betaling('tr_verleng1', 'mislukt', 0)`);
+check('mislukte betaling: niet verlengd, oppas loopt door', JSON.stringify((await als(E, `select duur, status from public.boekingen where id = '${O}'`)).rows?.[0]) === JSON.stringify({ duur: 180, status: 'bezig' }));
+await db.query(`select public.registreer_betaling('tr_verleng2', $1, 'verlenging', $2, 'kaart', $3)`, [O, ov.bedrag, ov.verlengd_tot]);
+await db.query(`select public.verwerk_betaling('tr_verleng2', 'betaald', 0)`);
 const o5 = await als(E, `select duur, tarief, servicekosten from public.boekingen where id = '${O}'`);
-check('verlengen past duur en prijs aan', JSON.stringify(o5.rows?.[0]) === JSON.stringify({ duur: 240, tarief: 4400, servicekosten: 0 }), JSON.stringify(o5));
-check('uitlater kan niet verlengen', !!(await als(U, `select public.verleng_oppas('${O}')`)).fout);
+check('betaald: verlengd, met duur en prijs', JSON.stringify(o5.rows?.[0]) === JSON.stringify({ duur: 240, tarief: 4400, servicekosten: 0 }), JSON.stringify(o5));
+// Twee keer betaald voor hetzelfde uur: één keer verlengd, de tweede gaat terug
+await db.query(`select public.registreer_betaling('tr_verleng3', $1, 'verlenging', $2, 'kaart', $3)`, [O, ov.bedrag, ov.verlengd_tot]);
+await db.query(`select public.verwerk_betaling('tr_verleng3', 'betaald', 0)`);
+const ot = (await db.query(`select * from public.terug_te_betalen()`)).rows;
+check('dubbel verlengd: niet nog een uur, tweede betaling terug', (await als(E, `select duur from public.boekingen where id = '${O}'`)).rows?.[0]?.duur === 240
+  && ot.some((t) => t.betaling_id === 'tr_verleng3' && t.bedrag === ov.bedrag) && !ot.some((t) => t.betaling_id === 'tr_verleng2'), JSON.stringify(ot));
+await db.query(`select public.boek_terugbetaling('tr_verleng3', $1)`, [ov.bedrag]);
 check('eigenaar: ik ben thuis', !(await als(E, `select public.wijzig_status('${O}', 'afgerond')`)).fout);
 const o6 = await als(E, `select public.wijzig_status('${W}', 'geannuleerd')`);
 check('afgeronde wandeling niet meer te annuleren', !!o6.fout);
@@ -462,6 +478,8 @@ const routeerAlles = async () => {
   }
 };
 check('app voert zelf geen betaling in', !!(await als(E, `insert into public.betalingen (id, boeking_id, bedrag, methode) values ('tr_nep', '${W}', 1, 'ideal')`)).fout);
+check('hooguit 60 dagen vooruit boeken', /60 dagen/.test((await als(E, `select public.vraag_boeking_aan('uitlaten', '${U}', array['${LUNA}']::uuid[], 30::smallint, now() + interval '61 days', 'thuis', '', 'ideal')`)).fout ?? ''));
+check('ook later niet verder dan 60 dagen', /60 dagen/.test((await woober(`update public.boekingen set moment = now() + interval '90 days' where id = '${W}'`)).fout ?? ''));
 check('onbekende betaling in de webhook doet niets', !(await woober(`select public.verwerk_betaling('tr_onbekend', 'betaald', 0)`)).fout);
 check('betaling starten voor een ander kan niet', /hoort niet bij jou/.test((await woober(`select * from public.betaling_voor('${W}', '${X}')`)).fout ?? ''));
 const mb = (await boek(E, LUNA)).rows?.[0]?.id;
@@ -528,20 +546,70 @@ await routeerAlles();
 const mb4 = (await boek(E, LUNA)).rows?.[0]?.id;
 await rondAf(E, mb4);
 check('geen automatische uitbetaling als niets oud is', (await woober(`select public.maak_automatische_uitbetalingen() as n`)).rows[0].n === 0);
-await db.exec(`update public.betalingen set betaald_op = now() - interval '85 days' where id = (select betaling_id from public.routeerbaar() order by betaald_op limit 1)`);
-check('oude betaling: automatisch uitbetaald', (await woober(`select public.maak_automatische_uitbetalingen() as n`)).rows[0].n === 1);
+const mb4Betaling = (await woober(`select id from public.betalingen where boeking_id = '${mb4}' and soort = 'boeking'`)).rows[0].id;
+// Een boeking met servicekosten, zoals in een latere fase: die 4 euro is van Woober en gaat nooit naar een uitlater
+await db.exec(`update public.boekingen set servicekosten = servicekosten + 400 where id = '${W}'`);
+await db.query(`select public.registreer_betaling('tr_service1', $1, 'boeking', 400, 'ideal')`, [W]);
+await db.query(`select public.verwerk_betaling('tr_service1', 'betaald', 0)`);
+// Wat na routeren nog in oudere betalingen staat, is het aandeel van Woober; dat mag na 90 dagen naar Woober
+await db.exec(`update public.betalingen set betaald_op = now() - interval '85 days' where id <> '${mb4Betaling}'`);
+const oudVanWoober = (await woober(`select coalesce(sum(ruimte), 0)::int as r from public.routeerbaar() where betaald_op < now() - interval '80 days'`)).rows[0].r;
+check('aandeel van Woober in oude betalingen dwingt geen uitbetaling af', oudVanWoober > 0 && (await woober(`select public.maak_automatische_uitbetalingen() as n`)).rows[0].n === 0, String(oudVanWoober));
+await db.exec(`update public.betalingen set betaald_op = now() - interval '85 days' where id = '${mb4Betaling}'`);
+check('geld van de uitlater in een oude betaling: automatisch uitbetaald', (await woober(`select public.maak_automatische_uitbetalingen() as n`)).rows[0].n === 1);
 check('automatische uitbetaling van het hele saldo', (await mijnSaldo(U)) === 0 && (await als(U, `select automatisch from public.uitbetalingen order by aangemaakt desc limit 1`)).rows?.[0]?.automatisch === true);
+await routeerAlles();
+await db.exec(`update public.betalingen set betaald_op = now() - interval '89 days' where id in (select betaling_id from public.routeerbaar())`);
+check('na 88 dagen niet meer te routeren (Mollie geeft het na 90 dagen aan Woober)', (await woober(`select count(*)::int as n from public.routeerbaar()`)).rows[0].n === 0);
 check('fooi via betaling', !(await woober(`select * from public.betaling_voor('${mb4}', '${E}', 'fooi', 300)`)).fout);
 await woober(`select public.registreer_betaling('tr_fooi1', '${mb4}', 'fooi', 300, 'ideal')`);
 await woober(`select public.verwerk_betaling('tr_fooi1', 'betaald', 0)`);
 await woober(`select public.verwerk_betaling('tr_fooi1', 'betaald', 0)`);
 check('fooi telt één keer, ook als de webhook twee keer komt', (await woober(`select fooi from public.boekingen where id = '${mb4}'`)).rows[0].fooi === 300 && (await mijnSaldo(U)) === 300);
+// Terugboekingen via de bank: Woober draagt het verlies, nooit de uitlater
+const mb5 = (await boek(E, LUNA)).rows?.[0]?.id;
+await rondAf(E, mb5);
+const tb1 = (await woober(`select id from public.betalingen where boeking_id = '${mb5}' and soort = 'boeking'`)).rows[0].id;
+const ruimteTb = async () => (await woober(`select coalesce(sum(ruimte), 0)::int as r from public.routeerbaar() where betaling_id = '${tb1}'`)).rows[0].r;
+const voorTb = await ruimteTb();
+const saldoVoorTb = await mijnSaldo(U);
+await woober(`select public.verwerk_betaling('${tb1}', 'betaald', 0, 500)`);
+check('deels teruggeboekt: dat deel is niet meer te routeren', (await ruimteTb()) === voorTb - 500, `${voorTb} ${await ruimteTb()}`);
+check('deels teruggeboekt: niets extra terugbetalen', !(await woober(`select * from public.terug_te_betalen()`)).rows.some((t) => t.betaling_id === tb1));
+check('deels teruggeboekt: saldo van de uitlater blijft', (await mijnSaldo(U)) === saldoVoorTb);
+check('deels teruggeboekt: geen aanvulling nodig', (await woober(`select count(*)::int as n from public.uitbetalingen where reden = 'aanvulling'`)).rows[0].n === 0);
+const ubTb = (await als(U, `select public.vraag_uitbetaling_aan(${saldoVoorTb}) as id`)).rows?.[0]?.id;
+const planTb = (await woober(`select * from public.plan_routes('${ubTb}')`)).rows;
+check('wat teruggeboekt is, legt Woober bij', planTb.reduce((t, r) => t + r.bedrag, 0) === saldoVoorTb, JSON.stringify(planTb));
+await routeerAlles();
+// Volledig teruggeboekt nadat het al gerouteerd was: Mollie haalt het bij de uitlater terug, Woober vult aan
+const gerouteerd = (await woober(`select r.betaling_id, sum(r.bedrag)::int as s from public.mollie_routes r join public.betalingen p on p.id = r.betaling_id
+  join public.boekingen b on b.id = p.boeking_id where r.soort = 'route' and r.status = 'gemaakt' and r.betaling_id <> '${tb1}' and b.eigenaar_id = '${E}'
+  group by r.betaling_id order by 1 limit 1`)).rows[0];
+const tb2 = gerouteerd.betaling_id;
+const tb2Bedrag = (await woober(`select bedrag from public.betalingen where id = '${tb2}'`)).rows[0].bedrag;
+await woober(`select public.verwerk_betaling('${tb2}', 'betaald', 0, ${tb2Bedrag})`);
+await woober(`select public.verwerk_betaling('${tb2}', 'betaald', 0, ${tb2Bedrag})`);
+const aanvulling = (await woober(`select uitlater_id, bedrag, status from public.uitbetalingen where reden = 'aanvulling'`)).rows;
+check('volledig teruggeboekt: Woober vult de uitlater aan, één keer', aanvulling.length === 1 && aanvulling[0].uitlater_id === U && aanvulling[0].bedrag === gerouteerd.s, JSON.stringify({ aanvulling, gerouteerd }));
+check('aanvulling gaat niet van het saldo af', (await mijnSaldo(U)) === 0);
+await routeerAlles();
+check('aanvulling wordt gerouteerd', (await woober(`select status from public.uitbetalingen where reden = 'aanvulling'`)).rows[0].status === 'onderweg');
+// Een medewerker beoordeelt de eigenaar; de app doet dat niet zelf
+check('terugboekingen alleen voor beheerders', /beheerders/.test((await als(E, `select * from public.beheer_terugboekingen()`)).fout ?? ''));
+await db.exec(`insert into public.beheerders (gebruiker_id) values ('${U}')`);
+const tbl = (await als(U, `select * from public.beheer_terugboekingen()`)).rows ?? [];
+check('beheerder ziet terugboekingen met eigenaar en herhaling', tbl.length === 2 && tbl.every((r) => r.email && r.andere === 1 && r.besluit === null) && tbl.some((r) => r.betaling_id === tb2 && r.aangevuld), JSON.stringify(tbl));
+check('besluit is verplicht', /besloten/.test((await als(U, `select public.beheer_terugboeking_afhandelen('${tb1}', ' ')`)).fout ?? ''));
+check('besluit vastleggen', !(await als(U, `select public.beheer_terugboeking_afhandelen('${tb1}', 'Eigenaar gebeld, vergissing van de bank')`)).fout);
+check('afgehandeld komt onderaan', (await als(U, `select betaling_id from public.beheer_terugboekingen()`)).rows?.at(-1)?.betaling_id === tb1);
+await db.exec(`delete from public.beheerders`);
 // Rechten op functies
 const alsAnon = async (q) => {
   await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
   try { return { rows: (await db.query(q)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
 };
-for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`, `public.mijn_saldo()`, `public.vraag_uitbetaling_aan(1000)`, `public.mijn_mollie_koppeling()`]) {
+for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`, `public.mijn_saldo()`, `public.vraag_uitbetaling_aan(1000)`, `public.mijn_mollie_koppeling()`, `public.beheer_terugboekingen()`]) {
   check(`zonder account geen ${f.split('(')[0]}`, /permission denied/.test((await alsAnon(`select ${f}`)).fout ?? ''));
 }
 check('zonder account wel teksten lezen', !(await alsAnon(`select * from public.teksten`)).fout);
