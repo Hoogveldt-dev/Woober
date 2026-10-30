@@ -2,6 +2,7 @@
 export const kleuren = {
   primair: '#FF4F6E',
   primairDonker: '#E23A5A',
+  primairVlak: '#FFF0F3',
   verloop: ['#FF5A5F', '#FF8A3D'] as const,
   achtergrond: '#FFFFFF',
   vlak: '#F5F5F7',
@@ -17,7 +18,6 @@ export const kleuren = {
   info: '#3B82F6',
 
   // Woober
-  primairVlak: '#FFF0F3',
   ster: '#FFB400',
   locatie: '#2F80ED',
 };

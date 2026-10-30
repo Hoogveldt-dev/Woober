@@ -9,7 +9,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 - Draai na elke reeks wijzigingen `npm run typecheck` en `npx expo lint` en los fouten op. Na een wijziging in `supabase/` ook `npm run test:db`.
 - Installeer pakketten met `npx expo install <pakket>`. Krijgt die geen verbinding met de Expo-servers, gebruik dan `EXPO_OFFLINE=1 npx expo install <pakket>`.
 - Commit na elke werkende stap met een duidelijke Nederlandse omschrijving.
-- Zelfde huisstijl als Woofer: `src/theme.ts` en `src/components/ui.tsx` zijn overgenomen uit Woofer. Pas de gedeelde basis alleen samen met Woofer aan; Woober-aanvullingen staan apart.
+- Zelfde huisstijl als Woofer: `src/theme.ts` en `src/components/ui.tsx` zijn overgenomen uit Woofer. Pas de gedeelde basis alleen samen met Woofer aan; Woober-aanvullingen staan apart. Woofer heeft omgekeerd overgenomen: `primairVlak` en `schaduw` in het thema, een deel van `src/components/blokken.tsx`, `Bewerkbaar.tsx`, `JuridischeTekst.tsx`, de aanpasbare teksten (`src/lib/teksten.ts`, `src/state/Teksten.tsx`) en de opzet van Beheer. Verbeter je daar iets, neem het dan ook in Woofer over.
 
 ## Belangrijke plekken
 - Prijzen en annuleren: `src/lib/prijs.ts`. Verdienmodel (fases, servicekosten, boekingskosten, commissie, drukte, Woober Plus, tegoed): `src/lib/verdienmodel.ts`. Dezelfde regels en waarden staan in `bereken_prijs()` en de tabel `verdienmodellen` in `supabase/migrations/`; `npm run test:db` vergelijkt app en database tot op de cent.
