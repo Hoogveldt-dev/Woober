@@ -5,12 +5,16 @@ interface TekstenContext {
   aanpassingen: Aanpassingen;
   /** Opnieuw ophalen, bijvoorbeeld nadat een beheerder iets heeft aangepast */
   herlaad: () => Promise<void>;
+  /** Bewerkmodus: een beheerder ziet bij aanpasbare teksten een hamertje (src/components/Bewerkbaar.tsx) */
+  bewerken: boolean;
+  zetBewerken: (aan: boolean) => void;
 }
 
-const Context = createContext<TekstenContext>({ aanpassingen: {}, herlaad: async () => {} });
+const Context = createContext<TekstenContext>({ aanpassingen: {}, herlaad: async () => {}, bewerken: false, zetBewerken: () => {} });
 
 export function TekstenProvider({ children }: { children: ReactNode }) {
   const [aanpassingen, setAanpassingen] = useState<Aanpassingen>(bewaardeAanpassingen);
+  const [bewerken, zetBewerken] = useState(false);
   const herlaad = useCallback(async () => {
     setAanpassingen(await laadAanpassingen());
   }, []);
@@ -18,7 +22,7 @@ export function TekstenProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     laadAanpassingen().then(setAanpassingen, () => undefined);
   }, []);
-  return <Context.Provider value={{ aanpassingen, herlaad }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ aanpassingen, herlaad, bewerken, zetBewerken }}>{children}</Context.Provider>;
 }
 
 /** De tekst zoals de beheerder hem heeft ingesteld, anders de standaard uit src/lib/teksten.ts */

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentProps } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { gedeeldeStijl, Sectie } from '../components/blokken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
@@ -32,16 +33,20 @@ export default function Veiligheid() {
         <Ionicons name="call" size={22} color="#fff" />
         <View style={{ flex: 1 }}>
           <Text style={s.noodTitel}>Noodgeval</Text>
-          <Text style={s.noodTekst}>{nood}</Text>
+          <Bewerkbaar sleutels="veiligheid.nood">
+            <Text style={s.noodTekst}>{nood}</Text>
+          </Bewerkbaar>
         </View>
       </View>
-      <Text style={s.contact}>
-        Vraag of probleem zonder haast? Mail{' '}
-        <Text style={s.contactLink} onPress={() => Linking.openURL(`mailto:${contact}`)}>
-          {contact}
+      <Bewerkbaar sleutels="contact.email">
+        <Text style={s.contact}>
+          Vraag of probleem zonder haast? Mail{' '}
+          <Text style={s.contactLink} onPress={() => Linking.openURL(`mailto:${contact}`)}>
+            {contact}
+          </Text>
+          .
         </Text>
-        .
-      </Text>
+      </Bewerkbaar>
 
       {rol === 'eigenaar' ? (
         <>
@@ -52,10 +57,12 @@ export default function Veiligheid() {
           <Punt icoon="navigate" titel="Live meekijken" tekst="Tijdens de wandeling zie je de route, foto's en plas- en poepmomenten." />
           <Punt icoon="star" titel="Echte reviews" tekst="Alleen wie een betaalde wandeling heeft gehad, kan een review schrijven." />
           <Punt icoon="key" titel="Sleutels" tekst="Deel sleutelcodes pas na een bevestigde boeking, en alleen via de chat in de app." />
-          <Sectie>Oppas aan huis</Sectie>
-          <Punt icoon="home" titel="Iemand in je huis" tekst="Kies voor oppas iemand die je al kent van een kennismaking. Leg huisregels, eten en de plek van de riem vast in je bericht." />
-          <Punt icoon="videocam" titel="Camera's" tekst="Hangen er camera's in huis, meld dat bij het boeken. Iemand filmen zonder dat die het weet mag niet." />
-          <Punt icoon="time" titel="Later thuis" tekst="Verleng in de app met een uur. De oppas ziet het direct; het extra uur betaal je achteraf." />
+          <Punt icoon="location" titel="Adres liever niet delen" tekst="Geef je hond af op een openbare plek in de buurt, of kies oppas bij de oppas thuis. De uitlater ziet je adres dan niet." />
+          <Sectie>Oppas</Sectie>
+          <Punt icoon="home" titel="Iemand in je huis" tekst="Kies voor oppas iemand die je al kent van een kennismaking. Vertel bij het boeken wat de oppas mag gebruiken en wat privé is, en spreek de rest af in de chat." />
+          <Punt icoon="videocam" titel="Camera's" tekst="Hangen er camera's in huis, meld bij het boeken waar en of ze geluid opnemen. Iemand filmen zonder dat die het weet mag niet." />
+          <Punt icoon="bed" titel="Bij de oppas thuis" tekst="Liever niemand in je huis? Sommige oppassen ontvangen honden thuis en beschrijven hun huis in hun profiel. Het adres zie je na accepteren." />
+          <Punt icoon="time" titel="Later thuis" tekst="Verleng in de app met een uur. Je betaalt het extra uur meteen; zodra het betaald is, ziet de oppas het." />
         </>
       ) : (
         <>
@@ -67,7 +74,8 @@ export default function Veiligheid() {
           <Sectie>Onderweg</Sectie>
           <Punt icoon="keypad" titel="Ophaalcode" tekst="Vraag bij de deur altijd om de code. Zo weet de eigenaar dat de juiste persoon de hond meeneemt." />
           <Punt icoon="umbrella" titel="Verzekerd" tekst="Je aansprakelijkheidsverzekering dekt schade die een hond onder jouw toezicht veroorzaakt, en bij oppas ook schade in het huis." />
-          <Punt icoon="home" titel="Oppas aan huis" tekst="Je bent te gast. Ga alleen in de ruimtes die de eigenaar noemt, en meld camera's of iets vreemds via de app." />
+          <Punt icoon="home" titel="Oppas bij de eigenaar" tekst="Je bent te gast. Bij het verzoek zie je waar camera's hangen, wat je mag gebruiken en wat privé is. Spreek de rest af in de chat, en meld iets vreemds via de app." />
+          <Punt icoon="bed" titel="Honden bij jou thuis" tekst="Zorg dat je huis veilig is voor honden: dichte tuin, geen giftige planten, eten en medicijnen buiten bereik. Je adres ziet een eigenaar pas na accepteren." />
         </>
       )}
 

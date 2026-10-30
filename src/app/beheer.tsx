@@ -7,6 +7,7 @@ import { laadCijfers, laadVerdienmodellen, planVerdienmodel, type Cijfers, type 
 import { datumTijdTekst } from '../lib/tijd';
 import { procent } from '../lib/verdienmodel';
 import { useApp } from '../state/AppContext';
+import { useTeksten } from '../state/Teksten';
 import { ruimte } from '../theme';
 
 const DAG = 86400000;
@@ -28,6 +29,7 @@ const MOMENTEN = [
 export default function Beheer() {
   const router = useRouter();
   const { gebruiker } = useApp();
+  const { bewerken, zetBewerken } = useTeksten();
   const [gegevens, setGegevens] = useState<{ actief: string | null; planning: Planning[]; modellen: ModelKort[] } | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
@@ -101,7 +103,23 @@ export default function Beheer() {
         />
         <MenuRij icoon="shield-checkmark" titel="Uitlaters verifiëren" sub="Identiteit, verzekering en rekening" onPress={() => router.push('/beheer-uitlaters')} />
         <MenuRij icoon="people" titel="Wachtlijst" sub="Wie het wil weten zodra Woober in de buurt start" onPress={() => router.push('/beheer-wachtlijst')} />
-        <MenuRij icoon="create" titel="Teksten in de app" sub="Welkomscherm, mededeling, meldingen, privacyverklaring" onPress={() => router.push('/beheer-teksten')} />
+        <MenuRij icoon="return-down-back" titel="Terugboekingen" sub="Betalingen die eigenaren via de bank lieten terugdraaien" onPress={() => router.push('/beheer-terugboekingen')} />
+      </Blok>
+
+      <Sectie>Teksten in de app</Sectie>
+      <Blok>
+        <MenuRij
+          icoon="hammer"
+          titel={bewerken ? 'Bewerkmodus uitzetten' : 'Bewerkmodus aanzetten'}
+          sub={bewerken ? 'Staat aan: tik in de app op een hamer' : 'Ga door de app en tik op een hamer om een tekst of knop aan te passen'}
+          onPress={() => {
+            zetBewerken(!bewerken);
+            if (!bewerken) router.back();
+          }}
+        />
+        <MenuRij icoon="phone-portrait" titel="Welkomscherm bekijken" sub="Wat je ziet zonder account, met hamers" onPress={() => router.push({ pathname: '/beheer-voorbeeld', params: { scherm: 'welkom' } })} />
+        <MenuRij icoon="log-in" titel="Inlogscherm bekijken" sub="Titel en uitleg bij inloggen, met hamers" onPress={() => router.push({ pathname: '/beheer-voorbeeld', params: { scherm: 'inloggen' } })} />
+        <MenuRij icoon="list" titel="Alle teksten in een lijst" sub="Ook teksten die je in de app moeilijk tegenkomt" onPress={() => router.push('/beheer-teksten')} />
       </Blok>
 
       <Sectie>Verdienmodel</Sectie>

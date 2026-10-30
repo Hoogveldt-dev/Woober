@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { HUIS_KENMERKEN, MIN_HUIS_TEKENS } from '../lib/huis';
 import { berekenPrijs, DUREN, euro } from '../lib/prijs';
 import { procent } from '../lib/verdienmodel';
 import { useApp } from '../state/AppContext';
 import { DAGDELEN, DAGEN_KORT } from '../lib/tijd';
 import { kleuren, radius, ruimte } from '../theme';
-import type { Beschikbaarheid, Dag, Dagdeel, Dienst, Uitlater, Vervoer, WandelDuur } from '../types';
+import type { Beschikbaarheid, Dag, Dagdeel, Dienst, HuisKenmerk, OppasPlek, Uitlater, Vervoer, WandelDuur } from '../types';
 import { gedeeldeStijl } from './blokken';
 import { Chip, Knop, Label, Melding, Veld } from './ui';
 
@@ -35,6 +36,9 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   });
   const [diensten, setDiensten] = useState<Dienst[]>(begin.diensten);
   const [oppasTarief, setOppasTarief] = useState(naarInvoer(begin.oppasPerUur || 1100));
+  const [plekken, setPlekken] = useState<OppasPlek[]>(begin.oppasPlekken);
+  const [huis, setHuis] = useState(begin.huis?.omschrijving ?? '');
+  const [kenmerken, setKenmerken] = useState<HuisKenmerk[]>(begin.huis?.kenmerken ?? []);
   const [toeslag, setToeslag] = useState(naarInvoer(begin.toeslagExtraHond));
   const [maxHonden, setMaxHonden] = useState(begin.maxHonden);
   const [werkgebied, setWerkgebied] = useState(begin.werkgebiedKm);
@@ -45,12 +49,15 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   const oppasCenten = naarCenten(oppasTarief);
   const uitlaten = diensten.includes('uitlaten');
   const oppas = diensten.includes('oppas');
+  const thuisOntvangen = oppas && plekken.includes('bij_oppas');
   const toeslagCenten = Number(toeslag.replace(',', '.')) >= 0 ? Math.round(Number(toeslag.replace(',', '.')) * 100) : null;
   const fouten = {
     bio: bio.trim().length < 20 ? 'Vertel in minstens 20 tekens iets over jezelf.' : null,
     diensten: diensten.length > 0 ? null : 'Kies minstens één dienst.',
     tarief: !uitlaten || DUREN.every((d) => centen[d] !== null) ? null : 'Vul per duur een tarief in tussen €5 en €100.',
     oppas: !oppas || oppasCenten !== null ? null : 'Vul een uurtarief in tussen €5 en €100.',
+    plekken: !oppas || plekken.length > 0 ? null : 'Kies waar je oppast.',
+    huis: !thuisOntvangen || huis.trim().length >= MIN_HUIS_TEKENS ? null : `Beschrijf je huis in minstens ${MIN_HUIS_TEKENS} tekens.`,
     toeslag: toeslagCenten !== null && Number.isFinite(toeslagCenten) ? null : 'Vul een bedrag in, of 0.',
     bedrijf: professioneel && bedrijfsnaam.trim().length < 2 ? 'Vul de naam van je bedrijf in.' : null,
     rooster: Object.values(rooster).some((d) => d.length > 0) ? null : 'Kies minstens één dagdeel.',
@@ -67,6 +74,8 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
       ? berekenPrijs({ tarieven: { 30: 0, 45: 0, 60: 0 }, oppasPerUur: oppasCenten, toeslagExtraHond: toeslagCenten }, 'oppas', 180, 1, verdienmodel)
       : null;
   const wisselDienst = (d: Dienst) => setDiensten((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
+  const wisselPlek = (p: OppasPlek) => setPlekken((x) => (x.includes(p) ? x.filter((y) => y !== p) : [...x, p]));
+  const wisselKenmerk = (k: HuisKenmerk) => setKenmerken((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]));
 
   const wissel = (dag: Dag, deel: Dagdeel) =>
     setRooster((r) => ({ ...r, [dag]: r[dag].includes(deel) ? r[dag].filter((x) => x !== deel) : [...r[dag], deel] }));
@@ -78,6 +87,8 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
       ...begin,
       diensten,
       oppasPerUur: oppas && oppasCenten !== null ? oppasCenten : 0,
+      oppasPlekken: oppas ? plekken : begin.oppasPlekken,
+      huis: thuisOntvangen ? { ...begin.huis, omschrijving: huis.trim(), kenmerken } : undefined,
       bio: bio.trim(),
       ervaring: ervaring.trim(),
       professioneel,
@@ -101,13 +112,39 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
         <Label>Wat bied je aan?</Label>
         <View style={gedeeldeStijl.rij}>
           <Chip label="Uitlaten" icoon="walk" actief={uitlaten} onPress={() => wisselDienst('uitlaten')} />
-          <Chip label="Oppas aan huis" icoon="home" actief={oppas} onPress={() => wisselDienst('oppas')} />
+          <Chip label="Oppas" icoon="home" actief={oppas} onPress={() => wisselDienst('oppas')} />
         </View>
         {toon(fouten.diensten) ? <Text style={s.fout}>{fouten.diensten}</Text> : null}
         {oppas ? (
-          <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2) }]}>
-            Bij oppas ben je een paar uur bij de eigenaar thuis, vaak &apos;s avonds. Je laat de hond tussendoor even uit.
-          </Text>
+          <>
+            <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2), marginBottom: ruimte(3) }]}>
+              Bij oppas pas je een paar uur op, vaak &apos;s avonds, en laat je de hond tussendoor even uit. Waar pas je op?
+            </Text>
+            <View style={gedeeldeStijl.rij}>
+              <Chip label="Bij de eigenaar thuis" icoon="home" actief={plekken.includes('bij_eigenaar')} onPress={() => wisselPlek('bij_eigenaar')} />
+              <Chip label="Bij mij thuis" icoon="bed" actief={plekken.includes('bij_oppas')} onPress={() => wisselPlek('bij_oppas')} />
+            </View>
+            {toon(fouten.plekken) ? <Text style={s.fout}>{fouten.plekken}</Text> : null}
+          </>
+        ) : null}
+        {thuisOntvangen ? (
+          <View style={{ marginTop: ruimte(4) }}>
+            <Veld
+              label="Over je huis"
+              value={huis}
+              onChangeText={setHuis}
+              multiline
+              maxLength={500}
+              placeholder="Wat voor huis is het, waar slapen en spelen de honden, en waarom is het geschikt?"
+              hulp="Eigenaren lezen dit bij het kiezen. Noem geen adres: dat ziet een eigenaar pas als je een boeking accepteert."
+              fout={toon(fouten.huis)}
+            />
+            <View style={[gedeeldeStijl.rij, { marginTop: -ruimte(2) }]}>
+              {(Object.keys(HUIS_KENMERKEN) as HuisKenmerk[]).map((k) => (
+                <Chip key={k} label={HUIS_KENMERKEN[k]} actief={kenmerken.includes(k)} onPress={() => wisselKenmerk(k)} />
+              ))}
+            </View>
+          </View>
         ) : null}
 
         <View style={{ height: ruimte(3) }} />
@@ -139,7 +176,7 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
             <Label>Jouw tarief per wandeling</Label>
             <View style={s.tarieven}>
               {DUREN.map((d) => (
-                <View key={d} style={s.tarief}>
+                <View key={d} style={[s.tariefKader, s.tarief]}>
                   <Text style={s.tariefDuur}>{d} min</Text>
                   <View style={s.tariefInvoer}>
                     <Text style={s.euroTeken}>€</Text>
@@ -162,7 +199,7 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
           <>
             <View style={{ height: ruimte(5) }} />
             <Label>Jouw uurtarief voor oppas</Label>
-            <View style={[s.tarief, { flex: 0, width: 140 }]}>
+            <View style={[s.tariefKader, s.uurtarief]}>
               <Text style={s.tariefDuur}>per uur</Text>
               <View style={s.tariefInvoer}>
                 <Text style={s.euroTeken}>€</Text>
@@ -257,7 +294,9 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
 
 const s = StyleSheet.create({
   tarieven: { flexDirection: 'row', gap: ruimte(2) },
-  tarief: { flex: 1, borderWidth: 1.5, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },
+  tariefKader: { borderWidth: 1.5, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },
+  tarief: { flex: 1 },
+  uurtarief: { alignSelf: 'flex-start', width: 160 },
   tariefDuur: { fontSize: 13, fontWeight: '700', color: kleuren.gedempt },
   tariefInvoer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   euroTeken: { fontSize: 20, fontWeight: '800', color: kleuren.tekst, marginRight: 2 },

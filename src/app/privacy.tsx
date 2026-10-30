@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Melding } from '../components/ui';
+import { Linking, StyleSheet, Text } from 'react-native';
+import { JuridischeTekst, type Sectie } from '../components/JuridischeTekst';
 import { useTekst } from '../state/Teksten';
 import { kleuren, ruimte } from '../theme';
 
@@ -17,11 +16,6 @@ interface Organisatie {
   email: string;
 }
 
-interface Sectie {
-  titel: string;
-  alineas?: string[];
-  punten?: string[];
-}
 
 const secties = (ORGANISATIE: Organisatie): Sectie[] => [
   {
@@ -37,13 +31,13 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
       'Je account: je e-mailadres en, als je inlogt met Apple of Google, de naam die je daar gebruikt. Bij Apple kun je je e-mailadres verbergen; we krijgen dan een doorstuuradres.',
       'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent.',
       'Je honden: naam, ras, geboortedatum, karakter, bijzonderheden en dierenarts.',
-      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd. Om je te kunnen verifiëren, ziet een medewerker van Woober je e-mailadres.',
+      'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd, en als je honden thuis ontvangt een beschrijving van je huis (zonder adres). Om je te kunnen verifiëren, ziet een medewerker van Woober je e-mailadres.',
       'Plekken en reviews die je schrijft. Andere gebruikers zien daarbij alleen je voornaam.',
       'Of je op de wachtlijst staat, zodat we je kunnen mailen zodra Woober in je buurt start. Afmelden kan op het startscherm.',
       'Wanneer je met de gebruiksvoorwaarden akkoord ging en welke versie dat was.',
       'Meldingen die je doet over een plek of review. Een medewerker leest die.',
       'Doel: je laten inloggen en je account, honden en profiel bewaren. Grondslag: de overeenkomst met jou (het gebruik van Woober).',
-      'Andere gebruikers zien nooit je e-mailadres of adres. Een uitlater ziet het adres van een eigenaar pas na een geaccepteerde boeking.',
+      'Andere gebruikers zien nooit je e-mailadres, en je adres alleen voor een boeking die is geaccepteerd: een uitlater of oppas dat van de eigenaar, niet als je de hond op een ander punt afgeeft; bij oppas bij de oppas thuis ziet de eigenaar het adres van de oppas. Afspraken over je huis (camera’s, wat de oppas mag gebruiken, wat privé is) ziet alleen de oppas van die boeking, al bij het verzoek.',
     ],
   },
   {
@@ -57,6 +51,14 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
     titel: 'De kaart',
     alineas: [
       'De kaart komt van PDOK, de dienst voor kaarten van de Nederlandse overheid (Kadaster). Je telefoon of browser haalt de kaartbeelden daar rechtstreeks op; PDOK ziet daarbij je IP-adres, net als bij elke website. De app gebruikt je eigen locatie niet.',
+    ],
+  },
+  {
+    titel: 'Betalen en uitbetalen',
+    alineas: [
+      'Betalingen en uitbetalingen lopen via Mollie B.V. in Amsterdam, een betaalinstelling met een vergunning van De Nederlandsche Bank. Je betaalgegevens geef je op de betaalpagina van Mollie, niet aan Woober. Woober bewaart per betaling alleen het kenmerk, het bedrag, de betaalmethode en of het gelukt is. Laat je een betaling via je bank terugdraaien, dan bewaren we ook dat, en wat een medewerker daarover besloot.',
+      'Als uitlater koppel je een eigen account bij Mollie; Mollie controleert daarbij je identiteit en je rekening. Woober bewaart alleen het kenmerk van je Mollie-account, hoe ver het aansluiten is en een sleutel om dat bij Mollie op te vragen.',
+      'Mollie verwerkt deze gegevens ook zelf, volgens zijn eigen privacyverklaring. Grondslag voor Woober: de overeenkomst met jou.',
     ],
   },
   {
@@ -101,46 +103,21 @@ export default function Privacy() {
     adres: useTekst('privacy.adres'),
     email: useTekst('privacy.email'),
   };
-  const versie = useTekst('privacy.versie');
-  const concept = useTekst('privacy.concept');
   return (
-    <ScrollView contentContainerStyle={s.inhoud}>
-      <Text style={s.kop}>Privacy- en cookieverklaring</Text>
-      <Text style={s.versie}>Versie {versie}</Text>
-      {concept.trim() ? <Melding type="waarschuwing">{concept}</Melding> : null}
-
-      {secties(organisatie).map((sectie) => (
-        <View key={sectie.titel} style={s.sectie}>
-          <Text style={s.titel}>{sectie.titel}</Text>
-          {sectie.punten?.map((p) => (
-            <View key={p} style={s.punt}>
-              <Ionicons name="ellipse" size={6} color={kleuren.primair} style={{ marginTop: 8 }} />
-              <Text style={s.tekst}>{p}</Text>
-            </View>
-          ))}
-          {sectie.alineas?.map((a) => (
-            <Text key={a} style={[s.tekst, s.alinea]}>
-              {a}
-            </Text>
-          ))}
-        </View>
-      ))}
-
+    <JuridischeTekst
+      kop="Privacy- en cookieverklaring"
+      versie="privacy.versie"
+      concept="privacy.concept"
+      gegevens={['privacy.organisatie', 'privacy.kvk', 'privacy.adres', 'privacy.email']}
+      secties={secties(organisatie)}
+    >
       <Text style={s.link} onPress={() => Linking.openURL('https://www.autoriteitpersoonsgegevens.nl')}>
         Naar de Autoriteit Persoonsgegevens
       </Text>
-    </ScrollView>
+    </JuridischeTekst>
   );
 }
 
 const s = StyleSheet.create({
-  inhoud: { padding: ruimte(5), paddingBottom: ruimte(14), width: '100%', maxWidth: 680, alignSelf: 'center' },
-  kop: { fontSize: 26, fontWeight: '900', color: kleuren.tekst, letterSpacing: -0.5 },
-  versie: { fontSize: 13, color: kleuren.gedempt, marginTop: 4, marginBottom: ruimte(4) },
-  sectie: { marginTop: ruimte(5), paddingTop: ruimte(4), borderTopWidth: 1, borderTopColor: kleuren.rand },
-  titel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst, marginBottom: ruimte(2) },
-  punt: { flexDirection: 'row', gap: 10, marginBottom: ruimte(2), alignItems: 'flex-start' },
-  tekst: { flex: 1, fontSize: 15, color: kleuren.tekst, lineHeight: 22 },
-  alinea: { marginBottom: ruimte(2) },
   link: { fontSize: 15, color: kleuren.primair, fontWeight: '700', marginTop: ruimte(6) },
 });

@@ -1,4 +1,4 @@
-import type { Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
+import type { AfspraakMelding, Betaalmethode, Boeking, Dienst, OppasDuur, PrijsOpbouw, Uitlater, WandelDuur } from '../types';
 import type { Verdienmodel } from './verdienmodel';
 
 /**
@@ -15,6 +15,29 @@ export const DUREN: WandelDuur[] = [30, 45, 60];
 export const OPPAS_DUREN: OppasDuur[] = [120, 180, 240, 300];
 /** Verlengen van oppas gaat per uur */
 export const VERLENG_MINUTEN = 60;
+
+/** Naam van een betaalmethode in zinnen, zoals "met iDEAL | Wero" */
+export const METHODE_NAAM: Record<Betaalmethode, string> = { ideal: 'iDEAL | Wero', applepay: 'Apple Pay', kaart: 'creditcard' };
+
+/** Oppas duurt hooguit 12 uur, ook na verlengen */
+export const MAX_OPPAS_MINUTEN = 720;
+
+/**
+ * Prijs van een oppas na een uur verlengen, met hetzelfde verdienmodel, dezelfde drukte en hetzelfde tegoed als bij
+ * het boeken (prijs_verlengd() in de migratie). De eigenaar betaalt het verschil meteen; het uur gaat pas in als dat
+ * betaald is.
+ */
+export function prijsNaVerlengen(
+  uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur' | 'toeslagExtraHond'>,
+  b: Pick<Boeking, 'duur' | 'hondIds' | 'prijs'>,
+  model: Verdienmodel,
+): PrijsOpbouw {
+  return berekenPrijs(uitlater, 'oppas', b.duur + VERLENG_MINUTEN, b.hondIds.length, model, {
+    drukteFactor: b.prijs.drukteFactor,
+    plus: b.prijs.plus,
+    tegoed: b.prijs.korting,
+  });
+}
 
 /** Tarief van de uitlater zelf, zonder toeslag: per wandelduur, of uurtarief maal aantal uren bij oppas */
 export function tariefVoor(uitlater: Pick<Uitlater, 'tarieven' | 'oppasPerUur'>, dienst: Dienst, duur: number): number {
@@ -115,6 +138,26 @@ export function annuleringskosten(b: Boeking, nu: number): number {
     if (urenTot >= GRATIS_ANNULEREN_UUR) return 0;
   }
   return Math.round((b.prijs.tarief + b.prijs.toeslag) * ANNULERINGSDEEL);
+}
+
+/** Zo lang na het afgesproken moment mag een uitlater nog niet zijn begonnen voordat de eigenaar een no-show kan melden */
+export const TE_LAAT_MINUTEN = 15;
+
+/**
+ * Kan de eigenaar melden dat de uitlater niet kwam of op het laatste moment afzegde, en zo ja wat ligt voor de hand?
+ * Een melding beoordeelt altijd een medewerker; hier staat alleen wanneer de knop verschijnt.
+ */
+export function meldbareAfspraak(b: Boeking, nu: number): AfspraakMelding['soort'] | null {
+  if (b.mijnRol !== 'eigenaar' || b.afspraakMelding) return null;
+  const tijdstip = b.moment.type === 'later' ? b.moment.tijdstip : null;
+  if (b.status === 'geannuleerd' && b.geannuleerdDoor === 'uitlater') {
+    const kort = tijdstip === null || tijdstip - b.statusSinds < GRATIS_ANNULEREN_UUR * 3600000;
+    return kort ? 'laat_afgezegd' : null;
+  }
+  // De eigenaar annuleerde zelf en betaalde kosten: mogelijk omdat de uitlater niet kwam
+  if (b.status === 'geannuleerd' && b.geannuleerdDoor === 'eigenaar' && (b.annuleringskosten ?? 0) > 0) return 'niet_gekomen';
+  if (b.status === 'gepland' && tijdstip !== null && nu > tijdstip + TE_LAAT_MINUTEN * 60000) return 'niet_gekomen';
+  return null;
 }
 
 export function euro(centen: number): string {

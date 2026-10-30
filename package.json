@@ -41,7 +41,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "test:db": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON supabase/tests/rls.test.mjs",
-    "kaart:leaflet": "node scripts/leaflet.mjs"
+    "kaart:leaflet": "node scripts/leaflet.mjs",
+    "check:functions": "npx --yes deno@2 check supabase/functions/*/index.ts && npx --yes deno@2 test supabase/functions && npx --yes deno@2 lint supabase/functions"
   },
   "private": true
 }

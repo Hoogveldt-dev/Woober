@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { type ComponentProps } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState, type ComponentProps } from 'react';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { gedeeldeStijl } from '../components/blokken';
 import { Badge, Knop, Melding } from '../components/ui';
+import { koppelMollie, mijnKoppeling, type Koppelstatus } from '../lib/betalen';
 import { klaarVoorWerk, useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Verificatie } from '../types';
@@ -13,7 +15,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
   {
     id: 'identiteit',
     titel: 'Identiteit',
-    tekst: 'Foto van je paspoort of ID-kaart en een selfie. Gecontroleerd door Stripe Identity; Woober bewaart zelf geen kopie.',
+    tekst: 'Foto van je paspoort of ID-kaart en een selfie. Gecontroleerd door onze betaalpartner; Woober bewaart zelf geen kopie.',
     icoon: 'id-card',
     verplicht: true,
   },
@@ -27,7 +29,7 @@ const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: Com
   {
     id: 'uitbetaling',
     titel: 'Rekening voor uitbetaling',
-    tekst: 'Je eigen IBAN via Stripe Connect. Werk je als bedrijf, dan vul je hier ook je KvK-nummer in.',
+    tekst: 'Een eigen account bij onze betaalpartner Mollie, met je IBAN. Daar komt je saldo op als je uitbetaalt; Mollie controleert je gegevens.',
     icoon: 'card',
     verplicht: true,
   },
@@ -77,6 +79,7 @@ export default function VerificatieScherm() {
               </View>
               <Text style={s.tekst}>{stap.tekst}</Text>
               {!gedaan && modus === 'demo' ? <Knop titel="Controleren (demo)" variant="secundair" onPress={() => verifieer(stap.id)} stijl={{ marginTop: ruimte(2), alignSelf: 'flex-start', height: 42 }} /> : null}
+              {!gedaan && modus === 'echt' && stap.id === 'uitbetaling' ? <MollieKoppeling /> : null}
             </View>
             {gedaan ? <Ionicons name="checkmark-circle" size={24} color={kleuren.like} /> : null}
           </View>
@@ -89,13 +92,61 @@ export default function VerificatieScherm() {
           <Knop titel="Naar de kaart" icoon="navigate" onPress={() => router.replace('/werk')} stijl={{ marginTop: ruimte(3) }} />
         </>
       ) : (
-        <Melding type="info">
-          {modus === 'echt'
-            ? uitlegEcht
-            : 'In de echte app regelt Stripe de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
-        </Melding>
+        <Bewerkbaar sleutels="verificatie.echt">
+          <Melding type="info">
+            {modus === 'echt'
+              ? uitlegEcht
+              : 'In de echte app regelt onze betaalpartner de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
+          </Melding>
+        </Bewerkbaar>
       )}
     </ScrollView>
+  );
+}
+
+/** Echte uitlaters: eigen Mollie-account koppelen en zien hoe ver dat is (Edge Functions mollie-aansluiten en mollie-oauth) */
+function MollieKoppeling() {
+  const { mollie } = useLocalSearchParams<{ mollie?: string }>();
+  const [status, setStatus] = useState<Koppelstatus | undefined>(undefined);
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState<string | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      mijnKoppeling().then(setStatus, () => setStatus(null));
+    }, []),
+  );
+  const koppel = async () => {
+    setBezig(true);
+    setFout(null);
+    try {
+      await koppelMollie();
+      setStatus(await mijnKoppeling());
+    } catch (e) {
+      setFout(e instanceof Error ? e.message : 'Koppelen lukte niet.');
+    } finally {
+      setBezig(false);
+    }
+  };
+  if (status === undefined) return null;
+  const uitleg =
+    status === 'in controle'
+      ? 'Gekoppeld. Mollie controleert nu je gegevens; dat duurt meestal een paar werkdagen.'
+      : status === 'gegevens nodig'
+        ? 'Gekoppeld, maar Mollie heeft nog gegevens van je nodig. Vul ze aan bij Mollie.'
+        : status === 'klaar'
+          ? 'Je Mollie-account is klaar. Staat het vinkje er nog niet, open de app dan opnieuw.'
+          : null;
+  return (
+    <View style={{ gap: ruimte(2), marginTop: ruimte(2) }}>
+      {mollie === 'afgebroken' || mollie === 'mislukt' ? <Melding type="fout">Koppelen met Mollie is niet gelukt. Probeer het nog eens.</Melding> : null}
+      {uitleg ? <Melding type="info">{uitleg}</Melding> : null}
+      {status === 'gegevens nodig' ? (
+        <Knop titel="Verder bij Mollie" variant="secundair" icoon="open-outline" onPress={() => Linking.openURL('https://my.mollie.com/dashboard')} stijl={{ alignSelf: 'flex-start', height: 42 }} />
+      ) : status !== 'in controle' && status !== 'klaar' ? (
+        <Knop titel="Koppelen via Mollie" icoon="card" uitgeschakeld={bezig} onPress={koppel} stijl={{ alignSelf: 'flex-start', height: 42 }} />
+      ) : null}
+      {fout ? <Melding type="fout">{fout}</Melding> : null}
+    </View>
   );
 }
 

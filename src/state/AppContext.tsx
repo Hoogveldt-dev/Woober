@@ -2,11 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState as AppStatus } from 'react-native';
 import { AUTO_ANTWOORDEN_KLANT, AUTO_ANTWOORDEN_UITLATER, DEMO_EIGEN_HONDEN, DEMO_KLANTEN } from '../data/honden';
 import { maakDemoPlekken } from '../data/plekken';
-import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START } from '../data/stad';
+import { DEMO_ADRES, DEMO_THUIS, DEMO_UITLATER_START, PARK_INGANG } from '../data/stad';
 import { DEMO_BEKEND, maakDemoUitlaters } from '../data/uitlaters';
 import * as account from '../lib/account';
 import * as plekkenDb from '../lib/plekkenDb';
-import { annuleringskosten, berekenPrijs, euro, GRATIS, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
+import { annuleringskosten, berekenPrijs, euro, GRATIS, MAX_OPPAS_MINUTEN, prijsNaVerlengen, VERLENG_MINUTEN, type PrijsExtra } from '../lib/prijs';
 import { blokRondje, routeTussen, wandelroute } from '../lib/route';
 import {
   ACCEPTEER_NA_MS,
@@ -22,11 +22,16 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import * as betalen from '../lib/betalen';
+import { saldoVan, uitbetalingFout } from '../lib/saldo';
+import { afgerondeOpdrachten, verdiend } from '../lib/verdiensten';
 import { wisStappen } from '../lib/stappen';
 import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
 import type {
+  Afgifte,
+  AfspraakMelding,
   AppMelding,
   Beoordeling,
   Betaalmethode,
@@ -37,7 +42,9 @@ import type {
   Gebruiker,
   Gesprek,
   Hond,
+  HuisInfo,
   Klant,
+  OppasPlek,
   PrijsOpbouw,
   Moment,
   NieuwePlek,
@@ -46,13 +53,12 @@ import type {
   Rol,
   Serie,
   Sleutel,
+  Uitbetaling,
   Uitlater,
   Verificatie,
 } from '../types';
 
 export const LOPEND: Boeking['status'][] = ['onderweg', 'aangekomen', 'bezig'];
-export const ACTIEF: Boeking['status'][] = ['aangevraagd', ...LOPEND];
-
 interface AppState {
   /** Demo met verzonnen gegevens, of een echt account in Supabase */
   modus: 'demo' | 'echt';
@@ -87,6 +93,10 @@ interface AppState {
   plus: boolean;
   /** Tegoed van de eigenaar in centen, betaald door Woober (welkomst, uitnodiging, actiecode) */
   tegoed: number;
+  /** Uitbetalingen van het saldo als uitlater naar de eigen rekening (src/lib/saldo.ts) */
+  uitbetalingen: Uitbetaling[];
+  /** Echte accounts: saldo uit de database (mijn_saldo); de demo rekent het zelf uit */
+  saldoEcht: number;
   gebruikteCodes: string[];
   /** Losloopgebieden, stranden en horeca met reviews van gebruikers */
   plekken: Plek[];
@@ -97,11 +107,17 @@ export interface Aanvraag {
   uitlaterId: string;
   hondIds: string[];
   duur: number;
-  cameraInHuis?: boolean;
+  /** Alleen bij oppas */
+  oppasPlek?: OppasPlek;
+  huisinfo?: HuisInfo;
+  /** Alleen bij uitlaten: afgeven op een ander punt dan thuis */
+  afgifte?: Afgifte;
   moment: Moment;
   sleutel: Sleutel;
   notitie: string;
   betaalmethode: Betaalmethode;
+  /** Zoveel als kan van de prijs betalen met je saldo als uitlater */
+  metSaldo?: boolean;
 }
 
 interface AppActies {
@@ -124,7 +140,8 @@ interface AppActies {
   zetPlus: (aan: boolean) => void;
   /** Geeft een melding terug voor de gebruiker */
   verzilverCode: (code: string) => { gelukt: boolean; tekst: string };
-  vraagKennismakingAan: (uitlaterId: string, tijdstip: number, bericht: string) => string;
+  /** Kennismaken bij jou thuis, of op een openbare plek (afgifte) */
+  vraagKennismakingAan: (uitlaterId: string, tijdstip: number, bericht: string, afgifte?: Afgifte) => string;
   annuleer: (id: string) => void;
   startNu: (id: string) => void;
   versnel: (id: string) => void;
@@ -138,11 +155,13 @@ interface AppActies {
   startWandeling: (id: string, code: string) => boolean;
   voegToe: (id: string, soort: GebeurtenisSoort, tekst?: string) => void;
   beeindig: (id: string) => void;
-  /** Oppas met een uur verlengen; in de echte app moet de oppas dit eerst bevestigen */
+  /** Oppas met een uur verlengen. In de demo telt het extra uur als betaald; echt gaat het pas in na betalen (betaling-starten, soort verlenging) */
   verleng: (id: string) => void;
   stuurBericht: (metId: string, rol: Rol, tekst: string) => void;
   blokkeer: (id: string) => void;
   meld: (id: string, reden: string) => void;
+  /** De uitlater kwam niet of zegde laat af; een medewerker beoordeelt de melding */
+  meldAfspraak: (id: string, soort: AfspraakMelding['soort'], toelichting: string) => void;
   sluitMelding: (id: string) => void;
   /** Review van een plek schrijven of aanpassen; één per gebruiker per plek */
   beoordeelPlek: (plekId: string, sterren: number, tekst: string) => void;
@@ -155,6 +174,11 @@ interface AppActies {
   verwijderPlek: (id: string) => void;
   accountVerwijderen: () => Promise<void>;
 
+  /** Saldo als uitlater: verdiend min uitbetaald en min wat je ermee betaalde als eigenaar. Eigen geld, geen tegoed van Woober. */
+  saldo: number;
+  vraagUitbetalingAan: (bedrag: number) => Promise<{ gelukt: boolean; tekst: string }>;
+  /** Echte accounts: saldo en uitbetalingen opnieuw ophalen, bijvoorbeeld bij het openen van het saldo */
+  herlaadSaldo: () => Promise<void>;
   /** Het actieve verdienmodel */
   verdienmodel: Verdienmodel;
   /** Prijs volgens het actieve verdienmodel, inclusief drukte en abonnement; met tegoed als metTegoed */
@@ -202,6 +226,8 @@ const LEEG: AppState = {
   drukteNagebootst: false,
   plus: false,
   tegoed: 0,
+  uitbetalingen: [],
+  saldoEcht: 0,
   gebruikteCodes: [],
   plekken: maakDemoPlekken(),
 };
@@ -226,6 +252,7 @@ export function standaardProfiel(voornaam: string): Uitlater {
     ervaring: '',
     professioneel: false,
     diensten: ['uitlaten'],
+    oppasPlekken: ['bij_eigenaar'],
     oppasPerUur: 1100,
     tarieven: { 30: 1200, 45: 1600, 60: 1900 },
     toeslagExtraHond: 500,
@@ -339,8 +366,24 @@ function demoGeschiedenisEigenaar(thuis: Punt, adres: string, uitlaters: Uitlate
     wandeling('u2', ['h-moos'], 30, 4, 10, 5),
     wandeling('u1', ['h-luna', 'h-moos'], 180, 5, 19, 5, 'oppas'),
     wandeling('u1', ['h-luna'], 60, 6, 17, null),
+    afgezegd(u('u2'), thuis, adres, 2, 9),
     historie({ mijnRol: 'eigenaar', soort: 'kennismaking', uitlaterId: 'u2', hondIds: ['h-luna', 'h-moos'], ophaalPunt: thuis, adres }, 9, 18),
   ];
+}
+
+/** Voor de demo: een wandeling die de uitlater 40 minuten van tevoren afzegde, zodat je het melden kunt zien */
+function afgezegd(u: Uitlater, thuis: Punt, adres: string, dagenGeleden: number, uur: number): Boeking {
+  const tijdstip = new Date(Date.now() - dagenGeleden * 86400000);
+  tijdstip.setHours(uur, 0, 0, 0);
+  return {
+    ...basisBoeking({ mijnRol: 'eigenaar', uitlaterId: u.id, hondIds: ['h-moos'], ophaalPunt: thuis, adres, prijs: berekenPrijs(u, 'uitlaten', 30, 1, modelVoor('lancering')) }),
+    moment: { type: 'later', tijdstip: tijdstip.getTime() },
+    aangemaakt: tijdstip.getTime() - 2 * 86400000,
+    status: 'geannuleerd',
+    statusSinds: tijdstip.getTime() - 40 * 60000,
+    annuleringskosten: 0,
+    geannuleerdDoor: 'uitlater',
+  };
 }
 
 function demoGeschiedenisUitlater(profiel: Uitlater): Boeking[] {
@@ -506,6 +549,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const eigenaarHistorie = demoGeschiedenisEigenaar(DEMO_THUIS, DEMO_ADRES, uitlaters);
     const uitlaterHistorie = demoGeschiedenisUitlater(profiel);
     const nu = Date.now();
+    // Wat ouder is dan een week, is in de demo al uitbetaald; het saldo is dan wat je deze week verdiende
+    const alUitbetaald = afgerondeOpdrachten(uitlaterHistorie)
+      .filter((b) => (b.beeindigd ?? 0) < nu - 7 * 86400000)
+      .reduce((t, b) => t + verdiend(b), 0);
     setState((oud) => ({
       ...LEEG,
       verdienmodelId: oud.verdienmodelId,
@@ -517,6 +564,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       uitlaters,
       bekend: DEMO_BEKEND,
       boekingen: [...eigenaarHistorie, ...uitlaterHistorie],
+      uitbetalingen: alUitbetaald > 0 ? [{ id: nieuwId('ub'), bedrag: alUitbetaald, tijd: nu - 7 * 86400000, status: 'betaald' }] : [],
       gesprekken: [
         {
           id: 'u1',
@@ -589,6 +637,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Een vaste afspraak krijgt telkens de prijs zonder tegoed; het tegoed gaat alleen van de eerste keer af
     const zonderTegoed = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, extraPrijs);
     const prijs = berekenPrijs(u, a.dienst, a.duur, a.hondIds.length, model, { ...extraPrijs, tegoed: s.tegoed });
+    // Saldo is eigen geld van de uitlater en geen korting: de prijs blijft gelijk, alleen een deel komt van het saldo
+    const metSaldo = a.metSaldo ? Math.max(0, Math.min(saldoVan(s.boekingen, s.uitbetalingen), prijs.totaal)) : 0;
     let serieId: string | undefined;
     let moment = a.moment;
     let serie: Serie | null = null;
@@ -597,21 +647,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       serie = { id: serieId, uitlaterId: a.uitlaterId, dienst: a.dienst, hondIds: a.hondIds, duur: a.duur, dagen: a.moment.dagen, tijd: a.moment.tijd, actief: true, prijs: zonderTegoed };
       moment = { type: 'later', tijdstip: volgendeKeer(a.moment.dagen, a.moment.tijd, Date.now()) };
     }
+    // Bij de oppas thuis brengt de eigenaar de hond; op een afgiftepunt geeft de eigenaar hem zelf mee
+    const bijOppas = a.dienst === 'oppas' && a.oppasPlek === 'bij_oppas';
+    const afgifte = a.dienst === 'uitlaten' ? a.afgifte : undefined;
     const b = basisBoeking({
       mijnRol: 'eigenaar',
       dienst: a.dienst,
       uitlaterId: a.uitlaterId,
       hondIds: a.hondIds,
       duur: a.duur,
-      cameraInHuis: a.cameraInHuis,
+      oppasPlek: a.dienst === 'oppas' ? (a.oppasPlek ?? 'bij_eigenaar') : undefined,
+      huisinfo: a.dienst === 'oppas' && !bijOppas ? a.huisinfo : undefined,
+      afgifte,
       moment,
       serieId,
-      ophaalPunt: s.gebruiker.thuis,
-      adres: s.gebruiker.adres,
-      sleutel: a.sleutel,
+      ophaalPunt: bijOppas ? u.positie : (afgifte?.punt ?? s.gebruiker.thuis),
+      adres: bijOppas ? (u.huis?.adres ?? `Bij ${u.voornaam} thuis, ${u.wijk}`) : (afgifte?.omschrijving ?? s.gebruiker.adres),
+      sleutel: bijOppas || afgifte ? 'thuis' : a.sleutel,
       notitie: a.notitie,
       betaalmethode: a.betaalmethode,
       prijs,
+      metSaldo: metSaldo || undefined,
       startPositie: u.positie,
     });
     setState((st) => ({
@@ -624,7 +680,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return b.id;
   }, [setState]);
 
-  const vraagKennismakingAan = useCallback((uitlaterId: string, tijdstip: number, bericht: string) => {
+  const vraagKennismakingAan = useCallback((uitlaterId: string, tijdstip: number, bericht: string, afgifte?: Afgifte) => {
     const s = ref.current.state;
     const u = uitlaterUit(s, uitlaterId);
     if (!s.gebruiker || !u) return '';
@@ -635,8 +691,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hondIds: s.honden.map((h) => h.id),
       duur: 30,
       moment: { type: 'later', tijdstip },
-      ophaalPunt: s.gebruiker.thuis,
-      adres: s.gebruiker.adres,
+      afgifte,
+      ophaalPunt: afgifte?.punt ?? s.gebruiker.thuis,
+      adres: afgifte?.omschrijving ?? s.gebruiker.adres,
       notitie: bericht,
       startPositie: u.positie,
     });
@@ -659,7 +716,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           ...s,
           tegoed: s.tegoed + terug,
-          boekingen: s.boekingen.map((x) => (x.id === id ? { ...x, status: 'geannuleerd', statusSinds: Date.now(), annuleringskosten: kosten } : x)),
+          boekingen: s.boekingen.map((x) => (x.id === id ? { ...x, status: 'geannuleerd', statusSinds: Date.now(), annuleringskosten: kosten, geannuleerdDoor: b.mijnRol } : x)),
         };
       }),
     [setState],
@@ -843,21 +900,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wijzigBoeking(id, (b) => {
         if (b.dienst !== 'oppas' || !['gepland', 'onderweg', 'aangekomen', 'bezig'].includes(b.status)) return b;
         const u = uitlaterUit(ref.current.state, b.uitlaterId);
-        if (!u) return b;
         const duur = b.duur + VERLENG_MINUTEN;
+        if (!u || duur > MAX_OPPAS_MINUTEN) return b;
         const nu = Date.now();
         return {
           ...b,
           duur,
-          // Zelfde verdienmodel, drukte en korting als bij het boeken
-          prijs: berekenPrijs(u, 'oppas', duur, b.hondIds.length, modelVoor(b.prijs.modelId), {
-            drukteFactor: b.prijs.drukteFactor,
-            plus: b.prijs.plus,
-            tegoed: b.prijs.korting,
-          }),
+          prijs: prijsNaVerlengen(u, b, modelVoor(b.prijs.modelId)),
           gebeurtenissen: [
             ...b.gebeurtenissen,
-            { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Verlengd tot ${duurTekst(duur)}` },
+            { id: nieuwId('g'), soort: 'notitie', tijd: nu, voortgang: scriptVoortgang(b, nu), tekst: `Extra uur betaald, verlengd tot ${duurTekst(duur)}` },
           ],
         };
       }),
@@ -911,6 +963,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const review = plek ? undefined : ps.flatMap((p) => p.reviews).find((r) => r.id === id);
     if (plek || review) plekkenDb.meld({ plek, review }, reden).catch(meldFout);
   }, [setState, echt, meldFout]);
+
+  // Echte boekingen bestaan nog niet; met echt boeken gaat dit naar de tabel meldingen (zie ACTIES.md, stap 7)
+  const meldAfspraak = useCallback(
+    (id: string, soort: AfspraakMelding['soort'], toelichting: string) =>
+      wijzigBoeking(id, (b) => (b.afspraakMelding ? b : { ...b, afspraakMelding: { soort, toelichting: toelichting.trim().slice(0, 300), tijd: Date.now(), status: 'open' } })),
+    [wijzigBoeking],
+  );
 
   /** Sluit een melding en alle oudere meldingen voor dezelfde rol */
   const sluitMelding = useCallback(
@@ -1073,8 +1132,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openVerzoek = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && b.status === 'aangevraagd'), [state.boekingen]);
   const actieveOpdracht = useMemo(() => state.boekingen.find((b) => b.mijnRol === 'uitlater' && LOPEND.includes(b.status)), [state.boekingen]);
 
+  const saldo = useMemo(
+    () => (state.modus === 'echt' ? state.saldoEcht : saldoVan(state.boekingen, state.uitbetalingen)),
+    [state.modus, state.saldoEcht, state.boekingen, state.uitbetalingen],
+  );
+  const herlaadSaldo = useCallback(async () => {
+    if (!echt() || !ref.current.state.mijnProfiel) return;
+    try {
+      const [saldoEcht, uitbetalingen] = await Promise.all([betalen.mijnSaldo(), betalen.mijnUitbetalingen()]);
+      setState((s) => ({ ...s, saldoEcht, uitbetalingen }));
+    } catch (e) {
+      meldFout(e);
+    }
+  }, [echt, setState, meldFout]);
+  const vraagUitbetalingAan = useCallback(
+    async (bedrag: number) => {
+      const s = ref.current.state;
+      if (!s.mijnProfiel?.verificatie.uitbetaling) return { gelukt: false, tekst: 'Koppel eerst je rekening onder Verificatie en uitbetaling.' };
+      if (s.modus === 'echt') {
+        // De database controleert saldo en minimum; de server routeert het daarna via Mollie (betalingen-verwerken)
+        const fout = uitbetalingFout(bedrag, s.saldoEcht);
+        if (fout) return { gelukt: false, tekst: fout };
+        try {
+          await betalen.vraagUitbetalingAan(bedrag);
+        } catch (e) {
+          return { gelukt: false, tekst: e instanceof Error ? e.message : 'Uitbetalen lukte niet.' };
+        }
+        await herlaadSaldo();
+        return { gelukt: true, tekst: `${euro(bedrag)} is onderweg naar je Mollie-account. Mollie maakt het over naar je bank volgens het schema dat je daar kiest.` };
+      }
+      const fout = uitbetalingFout(bedrag, saldoVan(s.boekingen, s.uitbetalingen));
+      if (fout) return { gelukt: false, tekst: fout };
+      setState((st) => ({ ...st, uitbetalingen: [...st.uitbetalingen, { id: nieuwId('ub'), bedrag, tijd: Date.now(), status: 'onderweg' }] }));
+      return { gelukt: true, tekst: `${euro(bedrag)} is onderweg naar je rekening. Meestal staat het er binnen een paar werkdagen.` };
+    },
+    [setState, herlaadSaldo],
+  );
+
   const waarde: Context = {
     ...state,
+    saldo,
+    vraagUitbetalingAan,
+    herlaadSaldo,
     aanmelden,
     demoStart,
     uitloggen,
@@ -1111,6 +1210,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     stuurBericht,
     blokkeer,
     meld,
+    meldAfspraak,
     sluitMelding,
     beoordeelPlek,
     verwijderPlekReview,
@@ -1197,6 +1297,10 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
       ? { type: 'later', tijdstip: tijdstipOp(1, oppas ? '19:30' : '12:30') }
       : { type: 'nu' };
   const dienst: Dienst = oppas ? 'oppas' : 'uitlaten';
+  // Afwisselend: thuis ontvangen als de oppas dat aanbiedt, camera's in huis, en bij uitlaten soms een afgiftepunt
+  const bijOppas = oppas && profiel.oppasPlekken.includes('bij_oppas') && (!profiel.oppasPlekken.includes('bij_eigenaar') || volgnummer % 2 === 0);
+  const camera = volgnummer % 2 === 1;
+  const afgifte = !oppas && !kennismaking && volgnummer % 3 === 2 ? { omschrijving: 'Ingang van het park, bij het hek', punt: PARK_INGANG } : undefined;
   return basisBoeking({
     mijnRol: 'uitlater',
     soort: kennismaking ? 'kennismaking' : 'betaald',
@@ -1206,9 +1310,15 @@ function maakVerzoek(s: AppState, volgnummer: number): Boeking {
     hondIds: k.honden.map((h) => h.id),
     duur,
     moment,
-    ophaalPunt: k.positie,
-    adres: k.adres,
-    sleutel: volgnummer % 2 === 0 ? 'thuis' : 'kastje',
+    oppasPlek: oppas ? (bijOppas ? 'bij_oppas' : 'bij_eigenaar') : undefined,
+    huisinfo:
+      oppas && !bijOppas
+        ? { camera, cameraWaar: camera ? 'Woonkamer en hal, alleen beeld' : '', voorzieningen: ['wifi', 'koffie_thee', 'tv'], huisregels: 'Boven is privé. Niet roken in huis.' }
+        : undefined,
+    afgifte,
+    ophaalPunt: bijOppas ? profiel.positie : (afgifte?.punt ?? k.positie),
+    adres: bijOppas ? 'Bij jou thuis' : (afgifte?.omschrijving ?? k.adres),
+    sleutel: bijOppas || afgifte || volgnummer % 2 === 0 ? 'thuis' : 'kastje',
     notitie: k.honden[0].bijzonderheden,
     prijs: kennismaking ? GRATIS : berekenPrijs(profiel, dienst, duur, k.honden.length, modelVoor(s.verdienmodelId), prijsExtra(s, dienst, moment)),
     startPositie: profiel.positie,

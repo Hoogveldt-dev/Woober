@@ -1,8 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Melding } from '../components/ui';
+import { JuridischeTekst, type Sectie } from '../components/JuridischeTekst';
 import { useTekst } from '../state/Teksten';
-import { kleuren, ruimte } from '../theme';
 
 /**
  * Gebruiksvoorwaarden (concept). Ook zonder account bereikbaar via woober.nl/voorwaarden; nodig voor de stores.
@@ -16,11 +13,6 @@ interface Gegevens {
   contact: string;
 }
 
-interface Sectie {
-  titel: string;
-  alineas?: string[];
-  punten?: string[];
-}
 
 const secties = (g: Gegevens): Sectie[] => [
   {
@@ -43,7 +35,7 @@ const secties = (g: Gegevens): Sectie[] => [
     punten: [
       'Je geeft eerlijke informatie over je hond: gedrag, gezondheid, medicijnen, angsten en hoe die met andere honden omgaat.',
       'Je blijft als eigenaar aansprakelijk voor schade die je hond veroorzaakt (artikel 6:179 Burgerlijk Wetboek). Een aansprakelijkheidsverzekering voor je hond is verstandig.',
-      'Bij oppas aan huis meld je vooraf of er camera’s hangen. Iemand filmen zonder dat die het weet, mag niet.',
+      'Bij oppas bij jou thuis meld je vooraf of er camera’s hangen, waar, en of ze geluid opnemen. Iemand filmen of opnemen zonder dat die het weet, mag niet.',
       'Je geeft je hond alleen mee aan iemand die de juiste ophaalcode noemt.',
     ],
   },
@@ -51,15 +43,20 @@ const secties = (g: Gegevens): Sectie[] => [
     titel: '4. Als uitlater of oppas',
     punten: [
       'Je werkt als zelfstandige, niet in dienst van Woober. Je zorgt zelf voor belastingaangifte en, als dat nodig is, een inschrijving bij de KvK.',
+      'Wat je verdient, komt op je saldo. Dat geld staat bij onze betaalpartner Mollie, een betaalinstelling met een vergunning van De Nederlandsche Bank, niet bij Woober. Om uit te betalen koppel je een eigen account bij Mollie. Je laat het uitbetalen wanneer je wilt, vanaf 10 euro of je hele saldo; Mollie maakt het daarna over naar je bank volgens het schema dat je daar kiest. Staat geld 80 dagen op je saldo, dan maken we het automatisch over. Boek je zelf een uitlater of oppas, dan kun je met je saldo betalen; je geeft Woober daarmee toestemming dat bedrag van je saldo af te schrijven. Je account verwijderen kan als je saldo is uitbetaald. Laat een eigenaar een betaling via de bank terugdraaien, dan draagt Woober dat verlies; haalt Mollie daarvoor geld bij je terug, dan vullen we dat aan.',
       'Voordat eigenaren je zien, controleert Woober je identiteit, je aansprakelijkheidsverzekering en je rekening. Een Verklaring Omtrent het Gedrag is niet verplicht.',
       'Je volgt de regels van de gemeente, zoals aanlijnen, opruimen en het maximum aantal honden tegelijk, en nooit meer dan acht honden.',
       'Je neemt een hond alleen mee na de juiste ophaalcode en deelt je locatie alleen tijdens de wandeling, met de eigenaar van die hond.',
+      'Ontvang je honden bij jou thuis, dan beschrijf je je huis eerlijk en zorg je dat het veilig is voor honden. Je adres ziet een eigenaar pas na een geaccepteerde boeking, en alleen voor die boeking.',
     ],
   },
   {
     titel: '5. Boeken, prijs en annuleren',
     alineas: [
       'Zodra boeken in jouw buurt beschikbaar is, gelden deze regels. Je ziet vooraf de volledige prijs: het tarief van de uitlater, eventuele toeslagen en eventuele kosten van Woober. Annuleren is gratis tot 2 uur van tevoren, of zolang de uitlater nog niet onderweg is; daarna krijgt de uitlater 50% van het tarief. Fooi gaat volledig naar de uitlater. Betaal altijd via de app, zodat de afspraak en de verzekering duidelijk zijn.',
+      'Je betaalt bij het boeken, via Mollie. Boeken kan tot 60 dagen vooruit. Verleng je een oppas, dan betaal je het extra uur meteen; het gaat in zodra het betaald is.',
+      'Laat je een betaling via je bank of creditcard terugdraaien, neem dan eerst contact met ons op. Woober draagt een terugboeking zelf; de uitlater houdt wat die verdiende. Een medewerker van Woober bekijkt elke terugboeking en kan, na contact met jou, je account blokkeren als er geen goede reden voor was.',
+      'Kwam de uitlater niet opdagen of zegde die op het laatste moment af, meld dat dan in de app bij de boeking. Een medewerker van Woober beoordeelt de melding en vraagt de uitlater om een reactie. Krijg je gelijk, dan betaal je niets voor die boeking en krijg je terug wat je al betaalde. Andere gebruikers zien de melding niet.',
     ],
   },
   {
@@ -104,40 +101,13 @@ export default function Voorwaarden() {
     adres: useTekst('privacy.adres'),
     contact: useTekst('contact.email'),
   };
-  const versie = useTekst('voorwaarden.versie');
-  const concept = useTekst('voorwaarden.concept');
   return (
-    <ScrollView contentContainerStyle={s.inhoud}>
-      <Text style={s.kop}>Gebruiksvoorwaarden</Text>
-      <Text style={s.versie}>Versie {versie}</Text>
-      {concept.trim() ? <Melding type="waarschuwing">{concept}</Melding> : null}
-      {secties(gegevens).map((sectie) => (
-        <View key={sectie.titel} style={s.sectie}>
-          <Text style={s.titel}>{sectie.titel}</Text>
-          {sectie.punten?.map((p) => (
-            <View key={p} style={s.punt}>
-              <Ionicons name="ellipse" size={6} color={kleuren.primair} style={{ marginTop: 8 }} />
-              <Text style={s.tekst}>{p}</Text>
-            </View>
-          ))}
-          {sectie.alineas?.map((a) => (
-            <Text key={a} style={[s.tekst, s.alinea]}>
-              {a}
-            </Text>
-          ))}
-        </View>
-      ))}
-    </ScrollView>
+    <JuridischeTekst
+      kop="Gebruiksvoorwaarden"
+      versie="voorwaarden.versie"
+      concept="voorwaarden.concept"
+      gegevens={['privacy.organisatie', 'privacy.kvk', 'privacy.adres', 'contact.email']}
+      secties={secties(gegevens)}
+    />
   );
 }
-
-const s = StyleSheet.create({
-  inhoud: { padding: ruimte(5), paddingBottom: ruimte(14), width: '100%', maxWidth: 680, alignSelf: 'center' },
-  kop: { fontSize: 26, fontWeight: '900', color: kleuren.tekst, letterSpacing: -0.5 },
-  versie: { fontSize: 13, color: kleuren.gedempt, marginTop: 4, marginBottom: ruimte(4) },
-  sectie: { marginTop: ruimte(5), paddingTop: ruimte(4), borderTopWidth: 1, borderTopColor: kleuren.rand },
-  titel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst, marginBottom: ruimte(2) },
-  punt: { flexDirection: 'row', gap: 10, marginBottom: ruimte(2), alignItems: 'flex-start' },
-  tekst: { flex: 1, fontSize: 15, color: kleuren.tekst, lineHeight: 22 },
-  alinea: { marginBottom: ruimte(2) },
-});

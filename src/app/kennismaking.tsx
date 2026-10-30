@@ -5,20 +5,24 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { PersoonAvatar } from '../components/avatars';
 import { gedeeldeStijl } from '../components/blokken';
 import { Chip, Knop, Label, Melding, Veld } from '../components/ui';
+import { afgiftePunten } from '../lib/huis';
 import { DAGEN_KORT, dagdeelVan, dagVan, tijdstipOp } from '../lib/tijd';
 import { useApp } from '../state/AppContext';
 import { kleuren, ruimte } from '../theme';
+import type { Plek } from '../types';
 
 const TIJDEN = ['09:00', '12:30', '17:30', '19:00', '20:00'];
 
 export default function Kennismaking() {
   const { uitlaterId } = useLocalSearchParams<{ uitlaterId: string }>();
   const router = useRouter();
-  const { uitlater, honden, vraagKennismakingAan } = useApp();
+  const { uitlater, honden, vraagKennismakingAan, plekken, gebruiker } = useApp();
   const u = uitlater(uitlaterId ?? '');
   const [nu] = useState(() => Date.now());
   const [dag, setDag] = useState(1);
   const [tijd, setTijd] = useState<string | null>(null);
+  // Kennismaken bij jou thuis, of op een openbare plek als je je adres nog niet wilt delen
+  const [plek, setPlek] = useState<Plek | null>(null);
   const [bericht, setBericht] = useState(u ? `Hoi ${u.voornaam}! Zullen we kennismaken? Dan kun je ${honden.map((h) => h.naam).join(' en ')} ontmoeten.` : '');
 
   if (!u) return <Redirect href="/" />;
@@ -31,7 +35,7 @@ export default function Kennismaking() {
 
   const verstuur = () => {
     if (!tijd) return;
-    const id = vraagKennismakingAan(u.id, tijdstipOp(dag, tijd, nu), bericht);
+    const id = vraagKennismakingAan(u.id, tijdstipOp(dag, tijd, nu), bericht, plek ? { omschrijving: plek.naam, punt: plek.punt } : undefined);
     router.dismissAll();
     router.push({ pathname: '/wandeling/[id]', params: { id } });
   };
@@ -49,6 +53,17 @@ export default function Kennismaking() {
         <Text style={[gedeeldeStijl.titel, { textAlign: 'center' }]}>Eerst even kennismaken</Text>
         <Text style={[gedeeldeStijl.sub, { textAlign: 'center', marginBottom: ruimte(5) }]}>
           {u.voornaam} komt een kwartiertje langs om jou en je {honden.length > 1 ? 'honden' : 'hond'} te ontmoeten. Gratis en zonder verplichtingen.
+        </Text>
+
+        <Label>Waar</Label>
+        <View style={gedeeldeStijl.rij}>
+          <Chip label="Bij mij thuis" icoon="home" actief={!plek} onPress={() => setPlek(null)} />
+          {gebruiker
+            ? afgiftePunten(plekken, gebruiker.thuis).map((p) => <Chip key={p.id} label={p.naam} icoon="location" actief={plek?.id === p.id} onPress={() => setPlek(p)} />)
+            : null}
+        </View>
+        <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2), marginBottom: ruimte(4) }]}>
+          {plek ? `${u.voornaam} ziet je adres dan niet. Je kunt ook later op een ander punt afgeven.` : `${u.voornaam} ziet je adres pas als de kennismaking is bevestigd.`}
         </Text>
 
         <Label>Dag</Label>

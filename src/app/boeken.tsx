@@ -14,7 +14,7 @@ import { factorTekst } from '../lib/verdienmodel';
 import { uitlaterOpties, type Sortering, type UitlaterOptie } from '../lib/zoeken';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
-import type { Dag, Dienst, Moment } from '../types';
+import type { Dag, Dienst, Moment, OppasPlek } from '../types';
 
 const TIJDEN = ['07:30', '09:00', '10:30', '12:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'];
 /** Oppas vooral 's avonds, maar ook overdag als je een dag weg bent */
@@ -83,12 +83,15 @@ export default function Boeken() {
   const [moment, setMoment] = useState<Moment>(beginMoment);
   const [sortering, setSortering] = useState<Sortering>('afstand');
   const [gekozen, setGekozen] = useState<string | null>(concept?.uitlaterId ?? null);
+  const [oppasPlek, setOppasPlek] = useState<OppasPlek>(concept?.oppasPlek ?? 'bij_eigenaar');
 
-  const huidigConcept = { dienst, hondIds, duur, moment, uitlaterId: gekozen };
+  const huidigConcept = { dienst, oppasPlek: dienst === 'oppas' ? oppasPlek : undefined, hondIds, duur, moment, uitlaterId: gekozen };
   const opties = useMemo(
     () =>
-      gebruiker ? uitlaterOpties(uitlaters, gebruiker.thuis, { dienst, hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering, prijsVoor) : [],
-    [uitlaters, gebruiker, dienst, hondIds, duur, moment, bekend, geblokkeerd, sortering, prijsVoor],
+      gebruiker
+        ? uitlaterOpties(uitlaters, gebruiker.thuis, { dienst, oppasPlek, hondIds, duur, moment, uitlaterId: null }, bekend, geblokkeerd, sortering, prijsVoor)
+        : [],
+    [uitlaters, gebruiker, dienst, oppasPlek, hondIds, duur, moment, bekend, geblokkeerd, sortering, prijsVoor],
   );
   if (!gebruiker) return null;
 
@@ -154,11 +157,28 @@ export default function Boeken() {
         <Segment
           opties={[
             { waarde: 'uitlaten', label: 'Uitlaten' },
-            { waarde: 'oppas', label: 'Oppas aan huis' },
+            { waarde: 'oppas', label: 'Oppas' },
           ]}
           waarde={dienst}
           onChange={wisselDienst}
         />
+        {oppas ? (
+          <>
+            <View style={{ height: ruimte(4) }} />
+            <Label>Waar</Label>
+            <Segment<OppasPlek>
+              opties={[
+                { waarde: 'bij_eigenaar', label: 'Bij mij thuis' },
+                { waarde: 'bij_oppas', label: 'Bij de oppas thuis' },
+              ]}
+              waarde={oppasPlek}
+              onChange={(p) => {
+                setOppasPlek(p);
+                setGekozen(null);
+              }}
+            />
+          </>
+        ) : null}
         <View style={{ height: ruimte(5) }} />
         {honden.length > 1 ? (
           <>
@@ -253,7 +273,7 @@ export default function Boeken() {
         />
         {oppas ? (
           <Text style={s.tot}>
-            Tot ongeveer {tijdTekst(startTijd + duur * 60000)}. Later thuis? Je kunt in de app verlengen.
+            Tot ongeveer {tijdTekst(startTijd + duur * 60000)}. {oppasPlek === 'bij_oppas' ? 'Je brengt je hond zelf en haalt hem weer op.' : 'Later thuis?'} Je kunt in de app verlengen.
           </Text>
         ) : null}
 
@@ -287,7 +307,11 @@ export default function Boeken() {
           ))}
         </View>
         <Text style={s.uitleg}>
-          {oppas ? 'Je ziet alleen mensen die oppas aan huis aanbieden. ' : ''}
+          {oppas
+            ? oppasPlek === 'bij_oppas'
+              ? 'Je ziet alleen oppassen die honden thuis ontvangen; hun huis staat in hun profiel, het adres zie je na accepteren. '
+              : 'Je ziet alleen mensen die bij jou thuis oppassen. Liever niemand anders in je huis? Kies Bij de oppas thuis. '
+            : ''}
           {zonderServicekosten ? `Tijdens de ${verdienmodel.naam.toLowerCase()} betaal je alleen het tarief van de ${wie}, zonder servicekosten. ` : 'Prijzen zijn inclusief servicekosten. '}
           Elke {wie} bepaalt zelf het tarief. Bij iemand nieuw plan je eerst een gratis kennismaking.
         </Text>

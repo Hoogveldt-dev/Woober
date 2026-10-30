@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PersoonAvatar } from '../../components/avatars';
 import { Blok, gedeeldeStijl, Rij, Sectie, Sterren, Tegel } from '../../components/blokken';
+import { OppasHuisInfo } from '../../components/Huis';
 import { MeldenBlad } from '../../components/MeldenBlad';
 import { Badge, Knop } from '../../components/ui';
 import { DUREN, euro } from '../../lib/prijs';
@@ -71,7 +72,7 @@ export default function UitlaterProfiel() {
             {u.professioneel ? <Badge tekst="KVK" icoon="briefcase" kleur={kleuren.info} /> : null}
             {u.online ? <Badge tekst="NU ONLINE" icoon="radio-button-on" /> : null}
             {u.diensten.includes('uitlaten') ? <Badge tekst="UITLATEN" icoon="walk" kleur={kleuren.tekst} /> : null}
-            {u.diensten.includes('oppas') ? <Badge tekst="OPPAS AAN HUIS" icoon="home" kleur={kleuren.tekst} /> : null}
+            {u.diensten.includes('oppas') ? <Badge tekst="OPPAS" icoon="home" kleur={kleuren.tekst} /> : null}
           </View>
         </View>
 
@@ -96,10 +97,18 @@ export default function UitlaterProfiel() {
         <Sectie>Eigen tarief</Sectie>
         <Blok>
           {u.diensten.includes('uitlaten') ? DUREN.map((d) => <Rij key={d} label={`Uitlaten, ${d} minuten`} waarde={euro(u.tarieven[d])} />) : null}
-          {u.diensten.includes('oppas') ? <Rij label="Oppas aan huis, per uur" waarde={euro(u.oppasPerUur)} /> : null}
+          {u.diensten.includes('oppas') ? <Rij label="Oppas, per uur" waarde={euro(u.oppasPerUur)} /> : null}
           <Rij label="Per extra hond" waarde={euro(u.toeslagExtraHond)} />
         </Blok>
         <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(3), marginBottom: ruimte(5) }]}>Servicekosten van Woober zie je bij het boeken.</Text>
+
+        {u.diensten.includes('oppas') && u.oppasPlekken.includes('bij_oppas') && u.huis ? (
+          <>
+            <Sectie>{u.oppasPlekken.includes('bij_eigenaar') ? `Oppas bij jou of bij ${u.voornaam} thuis` : `Oppas bij ${u.voornaam} thuis`}</Sectie>
+            <OppasHuisInfo huis={u.huis} />
+            <Text style={[gedeeldeStijl.hulp, { marginBottom: ruimte(5) }]}>Het adres zie je zodra {u.voornaam} je boeking accepteert.</Text>
+          </>
+        ) : null}
 
         <Sectie>Praktisch</Sectie>
         <Blok>

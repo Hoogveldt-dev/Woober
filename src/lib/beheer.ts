@@ -1,3 +1,4 @@
+import type { Betaalmethode } from '../types';
 import { supabase } from './supabase';
 
 // Alleen voor beheerders (tabel beheerders). De database controleert dat zelf; de app laat het scherm alleen zien.
@@ -228,4 +229,34 @@ export async function laadWachtlijst(): Promise<WachtlijstRij[]> {
   const { data, error } = await supabase.rpc('beheer_wachtlijst');
   if (error) throw BEHEER_FOUT(error.message);
   return (data ?? []) as WachtlijstRij[];
+}
+
+// Terugboekingen ---------------------------------------------------------------------------
+
+/** Een betaling die een eigenaar via de bank liet terugdraaien. Woober draagt het verlies, nooit de uitlater. */
+export interface Terugboeking {
+  betaling_id: string;
+  boeking_id: string | null;
+  eigenaar: string;
+  email: string | null;
+  methode: Betaalmethode;
+  bedrag: number;
+  teruggeboekt: number;
+  teruggeboekt_op: string | null;
+  /** Mollie haalde het al gerouteerde geld bij de uitlater terug en Woober vulde dat aan */
+  aangevuld: boolean;
+  /** Andere terugboekingen van dezelfde eigenaar */
+  andere: number;
+  besluit: string | null;
+}
+
+export async function laadTerugboekingen(): Promise<Terugboeking[]> {
+  const { data, error } = await supabase.rpc('beheer_terugboekingen');
+  if (error) throw BEHEER_FOUT(error.message);
+  return (data ?? []) as Terugboeking[];
+}
+
+export async function handelTerugboekingAf(betaling: string, besluit: string) {
+  const { error } = await supabase.rpc('beheer_terugboeking_afhandelen', { p_betaling: betaling, p_besluit: besluit });
+  if (error) throw BEHEER_FOUT(error.message);
 }

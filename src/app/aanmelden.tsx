@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Vinkje } from '../components/blokken';
+import { Bewerkbaar } from '../components/Bewerkbaar';
+import { KnopOpSlot } from '../components/Slotje';
 import { Knop, Label, Melding, Veld } from '../components/ui';
 import { DEMO_THUIS } from '../data/stad';
-import { bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
+import { APPLE_INLOGGEN_KLAAR, bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Rol } from '../types';
@@ -27,7 +29,8 @@ export default function Aanmelden() {
   return ingelogd ? <Gegevens /> : <Inloggen />;
 }
 
-function Inloggen() {
+/** Ook te zien voor beheerders onder Beheer, Inlogscherm bekijken (`voorbeeld`): dan logt niemand in */
+export function Inloggen({ voorbeeld }: { voorbeeld?: boolean }) {
   const titel = useTekst('inloggen.titel');
   const sub = useTekst('inloggen.sub');
   const privacyZin = useTekst('inloggen.privacy');
@@ -40,10 +43,11 @@ function Inloggen() {
 
   // Op iPhone en iPad de knop van Apple zelf, zoals Apple voorschrijft
   useEffect(() => {
-    if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleKnop, () => setAppleKnop(false));
+    if (APPLE_INLOGGEN_KLAAR && Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleKnop, () => setAppleKnop(false));
   }, []);
 
   const probeer = async (wat: 'apple' | 'google' | 'mail', actie: () => Promise<unknown>) => {
+    if (voorbeeld) return;
     setFout(null);
     setBezig(wat);
     try {
@@ -61,11 +65,17 @@ function Inloggen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={gedeeldeStijl.inhoud} keyboardShouldPersistTaps="handled">
-        <Text style={gedeeldeStijl.titel}>{titel}</Text>
-        <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(6) }]}>{sub}</Text>
+        <Bewerkbaar sleutels="inloggen.titel">
+          <Text style={gedeeldeStijl.titel}>{titel}</Text>
+        </Bewerkbaar>
+        <Bewerkbaar sleutels="inloggen.sub">
+          <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(6) }]}>{sub}</Text>
+        </Bewerkbaar>
 
         <View style={s.sociaal}>
-          {appleKnop ? (
+          {!APPLE_INLOGGEN_KLAAR ? (
+            <KnopOpSlot titel="Doorgaan met Apple" icoon="logo-apple" />
+          ) : appleKnop ? (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -129,9 +139,9 @@ function Inloggen() {
 
         {fout ? <View style={{ marginTop: ruimte(4) }}><Melding type="fout">{fout}</Melding></View> : null}
 
-        <Text style={[gedeeldeStijl.klein, { marginTop: ruimte(6) }]}>
-          {privacyZin}
-        </Text>
+        <Bewerkbaar sleutels="inloggen.privacy" stijl={{ marginTop: ruimte(6) }}>
+          <Text style={gedeeldeStijl.klein}>{privacyZin}</Text>
+        </Bewerkbaar>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -219,7 +229,7 @@ function Gegevens() {
 
         <Label>Ik wil</Label>
         <View style={s.rollen}>
-          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Hulp voor mijn hond" tekst="Uitlaten of oppas aan huis, door iemand uit de buurt." />
+          <RolKaart actief={rol === 'eigenaar'} onPress={() => setRol('eigenaar')} icoon="dog" titel="Hulp voor mijn hond" tekst="Uitlaten of oppas, door iemand uit de buurt." />
           <RolKaart actief={rol === 'uitlater'} onPress={() => setRol('uitlater')} icoon="walk" titel="Uitlaten of oppassen" tekst="Bepaal zelf je tarief, werkgebied en wanneer je werkt." />
         </View>
         {toon(fouten.rol) ? <Text style={s.fout}>{fouten.rol}</Text> : null}

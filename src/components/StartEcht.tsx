@@ -10,6 +10,7 @@ import { staOpWachtlijst, zetOpWachtlijst } from '../lib/wachtlijst';
 import { klaarVoorWerk, useApp } from '../state/AppContext';
 import { useTekst } from '../state/Teksten';
 import { kleuren, radius, ruimte, schaduw } from '../theme';
+import { Bewerkbaar } from './Bewerkbaar';
 import { Blad, RondeKnop } from './blokken';
 import { EchteKaart } from './EchteKaart';
 import { Woordmerk } from './merk';
@@ -42,6 +43,8 @@ function StartEcht({ children }: { children: ReactNode }) {
 
 function Wachtlijst() {
   const { rol } = useApp();
+  const knop = useTekst('start.knop_wachtlijst');
+  const opLijst = useTekst('start.op_wachtlijst');
   const [aan, setAan] = useState<boolean | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   useEffect(() => {
@@ -62,13 +65,17 @@ function Wachtlijst() {
       {aan ? (
         <View style={s.opLijst}>
           <Ionicons name="checkmark-circle" size={20} color={kleuren.like} />
-          <Text style={s.opLijstTekst}>Je staat op de lijst. We mailen je zodra het kan.</Text>
+          <Bewerkbaar sleutels="start.op_wachtlijst" stijl={{ flex: 1 }}>
+            <Text style={s.opLijstTekst}>{opLijst}</Text>
+          </Bewerkbaar>
           <Text style={s.afmelden} onPress={wissel} accessibilityRole="button">
             Afmelden
           </Text>
         </View>
       ) : (
-        <Knop titel="Laat het me weten" icoon="notifications" onPress={wissel} />
+        <Bewerkbaar sleutels="start.knop_wachtlijst">
+          <Knop titel={knop} icoon="notifications" onPress={wissel} />
+        </Bewerkbaar>
       )}
       {fout ? <Melding type="fout">{fout}</Melding> : null}
     </>
@@ -83,7 +90,9 @@ function Groet() {
       <Text style={s.groet}>
         {begroeting()}, {gebruiker?.voornaam}
       </Text>
-      {mededeling.trim() ? <Melding type="info">{mededeling}</Melding> : null}
+      <Bewerkbaar sleutels="mededeling.tekst" leeg={!mededeling.trim()}>
+        <Melding type="info">{mededeling}</Melding>
+      </Bewerkbaar>
     </>
   );
 }
@@ -91,12 +100,17 @@ function Groet() {
 export function EigenaarStartEcht() {
   const router = useRouter();
   const binnenkort = useTekst('start.binnenkort_eigenaar');
+  const titel = useTekst('start.titel_eigenaar');
   return (
     <StartEcht>
       <Groet />
       <View style={s.kaartje}>
-        <Text style={s.titel}>Uitlaten en oppas in jouw buurt</Text>
-        {binnenkort.trim() ? <Text style={s.tekst}>{binnenkort}</Text> : null}
+        <Bewerkbaar sleutels="start.titel_eigenaar">
+          <Text style={s.titel}>{titel}</Text>
+        </Bewerkbaar>
+        <Bewerkbaar sleutels="start.binnenkort_eigenaar" leeg={!binnenkort.trim()}>
+          <Text style={s.tekst}>{binnenkort}</Text>
+        </Bewerkbaar>
         <Wachtlijst />
       </View>
       <Knop titel="Plekken voor je hond" variant="secundair" icoon="location" onPress={() => router.push('/plekken')} />
@@ -114,7 +128,9 @@ export function UitlaterStartEcht() {
       <Groet />
       <View style={s.kaartje}>
         <Text style={s.titel}>{klaar ? 'Je profiel is gecontroleerd' : 'Nog even en je staat klaar'}</Text>
-        {binnenkort.trim() ? <Text style={s.tekst}>{binnenkort}</Text> : null}
+        <Bewerkbaar sleutels="start.binnenkort_uitlater" leeg={!binnenkort.trim()}>
+          <Text style={s.tekst}>{binnenkort}</Text>
+        </Bewerkbaar>
         {klaar ? (
           <Wachtlijst />
         ) : (

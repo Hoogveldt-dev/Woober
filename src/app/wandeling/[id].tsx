@@ -5,12 +5,15 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HondenStapel, PersoonAvatar } from '../../components/avatars';
 import { Blad, RondeKnop, Sterren, Tegel, useNu } from '../../components/blokken';
+import { AfspraakMelden } from '../../components/AfspraakMelden';
+import { AfsprakenTip } from '../../components/Huis';
 import { IncidentBlad } from '../../components/IncidentBlad';
 import { Kaart } from '../../components/Kaart';
 import { Knop, Melding } from '../../components/ui';
 import { WandelFeed } from '../../components/WandelFeed';
 import { boekingOpKaart } from '../../lib/kaartLagen';
-import { annuleringskosten, euro } from '../../lib/prijs';
+import { annuleringskosten, euro, MAX_OPPAS_MINUTEN, METHODE_NAAM, prijsNaVerlengen, VERLENG_MINUTEN } from '../../lib/prijs';
+import { modelVoor } from '../../lib/verdienmodel';
 import { deelPad, formatAfstand, lengte } from '../../lib/route';
 import { resterendeRitMin, verstrekenMin, wandelVoortgang } from '../../lib/simulatie';
 import { duurTekst, klokTekst, momentTekst, tijdTekst } from '../../lib/tijd';
@@ -55,6 +58,7 @@ export default function Wandeling() {
   const [bladHoogte, setBladHoogte] = useState(360);
   const [incident, setIncident] = useState(false);
   const [bevestigAnnuleren, setBevestigAnnuleren] = useState(false);
+  const [bevestigVerlengen, setBevestigVerlengen] = useState(false);
 
   const b = boekingen.find((x) => x.id === id);
   const u = b ? uitlater(b.uitlaterId) : undefined;
@@ -74,7 +78,10 @@ export default function Wandeling() {
   const kosten = annuleringskosten(b, nu);
   const kennismaking = b.soort === 'kennismaking';
   const oppas = b.dienst === 'oppas';
+  const bijOppas = oppas && b.oppasPlek === 'bij_oppas';
   const codeLabel = oppas ? 'Code bij de deur' : 'Ophaalcode';
+  // Waar de overdracht is als dat niet bij de eigenaar thuis is
+  const waar = bijOppas ? b.adres : b.afgifte?.omschrijving;
 
   const terug = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const chat = () => router.push({ pathname: '/chat/[id]', params: { id: u.id } });
@@ -136,14 +143,26 @@ export default function Wandeling() {
           <Text style={s.titel}>{kennismaking ? 'Kennismaking gepland' : oppas ? 'Oppas gepland' : 'Wandeling gepland'}</Text>
           <Text style={s.sub}>
             {momentTekst(b.moment, nu)} met {u.voornaam}
-            {kennismaking ? ', bij jou thuis' : `, ${duurTekst(b.duur)}`}
+            {kennismaking ? `, ${waar ? `bij ${waar}` : 'bij jou thuis'}` : `, ${duurTekst(b.duur)}`}
+            {!kennismaking && waar ? `. ${bijOppas ? `Je brengt ${hondNamen} naar ${waar}` : `Je geeft ${hondNamen} mee bij ${waar}`}.` : ''}
           </Text>
           {uitlaterKaart}
+          {oppas ? (
+            <AfsprakenTip
+              tekst={
+                bijOppas
+                  ? `Vertel ${u.voornaam} in de chat over eten, slapen en de gewoontes van ${hondNamen}, en spreek af hoe laat je ophaalt.`
+                  : `Spreek met ${u.voornaam} in de chat af wat er in huis mag, waar eten en riem liggen en wat je verder belangrijk vindt. Dan staat het voor jullie allebei op papier.`
+              }
+              onChat={chat}
+            />
+          ) : null}
           {kennismaking ? (
             <Knop titel="Kennismaking gehad (demo)" icoon="checkmark" variant="secundair" onPress={() => rondKennismakingAf(b.id)} />
           ) : (
             <Knop titel="Nu laten beginnen (demo)" icoon="play" variant="secundair" onPress={() => startNu(b.id)} />
           )}
+          <AfspraakMelden b={b} naam={u.voornaam} nu={nu} />
           {annuleerKnop}
         </>
       );
@@ -154,18 +173,24 @@ export default function Wandeling() {
         <>
           <View style={s.etaRij}>
             <View style={{ flex: 1 }}>
-              <Text style={s.titel}>{u.voornaam} is onderweg</Text>
-              <Text style={s.sub}>{oppas ? `Om op ${hondNamen} te passen` : `Om ${hondNamen} op te halen`}</Text>
+              <Text style={s.titel}>{bijOppas ? `Breng ${hondNamen} naar ${u.voornaam}` : `${u.voornaam} is onderweg`}</Text>
+              <Text style={s.sub}>{bijOppas ? waar : oppas ? `Om op ${hondNamen} te passen` : `Om ${hondNamen} op te halen${waar ? ` bij ${waar}` : ''}`}</Text>
             </View>
-            <View style={s.eta}>
-              <Text style={s.etaGetal}>{min}</Text>
-              <Text style={s.etaEenheid}>min</Text>
-            </View>
+            {!bijOppas ? (
+              <View style={s.eta}>
+                <Text style={s.etaGetal}>{min}</Text>
+                <Text style={s.etaEenheid}>min</Text>
+              </View>
+            ) : null}
           </View>
           {uitlaterKaart}
           <Ophaalcode code={b.ophaalcode} label={codeLabel} />
           <Text style={s.hulp}>
-            {oppas ? 'Laat alleen iemand binnen die deze code van jou heeft gekregen.' : 'Geef je hond alleen mee aan iemand die deze code van jou heeft gekregen.'}
+            {bijOppas
+              ? `Noem deze code bij de deur, dan weet ${u.voornaam} dat jij het bent.`
+              : oppas
+                ? 'Laat alleen iemand binnen die deze code van jou heeft gekregen.'
+                : 'Geef je hond alleen mee aan iemand die deze code van jou heeft gekregen.'}
           </Text>
           <View style={s.demoRij}>
             <Knop titel="Sneller (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
@@ -178,13 +203,15 @@ export default function Wandeling() {
     case 'aangekomen':
       inhoud = (
         <>
-          <Text style={s.titel}>{u.voornaam} staat voor de deur</Text>
+          <Text style={s.titel}>{bijOppas ? `Je bent bij ${u.voornaam}` : waar ? `${u.voornaam} staat bij ${waar}` : `${u.voornaam} staat voor de deur`}</Text>
           <Text style={s.sub}>
             {kennismaking
               ? 'Tijd om kennis te maken.'
-              : oppas
-                ? `Laat ${u.voornaam} binnen, noem de code en vertel waar het eten en de riem liggen.`
-                : `Geef ${hondNamen} mee en noem de ophaalcode.`}
+              : bijOppas
+                ? `Noem de code, geef eten en riem mee en vertel over de gewoontes van ${hondNamen}.`
+                : oppas
+                  ? `Laat ${u.voornaam} binnen, noem de code en vertel waar het eten en de riem liggen.`
+                  : `Geef ${hondNamen} mee en noem de ophaalcode.`}
           </Text>
           {uitlaterKaart}
           <Ophaalcode code={b.ophaalcode} label={codeLabel} />
@@ -198,6 +225,7 @@ export default function Wandeling() {
       const minuten = Math.min(b.duur, Math.floor(verstrekenMin(b, nu)));
       if (oppas) {
         const eind = (b.gestart ?? nu) + b.duur * 60000;
+        const extraUur = prijsNaVerlengen(u, b, modelVoor(b.prijs.modelId)).totaal - b.prijs.totaal;
         inhoud = (
           <>
             <View style={s.etaRij}>
@@ -206,7 +234,7 @@ export default function Wandeling() {
                 <Text style={s.titel}>
                   {hondNamen} in goede handen bij {u.voornaam}
                 </Text>
-                <Text style={s.sub}>Oppas tot {tijdTekst(eind)}. Geniet van je avond!</Text>
+                <Text style={s.sub}>{bijOppas ? `Ophalen om ${tijdTekst(eind)} bij ${u.voornaam}.` : `Oppas tot ${tijdTekst(eind)}.`} Geniet van je avond!</Text>
               </View>
             </View>
             <View style={s.voortgang}>
@@ -222,14 +250,38 @@ export default function Wandeling() {
             </ScrollView>
             <View style={s.knoppen}>
               <Knop titel="Bericht" variant="secundair" icoon="chatbubble" stijl={{ flex: 1 }} onPress={chat} />
-              <Knop titel="Verlengen" variant="secundair" icoon="add-circle" stijl={{ flex: 1 }} onPress={() => verleng(b.id)} />
+              <Knop
+                titel="Verlengen"
+                variant="secundair"
+                icoon="add-circle"
+                stijl={{ flex: 1 }}
+                uitgeschakeld={b.duur + VERLENG_MINUTEN > MAX_OPPAS_MINUTEN}
+                onPress={() => setBevestigVerlengen(true)}
+              />
             </View>
-            <Knop titel="Ik ben thuis" icoon="home" stijl={{ marginTop: ruimte(3) }} onPress={() => beeindig(b.id)} />
+            {bevestigVerlengen ? (
+              <View style={[s.bevestig, { backgroundColor: kleuren.primairVlak }]}>
+                <Text style={s.bevestigTekst}>
+                  Een uur langer, tot {tijdTekst(eind + VERLENG_MINUTEN * 60000)}, voor {euro(extraUur)} met {METHODE_NAAM[b.betaalmethode]}. Het uur gaat in
+                  zodra het betaald is; {u.voornaam} ziet het meteen.
+                </Text>
+                <Knop
+                  titel={`Betaal ${euro(extraUur)}`}
+                  icoon="add-circle"
+                  onPress={() => {
+                    verleng(b.id);
+                    setBevestigVerlengen(false);
+                  }}
+                />
+                <Knop titel="Toch niet" variant="tekst" onPress={() => setBevestigVerlengen(false)} />
+              </View>
+            ) : null}
+            <Knop titel={bijOppas ? 'Opgehaald' : 'Ik ben thuis'} icoon="home" stijl={{ marginTop: ruimte(3) }} onPress={() => beeindig(b.id)} />
             <View style={s.demoRij}>
               <Knop titel="Incident melden" variant="tekst" icoon="alert-circle" tekstKleur={kleuren.nope} onPress={() => setIncident(true)} />
               <Knop titel="Half uur verder (demo)" icoon="play-forward" variant="tekst" onPress={() => versnel(b.id)} />
             </View>
-            <Text style={s.hulp}>Verlengen gaat per uur. Ben je eerder thuis, dan betaal je de geboekte tijd.</Text>
+            <Text style={s.hulp}>Verlengen gaat per uur, tot 12 uur in totaal. Je betaalt het extra uur meteen. {bijOppas ? 'Haal je eerder op' : 'Ben je eerder thuis'}, dan betaal je de geboekte tijd.</Text>
           </>
         );
         break;
@@ -291,7 +343,7 @@ export default function Wandeling() {
         </>
       ) : (
         <>
-          <Text style={s.titel}>{oppas ? 'De oppas is klaar' : `${hondNamen} ${honden.length > 1 ? 'zijn' : 'is'} weer thuis`}</Text>
+          <Text style={s.titel}>{oppas ? 'De oppas is klaar' : `${hondNamen} ${honden.length > 1 ? 'zijn' : 'is'} weer ${waar ? 'bij jou' : 'thuis'}`}</Text>
           <Text style={s.sub}>{oppas ? 'Het oppasrapport wordt geopend.' : 'Het wandelrapport wordt geopend.'}</Text>
           <Knop titel={oppas ? 'Bekijk oppasrapport' : 'Bekijk wandelrapport'} icoon="document-text" onPress={() => router.replace({ pathname: '/rapport/[id]', params: { id: b.id } })} />
         </>
@@ -301,7 +353,7 @@ export default function Wandeling() {
     case 'geweigerd':
       inhoud = (
         <>
-          <Text style={s.titel}>{b.status === 'geannuleerd' ? 'Geannuleerd' : `${u.voornaam} kan helaas niet`}</Text>
+          <Text style={s.titel}>{b.status === 'geweigerd' ? `${u.voornaam} kan helaas niet` : b.geannuleerdDoor === 'uitlater' ? `${u.voornaam} heeft afgezegd` : 'Geannuleerd'}</Text>
           <Text style={s.sub}>
             {b.status === 'geannuleerd'
               ? b.annuleringskosten
@@ -317,6 +369,7 @@ export default function Wandeling() {
               router.replace('/boeken');
             }}
           />
+          <AfspraakMelden b={b} naam={u.voornaam} nu={nu} />
         </>
       );
       break;

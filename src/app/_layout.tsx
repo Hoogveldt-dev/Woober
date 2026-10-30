@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { BewerkBalk } from '../components/Bewerkbaar';
 import { MeldingBanner } from '../components/merk';
 import { AppProvider, useApp } from '../state/AppContext';
 import { TekstenProvider } from '../state/Teksten';
@@ -87,13 +88,12 @@ function Navigatie() {
 
       <Stack.Protected guard={eigenaarKlaar} redirectTo={startpunt}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="geschiedenis" options={{ headerShown: true, title: 'Geschiedenis' }} />
+        <Stack.Screen name="betaald" options={{ headerShown: true, title: 'Betalen' }} />
       </Stack.Protected>
 
       {/* Boeken en alles wat erbij hoort is nog nagespeeld; echte accounts kunnen hier nog niet komen (stap 3 in PLAN.md) */}
       <Stack.Protected guard={eigenaarKlaar && modus === 'demo'} redirectTo={startpunt}>
         <Stack.Screen name="boeken" options={{ headerShown: true, title: 'Kies een uitlater' }} />
-        <Stack.Screen name="afspraken" options={{ headerShown: true, title: 'Afspraken' }} />
         <Stack.Screen name="bevestigen" options={{ headerShown: true, title: 'Boeking bevestigen' }} />
         <Stack.Screen name="kennismaking" options={{ headerShown: true, title: 'Kennismaken' }} />
         <Stack.Screen name="uitlater/[id]" options={{ headerShown: true, title: '' }} />
@@ -104,6 +104,7 @@ function Navigatie() {
       <Stack.Protected guard={uitlaterKlaar} redirectTo={startpunt}>
         <Stack.Screen name="werk" />
         <Stack.Screen name="verificatie" options={{ headerShown: true, title: 'Verificatie' }} />
+        <Stack.Screen name="saldo" options={{ headerShown: true, title: 'Saldo' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={uitlaterKlaar && modus === 'demo'} redirectTo={startpunt}>
@@ -126,10 +127,12 @@ function Navigatie() {
       <Stack.Protected guard={(eigenaarKlaar || uitlaterKlaar) && beheerder} redirectTo={startpunt}>
         <Stack.Screen name="beheer" options={{ headerShown: true, title: 'Beheer' }} />
         <Stack.Screen name="beheer-teksten" options={{ headerShown: true, title: 'Teksten' }} />
+        <Stack.Screen name="beheer-voorbeeld" options={{ headerShown: true, title: 'Voorbeeld' }} />
         <Stack.Screen name="beheer-plekken" options={{ headerShown: true, title: 'Plekken en meldingen' }} />
         <Stack.Screen name="beheer-plek" options={{ headerShown: true, title: 'Plek' }} />
         <Stack.Screen name="beheer-uitlaters" options={{ headerShown: true, title: 'Uitlaters verifiëren' }} />
         <Stack.Screen name="beheer-wachtlijst" options={{ headerShown: true, title: 'Wachtlijst' }} />
+        <Stack.Screen name="beheer-terugboekingen" options={{ headerShown: true, title: 'Terugboekingen' }} />
         <Stack.Screen name="verdienmodel" options={{ headerShown: true, title: 'Verdienmodel' }} />
       </Stack.Protected>
     </Stack>
@@ -151,6 +154,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <Navigatie />
           <MeldingBanner />
+          <BewerkBalk />
         </AppProvider>
       </TekstenProvider>
     </SafeAreaProvider>

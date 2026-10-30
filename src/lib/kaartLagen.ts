@@ -18,7 +18,10 @@ export function boekingOpKaart(
   hondKleur: [string, string],
   opties: { ophaalSoort: 'thuis' | 'klant'; toonPlan?: boolean; uitlaterAlsIk?: boolean } = { ophaalSoort: 'thuis' },
 ): { markers: KaartMarker[]; routes: KaartRoute[]; focus: Punt[] } {
-  const ophaal: KaartMarker = { id: 'ophaal', soort: opties.ophaalSoort, punt: b.ophaalPunt };
+  // Een afgiftepunt is geen huis: dan een speld met uitleg
+  const ophaal: KaartMarker = b.afgifte
+    ? { id: 'ophaal', soort: 'klant', punt: b.ophaalPunt, label: 'Afgeven' }
+    : { id: 'ophaal', soort: opties.ophaalSoort, punt: b.ophaalPunt };
   const persoon = (punt: Punt, bubbel?: string): KaartMarker =>
     opties.uitlaterAlsIk
       ? { id: 'ik', soort: 'ik', punt }

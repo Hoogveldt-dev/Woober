@@ -106,11 +106,6 @@ export function isoNaarNl(iso: string | null | undefined): string {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
 }
 
-export function minutenTekst(min: number): string {
-  const m = Math.max(1, Math.round(min));
-  return `${m} min`;
-}
-
 /** "30 min", "3 uur", "2,5 uur" of "2 uur 10 min" */
 export function duurTekst(minuten: number): string {
   const m = Math.round(minuten);

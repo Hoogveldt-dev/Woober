@@ -6,12 +6,12 @@ export interface Punt {
 
 export type Rol = 'eigenaar' | 'uitlater';
 
-/** Wat je boekt, zoals de ritsoorten bij Uber: een wandeling of oppas aan huis */
+/** Wat je boekt, zoals de ritsoorten bij Uber: een wandeling of oppas (bij de eigenaar of bij de oppas thuis) */
 export type Dienst = 'uitlaten' | 'oppas';
 
 /** Duur van een wandeling in minuten */
 export type WandelDuur = 30 | 45 | 60;
-/** Duur van oppas aan huis in minuten */
+/** Duur van oppas in minuten */
 export type OppasDuur = 120 | 180 | 240 | 300;
 
 export type Grootte = 'klein' | 'middel' | 'groot';
@@ -62,6 +62,36 @@ export interface Verificatie {
   vog: boolean;
 }
 
+/** Waar een oppas oppast: bij de eigenaar thuis of bij de oppas thuis */
+export type OppasPlek = 'bij_eigenaar' | 'bij_oppas';
+export type HuisKenmerk = 'tuin' | 'huisdieren' | 'kinderen' | 'rookvrij';
+/** Wat een oppas bij de eigenaar thuis mag gebruiken */
+export type Voorziening = 'wifi' | 'koffie_thee' | 'tv' | 'koelkast';
+
+/** Het huis van een oppas die honden thuis ontvangt. Eigenaren lezen dit bij het kiezen; het adres pas na accepteren. */
+export interface OppasHuis {
+  omschrijving: string;
+  kenmerken: HuisKenmerk[];
+  /** Alleen in de demo; echt komt het adres na accepteren uit de tabel adressen */
+  adres?: string;
+}
+
+/** Afspraken over het huis bij oppas bij de eigenaar thuis; de oppas ziet ze al bij het verzoek */
+export interface HuisInfo {
+  camera: boolean;
+  /** Waar de camera's hangen en of ze geluid opnemen; verplicht als er camera's zijn */
+  cameraWaar: string;
+  voorzieningen: Voorziening[];
+  /** Wat privé is en andere huisregels */
+  huisregels: string;
+}
+
+/** De hond afgeven op een ander punt dan thuis; de uitlater ziet het adres dan niet */
+export interface Afgifte {
+  omschrijving: string;
+  punt: Punt;
+}
+
 export interface Uitlater {
   id: string;
   voornaam: string;
@@ -77,8 +107,11 @@ export interface Uitlater {
   diensten: Dienst[];
   /** Eigen tarief van de uitlater in centen, per wandelduur */
   tarieven: Record<WandelDuur, number>;
-  /** Eigen uurtarief voor oppas aan huis in centen, 0 als die dienst niet wordt aangeboden */
+  /** Eigen uurtarief voor oppas in centen, 0 als die dienst niet wordt aangeboden */
   oppasPerUur: number;
+  /** Waar deze persoon oppast; bij_oppas alleen met een beschrijving van het huis */
+  oppasPlekken: OppasPlek[];
+  huis?: OppasHuis;
   /** Toeslag per extra hond van hetzelfde huishouden, in centen */
   toeslagExtraHond: number;
   maxHonden: number;
@@ -177,6 +210,26 @@ export interface Beoordeling {
   tekst: string;
 }
 
+/**
+ * Melding van de eigenaar dat de uitlater niet kwam of op het laatste moment afzegde. Een medewerker beoordeelt
+ * die (nooit automatisch) en vraagt de uitlater om een reactie; krijgt de eigenaar gelijk, dan krijgt die terug wat
+ * hij voor de boeking betaalde. Andere gebruikers zien hier niets van.
+ */
+export interface AfspraakMelding {
+  soort: 'niet_gekomen' | 'laat_afgezegd';
+  toelichting: string;
+  tijd: number;
+  status: 'open' | 'terecht' | 'niet_terecht';
+}
+
+/** Geld van het saldo van een uitlater naar diens eigen rekening */
+export interface Uitbetaling {
+  id: string;
+  bedrag: number;
+  tijd: number;
+  status: 'onderweg' | 'betaald';
+}
+
 export interface Boeking {
   id: string;
   /** Betaalde boeking (uitlaten of oppas, zie dienst) of een gratis kennismaking */
@@ -192,12 +245,18 @@ export interface Boeking {
   duur: number;
   moment: Moment;
   serieId?: string;
+  /** Waar de hond wordt opgehaald of de oppas plaatsvindt: thuis, het afgiftepunt of het huis van de oppas */
   ophaalPunt: Punt;
+  /** Adres bij ophaalPunt; de uitlater ziet het pas na accepteren, en nooit bij een afgiftepunt */
   adres: string;
   sleutel: Sleutel;
   notitie: string;
-  /** Alleen bij oppas: de eigenaar meldt vooraf dat er camera's in huis hangen */
-  cameraInHuis?: boolean;
+  /** Alleen bij oppas */
+  oppasPlek?: OppasPlek;
+  /** Alleen bij oppas bij de eigenaar thuis */
+  huisinfo?: HuisInfo;
+  /** Alleen bij uitlaten en kennismaken: afgeven op een ander punt dan thuis */
+  afgifte?: Afgifte;
   betaalmethode: Betaalmethode;
   prijs: PrijsOpbouw;
   fooi: number;
@@ -216,6 +275,11 @@ export interface Boeking {
   basisDuur?: number;
   beeindigd?: number;
   annuleringskosten?: number;
+  /** Deel van de prijs dat de eigenaar betaalt met zijn eigen saldo als uitlater (src/lib/saldo.ts); de rest via de betaalmethode */
+  metSaldo?: number;
+  /** Wie de boeking annuleerde */
+  geannuleerdDoor?: Rol;
+  afspraakMelding?: AfspraakMelding;
   beoordelingDoorMij?: Beoordeling;
   reden?: string;
 }
@@ -269,6 +333,8 @@ export interface AppMelding {
 
 export interface BoekConcept {
   dienst: Dienst;
+  /** Alleen bij oppas */
+  oppasPlek?: OppasPlek;
   hondIds: string[];
   duur: number;
   moment: Moment;

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Bewerkbaar } from '../components/Bewerkbaar';
 import { Logo } from '../components/merk';
 import { Knop } from '../components/ui';
 import { useApp } from '../state/AppContext';
@@ -11,8 +12,14 @@ import { kleuren, radius, ruimte } from '../theme';
 import { useTekst } from '../state/Teksten';
 
 export default function Welkom() {
+  return <WelkomScherm />;
+}
+
+/** Ook te zien voor beheerders onder Beheer, Welkomscherm bekijken (`voorbeeld`): dan doen de knoppen niets */
+export function WelkomScherm({ voorbeeld }: { voorbeeld?: boolean }) {
   const router = useRouter();
-  const { demoStart } = useApp();
+  const { demoStart: start } = useApp();
+  const demoStart = (rol: 'eigenaar' | 'uitlater') => !voorbeeld && start(rol);
   const slogan = useTekst('welkom.slogan');
   const knop = useTekst('welkom.knop');
   const ondertitel = useTekst('welkom.ondertitel');
@@ -26,20 +33,24 @@ export default function Welkom() {
         <View style={s.midden}>
           <Logo grootte={88} kleur="#fff" binnen={kleuren.primair} />
           <Text style={s.logo}>woober</Text>
-          <Text style={s.slogan}>{slogan}</Text>
+          <Bewerkbaar sleutels="welkom.slogan">
+            <Text style={s.slogan}>{slogan}</Text>
+          </Bewerkbaar>
         </View>
 
         <View style={s.knoppen}>
-          <Knop titel={knop} variant="secundair" stijl={s.witteKnop} onPress={() => router.push('/aanmelden')} />
+          <Bewerkbaar sleutels="welkom.knop">
+            <Knop titel={knop} variant="secundair" stijl={s.witteKnop} onPress={() => !voorbeeld && router.push('/aanmelden')} />
+          </Bewerkbaar>
+          <Bewerkbaar sleutels="welkom.ondertitel">
+            <Text style={s.klein}>{ondertitel}</Text>
+          </Bewerkbaar>
           <Text style={s.klein}>
-            {ondertitel}
-          </Text>
-          <Text style={s.klein}>
-            <Text style={s.link} onPress={() => router.push('/privacy')}>
+            <Text style={s.link} onPress={() => !voorbeeld && router.push('/privacy')}>
               Privacy
             </Text>
             {'   '}
-            <Text style={s.link} onPress={() => router.push('/voorwaarden')}>
+            <Text style={s.link} onPress={() => !voorbeeld && router.push('/voorwaarden')}>
               Voorwaarden
             </Text>
           </Text>
@@ -49,7 +60,9 @@ export default function Welkom() {
         <View style={[s.demo, { bottom: insets.bottom + ruimte(4), left: insets.left + ruimte(4) }]} pointerEvents="box-none">
           {demoKeuze ? (
             <View style={s.demoKaart}>
-              <Text style={s.demoUitleg}>{demoUitleg}</Text>
+              <Bewerkbaar sleutels="welkom.demo">
+                <Text style={s.demoUitleg}>{demoUitleg}</Text>
+              </Bewerkbaar>
               <Pressable onPress={() => demoStart('eigenaar')} accessibilityRole="button" style={({ pressed }) => [s.demoOptie, pressed && { opacity: 0.6 }]}>
                 <Ionicons name="paw" size={15} color={kleuren.primair} />
                 <Text style={s.demoOptieTekst}>Als eigenaar</Text>

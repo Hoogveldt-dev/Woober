@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { euro } from '../lib/prijs';
 import { duurTekst, momentTekst } from '../lib/tijd';
-import { LOPEND, useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Boeking } from '../types';
 import { PersoonAvatar } from './avatars';
@@ -47,13 +45,16 @@ export function BoekingRij({
         </Text>
         <Text style={s.sub} numberOfLines={1}>
           {b.status === 'afgerond' || b.status === 'geannuleerd'
-            ? momentTekst({ type: 'later', tijdstip: b.gestart ?? b.statusSinds })
+            ? momentTekst({ type: 'later', tijdstip: b.gestart ?? (b.status === 'geannuleerd' && b.moment.type === 'later' ? b.moment.tijdstip : b.statusSinds) })
             : momentTekst(b.moment)}
           {kennismaking ? '' : `, ${duurTekst(b.duur)}`}
         </Text>
         <View style={s.statusRij}>
           <View style={[s.stip, { backgroundColor: status.kleur }]} />
-          <Text style={[s.status, { color: status.kleur }]}>{status.tekst}</Text>
+          <Text style={[s.status, { color: status.kleur }]}>
+            {b.status === 'geannuleerd' && b.mijnRol === 'eigenaar' && b.geannuleerdDoor === 'uitlater' ? `Afgezegd door ${naam}` : status.tekst}
+          </Text>
+          {b.afspraakMelding ? <Ionicons name="flag" size={12} color={kleuren.waarschuwing} accessibilityLabel="Gemeld" /> : null}
           {b.serieId ? <Ionicons name="repeat" size={13} color={kleuren.gedempt} /> : null}
           {b.beoordelingDoorMij ? <Ionicons name="star" size={12} color={kleuren.ster} /> : null}
         </View>
@@ -63,42 +64,6 @@ export function BoekingRij({
         <Ionicons name="chevron-forward" size={16} color={kleuren.gedempt} style={{ marginTop: 4 }} />
       </View>
     </Pressable>
-  );
-}
-
-const tijdVan = (b: Boeking) => (b.moment.type === 'later' ? b.moment.tijdstip : b.aangemaakt);
-
-/** Boekingen van de eigenaar, verdeeld zoals ze in de app staan: nu bezig, gepland en eerder */
-export function eigenaarBoekingen(boekingen: Boeking[]) {
-  const mijn = boekingen.filter((b) => b.mijnRol === 'eigenaar');
-  return {
-    nuBezig: mijn.filter((b) => LOPEND.includes(b.status) || (b.status === 'aangevraagd' && b.moment.type === 'nu')),
-    gepland: mijn.filter((b) => b.status === 'gepland' || (b.status === 'aangevraagd' && b.moment.type !== 'nu')).sort((a, b) => tijdVan(a) - tijdVan(b)),
-    eerder: mijn
-      .filter((b) => b.status === 'afgerond' || b.status === 'geannuleerd' || b.status === 'geweigerd')
-      .sort((a, b) => (b.gestart ?? b.statusSinds) - (a.gestart ?? a.statusSinds)),
-  };
-}
-
-/** Boeking in een lijst van de eigenaar: een betaalde, afgeronde wandeling opent het rapport, de rest de wandeling */
-export function EigenaarBoeking({ b }: { b: Boeking }) {
-  const router = useRouter();
-  const { uitlater, hondenVan } = useApp();
-  const u = uitlater(b.uitlaterId);
-  if (!u) return null;
-  return (
-    <BoekingRij
-      b={b}
-      naam={u.voornaam}
-      kleur={u.kleur}
-      honden={hondenVan(b).map((h) => h.naam).join(' en ')}
-      bedrag={b.prijs.totaal + b.fooi}
-      onPress={() =>
-        b.status === 'afgerond' && b.soort === 'betaald'
-          ? router.push({ pathname: '/rapport/[id]', params: { id: b.id } })
-          : router.push({ pathname: '/wandeling/[id]', params: { id: b.id } })
-      }
-    />
   );
 }
 
