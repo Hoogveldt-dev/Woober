@@ -31,6 +31,12 @@ export const TEKSTEN = {
     standaard: 'Het zusje van Woofer. Uitlaters bepalen zelf hun tarief en beschikbaarheid, en jij kiest zelf wie je hond uitlaat.',
     lang: true,
   },
+  'welkom.zusterapp': {
+    groep: 'Welkomscherm',
+    label: 'Zin over Woofer',
+    standaard: 'Op zoek naar een betrouwbare fokpartner voor je hond?',
+    hulp: 'Onderaan het welkomscherm, gevolgd door de link "Probeer Woofer". Leeg laten om de link weg te halen.',
+  },
   'welkom.demo': { groep: 'Welkomscherm', label: 'Uitleg bij Demo bekijken', standaard: 'Kijk rond met verzonnen gegevens. Er wordt niets opgeslagen.' },
   'inloggen.titel': { groep: 'Inloggen', label: 'Titel', standaard: 'Welkom bij Woober' },
   'inloggen.sub': { groep: 'Inloggen', label: 'Ondertitel', standaard: 'Log in of maak een account. Nieuw? Dan vul je daarna je gegevens aan.', lang: true },

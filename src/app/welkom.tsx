@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bewerkbaar } from '../components/Bewerkbaar';
 import { Logo } from '../components/merk';
 import { Knop } from '../components/ui';
+import { WOOFER_URL } from '../lib/zusterapp';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import { useTekst } from '../state/Teksten';
@@ -24,6 +25,7 @@ export function WelkomScherm({ voorbeeld }: { voorbeeld?: boolean }) {
   const knop = useTekst('welkom.knop');
   const ondertitel = useTekst('welkom.ondertitel');
   const demoUitleg = useTekst('welkom.demo');
+  const zusterapp = useTekst('welkom.zusterapp');
   const [demoKeuze, setDemoKeuze] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -54,6 +56,11 @@ export function WelkomScherm({ voorbeeld }: { voorbeeld?: boolean }) {
               Voorwaarden
             </Text>
           </Text>
+          <Bewerkbaar sleutels="welkom.zusterapp" leeg={!zusterapp.trim()}>
+            <Text style={s.zusterapp} onPress={() => !voorbeeld && Linking.openURL(WOOFER_URL)} accessibilityRole="link">
+              {zusterapp} <Text style={s.link}>Probeer Woofer</Text>
+            </Text>
+          </Bewerkbaar>
         </View>
 
         {/* Eerst rondkijken zonder account: de demo met verzonnen gegevens, klein linksonder (rechtsonder zit op het web het Netlify-logo) */}
@@ -113,5 +120,6 @@ const s = StyleSheet.create({
   demoOptie: { flexDirection: 'row', alignItems: 'center', gap: ruimte(2), paddingVertical: 8 },
   demoOptieTekst: { fontSize: 14, fontWeight: '700', color: kleuren.tekst },
   klein: { color: '#fff', opacity: 0.85, fontSize: 12, textAlign: 'center', marginTop: ruimte(4), lineHeight: 17 },
+  zusterapp: { color: '#fff', fontSize: 13, textAlign: 'center', marginTop: ruimte(3), lineHeight: 18 },
   link: { fontWeight: '700', textDecorationLine: 'underline' },
 });
