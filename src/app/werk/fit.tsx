@@ -5,6 +5,7 @@ import { ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, Text, Vie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bewerkbaar } from '../../components/Bewerkbaar';
 import { Blok, gedeeldeStijl, Sectie, Tegel } from '../../components/blokken';
+import { Slotje } from '../../components/Slotje';
 import { Stappenteller } from '../../components/Stappenteller';
 import { Knop, Kop } from '../../components/ui';
 import { venster } from '../../lib/fit';
@@ -91,10 +92,7 @@ export default function WooberFit() {
                 <Text style={s.koppelingNaam}>{k.naam}</Text>
                 <Text style={s.koppelingSub}>{k.sub}</Text>
               </View>
-              <View style={s.slot}>
-                <Ionicons name="lock-closed" size={12} color={kleuren.gedempt} />
-                <Text style={s.slotTekst}>Binnenkort</Text>
-              </View>
+              <Slotje />
             </View>
           ))}
         </Blok>
@@ -175,8 +173,6 @@ const s = StyleSheet.create({
   koppelingIcoon: { width: 34, height: 34, borderRadius: 17, backgroundColor: kleuren.vlak, alignItems: 'center', justifyContent: 'center' },
   koppelingNaam: { fontSize: 16, fontWeight: '600', color: kleuren.gedempt },
   koppelingSub: { fontSize: 13, color: kleuren.gedempt, marginTop: 1 },
-  slot: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: kleuren.vlak, borderRadius: radius.rond, paddingHorizontal: 10, paddingVertical: 5 },
-  slotTekst: { fontSize: 12, fontWeight: '700', color: kleuren.gedempt },
   uit: { alignItems: 'center', gap: ruimte(3), paddingVertical: ruimte(4) },
   uitTekst: { fontSize: 15, color: kleuren.tekst, textAlign: 'center', lineHeight: 21 },
 });

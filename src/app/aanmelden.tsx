@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { gedeeldeStijl, Vinkje } from '../components/blokken';
 import { Bewerkbaar } from '../components/Bewerkbaar';
+import { KnopOpSlot } from '../components/Slotje';
 import { Knop, Label, Melding, Veld } from '../components/ui';
 import { DEMO_THUIS } from '../data/stad';
-import { bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
+import { APPLE_INLOGGEN_KLAAR, bekendeGegevens, controleerInlogcode, inloggenMetApple, inloggenMetGoogle, stuurInlogcode } from '../lib/account';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Rol } from '../types';
@@ -42,7 +43,7 @@ export function Inloggen({ voorbeeld }: { voorbeeld?: boolean }) {
 
   // Op iPhone en iPad de knop van Apple zelf, zoals Apple voorschrijft
   useEffect(() => {
-    if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleKnop, () => setAppleKnop(false));
+    if (APPLE_INLOGGEN_KLAAR && Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleKnop, () => setAppleKnop(false));
   }, []);
 
   const probeer = async (wat: 'apple' | 'google' | 'mail', actie: () => Promise<unknown>) => {
@@ -72,7 +73,9 @@ export function Inloggen({ voorbeeld }: { voorbeeld?: boolean }) {
         </Bewerkbaar>
 
         <View style={s.sociaal}>
-          {appleKnop ? (
+          {!APPLE_INLOGGEN_KLAAR ? (
+            <KnopOpSlot titel="Doorgaan met Apple" icoon="logo-apple" />
+          ) : appleKnop ? (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
