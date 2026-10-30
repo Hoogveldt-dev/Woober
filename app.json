@@ -23,7 +23,10 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "nl.woober.app"
+      "package": "nl.woober.app",
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -47,7 +50,13 @@
       ],
       "expo-web-browser",
       "expo-sqlite",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Woober telt je stappen voor Woober Fit. Je stappen blijven op je telefoon."
+        }
+      ]
     ],
     "scheme": "woober"
   }

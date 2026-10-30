@@ -87,11 +87,13 @@ function Navigatie() {
 
       <Stack.Protected guard={eigenaarKlaar} redirectTo={startpunt}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="geschiedenis" options={{ headerShown: true, title: 'Geschiedenis' }} />
       </Stack.Protected>
 
       {/* Boeken en alles wat erbij hoort is nog nagespeeld; echte accounts kunnen hier nog niet komen (stap 3 in PLAN.md) */}
       <Stack.Protected guard={eigenaarKlaar && modus === 'demo'} redirectTo={startpunt}>
         <Stack.Screen name="boeken" options={{ headerShown: true, title: 'Kies een uitlater' }} />
+        <Stack.Screen name="afspraken" options={{ headerShown: true, title: 'Afspraken' }} />
         <Stack.Screen name="bevestigen" options={{ headerShown: true, title: 'Boeking bevestigen' }} />
         <Stack.Screen name="kennismaking" options={{ headerShown: true, title: 'Kennismaken' }} />
         <Stack.Screen name="uitlater/[id]" options={{ headerShown: true, title: '' }} />

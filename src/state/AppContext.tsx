@@ -22,6 +22,7 @@ import {
   TIJDSFACTOR,
   wandelVoortgang,
 } from '../lib/simulatie';
+import { wisStappen } from '../lib/stappen';
 import { supabase } from '../lib/supabase';
 import { duurTekst, tijdstipOp, volgendeKeer } from '../lib/tijd';
 import { drukteFactor, modelVoor, type Verdienmodel, type VerdienmodelId } from '../lib/verdienmodel';
@@ -1016,11 +1017,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    wisStappen();
     opnieuw();
   }, [opnieuw, meldFout, echt]);
   const uitloggen = useCallback(async () => {
     // Ook vanuit de demo: een half afgemaakte aanmelding hoort er niet te blijven hangen
     await account.uitloggen().catch(() => undefined);
+    // Bewaarde stappen van Woober Fit horen bij wie er ingelogd was
+    wisStappen();
     opnieuw();
   }, [opnieuw]);
 
