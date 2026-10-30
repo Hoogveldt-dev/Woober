@@ -1,8 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Bewerkbaar } from '../components/Bewerkbaar';
-import { Melding } from '../components/ui';
-import type { TekstSleutel } from '../lib/teksten';
+import { Linking, StyleSheet, Text } from 'react-native';
+import { JuridischeTekst, type Sectie } from '../components/JuridischeTekst';
 import { useTekst } from '../state/Teksten';
 import { kleuren, ruimte } from '../theme';
 
@@ -19,11 +16,6 @@ interface Organisatie {
   email: string;
 }
 
-interface Sectie {
-  titel: string;
-  alineas?: string[];
-  punten?: string[];
-}
 
 const secties = (ORGANISATIE: Organisatie): Sectie[] => [
   {
@@ -111,57 +103,21 @@ export default function Privacy() {
     adres: useTekst('privacy.adres'),
     email: useTekst('privacy.email'),
   };
-  const versie = useTekst('privacy.versie');
-  const concept = useTekst('privacy.concept');
   return (
-    <ScrollView contentContainerStyle={s.inhoud}>
-      <Text style={s.kop}>Privacy- en cookieverklaring</Text>
-      <Bewerkbaar sleutels="privacy.versie">
-        <Text style={s.versie}>Versie {versie}</Text>
-      </Bewerkbaar>
-      <Bewerkbaar sleutels="privacy.concept" leeg={!concept.trim()}>
-        <Melding type="waarschuwing">{concept}</Melding>
-      </Bewerkbaar>
-
-      {secties(organisatie).map((sectie) => (
-        <View key={sectie.titel} style={s.sectie}>
-          {/* Naam, KvK, adres en e-mail staan midden in de tekst; de hamer staat bij de kop */}
-          {sectie.titel === 'Wie zijn wij' ? (
-            <Bewerkbaar sleutels={['privacy.organisatie', 'privacy.kvk', 'privacy.adres', 'privacy.email'] as TekstSleutel[]}>
-              <Text style={s.titel}>{sectie.titel}</Text>
-            </Bewerkbaar>
-          ) : (
-            <Text style={s.titel}>{sectie.titel}</Text>
-          )}
-          {sectie.punten?.map((p) => (
-            <View key={p} style={s.punt}>
-              <Ionicons name="ellipse" size={6} color={kleuren.primair} style={{ marginTop: 8 }} />
-              <Text style={s.tekst}>{p}</Text>
-            </View>
-          ))}
-          {sectie.alineas?.map((a) => (
-            <Text key={a} style={[s.tekst, s.alinea]}>
-              {a}
-            </Text>
-          ))}
-        </View>
-      ))}
-
+    <JuridischeTekst
+      kop="Privacy- en cookieverklaring"
+      versie="privacy.versie"
+      concept="privacy.concept"
+      gegevens={['privacy.organisatie', 'privacy.kvk', 'privacy.adres', 'privacy.email']}
+      secties={secties(organisatie)}
+    >
       <Text style={s.link} onPress={() => Linking.openURL('https://www.autoriteitpersoonsgegevens.nl')}>
         Naar de Autoriteit Persoonsgegevens
       </Text>
-    </ScrollView>
+    </JuridischeTekst>
   );
 }
 
 const s = StyleSheet.create({
-  inhoud: { padding: ruimte(5), paddingBottom: ruimte(14), width: '100%', maxWidth: 680, alignSelf: 'center' },
-  kop: { fontSize: 26, fontWeight: '900', color: kleuren.tekst, letterSpacing: -0.5 },
-  versie: { fontSize: 13, color: kleuren.gedempt, marginTop: 4, marginBottom: ruimte(4) },
-  sectie: { marginTop: ruimte(5), paddingTop: ruimte(4), borderTopWidth: 1, borderTopColor: kleuren.rand },
-  titel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst, marginBottom: ruimte(2) },
-  punt: { flexDirection: 'row', gap: 10, marginBottom: ruimte(2), alignItems: 'flex-start' },
-  tekst: { flex: 1, fontSize: 15, color: kleuren.tekst, lineHeight: 22 },
-  alinea: { marginBottom: ruimte(2) },
   link: { fontSize: 15, color: kleuren.primair, fontWeight: '700', marginTop: ruimte(6) },
 });

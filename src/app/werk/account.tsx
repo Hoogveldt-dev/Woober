@@ -1,23 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AccountOnderaan, WooberRijen } from '../../components/AccountOnderaan';
 import { PersoonAvatar } from '../../components/avatars';
-import { Bewerkbaar } from '../../components/Bewerkbaar';
 import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie, Sterren } from '../../components/blokken';
 import { RolWissel } from '../../components/RolWissel';
-import { Badge, Knop, Kop } from '../../components/ui';
+import { Badge, Kop } from '../../components/ui';
 import { DUREN, euro } from '../../lib/prijs';
 import { klaarVoorWerk, useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
-import { useTekst } from '../../state/Teksten';
 
 export default function UitlaterAccount() {
   const router = useRouter();
-  const { gebruiker, mijnProfiel, accountVerwijderen, uitloggen, modus, beheerder, saldo } = useApp();
-  const [bevestig, setBevestig] = useState(false);
-  const contact = useTekst('contact.email');
+  const { gebruiker, mijnProfiel, saldo } = useApp();
   if (!gebruiker || !mijnProfiel) return null;
   const klaar = klaarVoorWerk(mijnProfiel);
 
@@ -60,34 +55,13 @@ export default function UitlaterAccount() {
             sub={klaar ? 'Identiteit, verzekering en rekening in orde' : 'Nog niet compleet'}
             onPress={() => router.push('/verificatie')}
           />
-          <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, incidenten, regels" onPress={() => router.push('/veiligheid')} />
-          <Bewerkbaar sleutels="contact.email">
-            <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
-          </Bewerkbaar>
-          <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
-          <MenuRij icoon="reader" titel="Voorwaarden" sub="Gebruiksvoorwaarden" onPress={() => router.push('/voorwaarden')} />
-          {beheerder ? <MenuRij icoon="construct" titel="Beheer" sub="Verdienmodel en andere instellingen, alleen voor het team" onPress={() => router.push('/beheer')} /> : null}
+          <WooberRijen />
         </Blok>
 
-        <View style={s.privacy}>
-          <Ionicons name="lock-closed" size={16} color={kleuren.gedempt} />
-          <Text style={s.privacyTekst}>
-            Je locatie wordt alleen gedeeld tijdens een wandeling, en alleen met de eigenaar van die hond. Woober gebruikt je route niet om je te beoordelen.
-          </Text>
-        </View>
-
-        <Knop titel={modus === 'echt' ? 'Uitloggen' : 'Demo verlaten'} variant="secundair" icoon="log-out-outline" onPress={uitloggen} stijl={{ marginTop: ruimte(4) }} />
-        {!bevestig ? (
-          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(3) }} />
-        ) : (
-          <View style={s.bevestig}>
-            <Text style={s.bevestigTitel}>Weet je het zeker?</Text>
-            <Text style={s.bevestigTekst}>Je account, je uitlaatprofiel, opdrachten en berichten worden definitief verwijderd. Openstaande uitbetalingen worden eerst afgerond.</Text>
-            <Knop titel="Ja, alles verwijderen" variant="gevaar" icoon="trash" onPress={accountVerwijderen} />
-            <Knop titel="Annuleren" variant="tekst" stijl={{ marginTop: ruimte(1) }} onPress={() => setBevestig(false)} />
-          </View>
-        )}
-        <Text style={s.versie}>{modus === 'echt' ? `Woober 1.0. Ingelogd als ${gebruiker.email}.` : 'Woober demo. Gegevens worden niet opgeslagen.'}</Text>
+        <AccountOnderaan
+          privacy="Je locatie wordt alleen gedeeld tijdens een wandeling, en alleen met de eigenaar van die hond. Woober gebruikt je route niet om je te beoordelen."
+          verwijderen="Je account, je uitlaatprofiel, opdrachten en berichten worden definitief verwijderd. Openstaande uitbetalingen worden eerst afgerond."
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -96,10 +70,4 @@ export default function UitlaterAccount() {
 const s = StyleSheet.create({
   profiel: { flexDirection: 'row', alignItems: 'center', gap: ruimte(4), padding: ruimte(4), borderRadius: radius.groot, backgroundColor: kleuren.vlak, marginTop: ruimte(4), marginBottom: ruimte(4) },
   naam: { fontSize: 22, fontWeight: '800', color: kleuren.tekst },
-  privacy: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  privacyTekst: { flex: 1, fontSize: 13, color: kleuren.gedempt, lineHeight: 18 },
-  bevestig: { marginTop: ruimte(4), padding: ruimte(4), borderRadius: radius.midden, backgroundColor: kleuren.foutVlak },
-  bevestigTitel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
-  bevestigTekst: { fontSize: 14, color: kleuren.tekst, marginVertical: ruimte(3), lineHeight: 20 },
-  versie: { fontSize: 12, color: '#A1A1AA', textAlign: 'center', marginTop: ruimte(6) },
 });

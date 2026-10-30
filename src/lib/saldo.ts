@@ -5,8 +5,8 @@ import { afgerondeOpdrachten, verdiend } from './verdiensten';
 /**
  * Saldo van een uitlater (de wallet). Wat je verdient blijft staan tot je het zelf laat uitbetalen, in één keer in
  * plaats van na elke wandeling. Je kunt het ook gebruiken om als eigenaar zelf een uitlater of oppas te betalen.
- * Het geld blijft bij de betaalpartner, niet bij Woober: bij Mollie Connect is het saldo wat nog niet naar de uitlater is
- * gerouteerd (vertraagde routing), bij Stripe Connect wat op zijn account staat (handmatige uitbetalingen). Zie PLAN.md.
+ * Het geld blijft bij Mollie, niet bij Woober: het saldo is wat nog niet naar de uitlater is gerouteerd (vertraagde
+ * routing). Zie PLAN.md, Betalen met Mollie Connect.
  * Dezelfde regels staan in saldo_van() en vraag_uitbetaling_aan() in supabase/migrations/20261030000000_saldo.sql.
  */
 

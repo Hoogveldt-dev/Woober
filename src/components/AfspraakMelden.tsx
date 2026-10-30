@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { euro, meldbareAfspraak } from '../lib/prijs';
 import { datumTijdTekst } from '../lib/tijd';
 import { useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { AfspraakMelding, Boeking } from '../types';
+import { OnderBlad } from './blokken';
 import { Knop, Melding, Veld } from './ui';
 
 const SOORTEN: { soort: AfspraakMelding['soort']; titel: string }[] = [
@@ -86,51 +86,45 @@ function MeldVenster({
   uitkomst: string;
   verstuur: (soort: AfspraakMelding['soort'], toelichting: string) => void;
 }) {
-  const insets = useSafeAreaInsets();
   const [soort, setSoort] = useState(voorstel);
   const [toelichting, setToelichting] = useState('');
   return (
-    <Modal visible={zichtbaar} transparent animationType="slide" onRequestClose={sluit}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={s.achtergrond} onPress={sluit} accessibilityLabel="Sluiten" />
-        <View style={[s.blad, { paddingBottom: Math.max(insets.bottom, ruimte(4)) }]}>
-          <Text style={s.titel}>Melden over deze boeking</Text>
-          <View style={{ gap: ruimte(2), marginBottom: ruimte(4) }}>
-            {SOORTEN.map((o) => {
-              const actief = o.soort === soort;
-              return (
-                <Pressable
-                  key={o.soort}
-                  onPress={() => setSoort(o.soort)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: actief }}
-                  style={[s.optie, actief && s.optieActief]}
-                >
-                  <Ionicons name={actief ? 'radio-button-on' : 'radio-button-off'} size={20} color={actief ? kleuren.primair : kleuren.gedempt} />
-                  <Text style={s.optieTekst}>
-                    {naam} {o.titel.charAt(0).toLowerCase() + o.titel.slice(1)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Veld
-            label="Wat is er gebeurd? (mag leeg)"
-            value={toelichting}
-            onChangeText={setToelichting}
-            multiline
-            maxLength={300}
-            placeholder="Bijvoorbeeld: om 9:15 nog niemand, geen bericht"
-          />
-          <Text style={s.uitleg}>
-            Een medewerker van Woober beoordeelt je melding, nooit een computer, en vraagt {naam} ook om een reactie. {uitkomst} Andere gebruikers zien je
-            melding niet.
-          </Text>
-          <Knop titel="Melding versturen" icoon="flag" onPress={() => verstuur(soort, toelichting)} />
-          <Knop titel="Annuleren" variant="tekst" onPress={sluit} stijl={{ marginTop: ruimte(1) }} />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <OnderBlad zichtbaar={zichtbaar} sluit={sluit}>
+      <Text style={s.titel}>Melden over deze boeking</Text>
+      <View style={{ gap: ruimte(2), marginBottom: ruimte(4) }}>
+        {SOORTEN.map((o) => {
+          const actief = o.soort === soort;
+          return (
+            <Pressable
+              key={o.soort}
+              onPress={() => setSoort(o.soort)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: actief }}
+              style={[s.optie, actief && s.optieActief]}
+            >
+              <Ionicons name={actief ? 'radio-button-on' : 'radio-button-off'} size={20} color={actief ? kleuren.primair : kleuren.gedempt} />
+              <Text style={s.optieTekst}>
+                {naam} {o.titel.charAt(0).toLowerCase() + o.titel.slice(1)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Veld
+        label="Wat is er gebeurd? (mag leeg)"
+        value={toelichting}
+        onChangeText={setToelichting}
+        multiline
+        maxLength={300}
+        placeholder="Bijvoorbeeld: om 9:15 nog niemand, geen bericht"
+      />
+      <Text style={s.uitleg}>
+        Een medewerker van Woober beoordeelt je melding, nooit een computer, en vraagt {naam} ook om een reactie. {uitkomst} Andere gebruikers zien je
+        melding niet.
+      </Text>
+      <Knop titel="Melding versturen" icoon="flag" onPress={() => verstuur(soort, toelichting)} />
+      <Knop titel="Annuleren" variant="tekst" onPress={sluit} stijl={{ marginTop: ruimte(1) }} />
+    </OnderBlad>
   );
 }
 
@@ -138,17 +132,6 @@ const s = StyleSheet.create({
   kaart: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), padding: ruimte(3), borderRadius: radius.midden, borderWidth: 1, borderColor: kleuren.rand, marginTop: ruimte(3) },
   kaartTitel: { fontSize: 15, fontWeight: '800', color: kleuren.tekst },
   kaartSub: { fontSize: 13, color: kleuren.gedempt, marginTop: 2, lineHeight: 18 },
-  achtergrond: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
-  blad: {
-    width: '100%',
-    maxWidth: 560,
-    alignSelf: 'center',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: radius.groot,
-    borderTopRightRadius: radius.groot,
-    paddingHorizontal: ruimte(5),
-    paddingTop: ruimte(5),
-  },
   titel: { fontSize: 20, fontWeight: '800', color: kleuren.tekst, marginBottom: ruimte(4) },
   optie: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), padding: ruimte(3), borderRadius: radius.midden, borderWidth: 1.5, borderColor: kleuren.rand },
   optieActief: { borderColor: kleuren.primair, backgroundColor: kleuren.primairVlak },

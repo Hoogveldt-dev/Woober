@@ -2,9 +2,8 @@ import type { Punt } from '../types';
 
 /**
  * Een verzonnen wijk als demokaart, losjes gebaseerd op een Nederlandse stad aan de rivier.
- * 1 eenheid is 1 meter. In de echte app komt hier een echte kaart (react-native-maps of expo-maps).
+ * 1 eenheid is 1 meter. Echte accounts gebruiken de echte kaart (EchteKaart met Leaflet en PDOK).
  */
-export const KAART = { breedte: 1000, hoogte: 1420 };
 
 export const XS = [70, 250, 460, 640, 900];
 export const YS = [200, 400, 570, 760, 970, 1170, 1340];

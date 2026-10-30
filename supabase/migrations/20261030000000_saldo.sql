@@ -1,10 +1,10 @@
 -- Saldo van uitlaters (de wallet). Wat een uitlater verdient, blijft staan tot hij het zelf laat uitbetalen, in één
 -- keer in plaats van na elke wandeling. Hij kan het ook gebruiken om als eigenaar zelf een uitlater of oppas te betalen.
 --
--- Het geld zelf blijft bij de betaalpartner, niet bij Woober (zie PLAN.md, Betalen): bij Mollie Connect met
--- vertraagde routing is het saldo wat nog niet naar de uitlater is gerouteerd, bij Stripe Connect met handmatige
--- uitbetalingen wat op zijn account staat. Deze migratie houdt bij wat er staat, wat gereserveerd is en wat is
--- gevraagd; het serverproces voor de betaalpartner leest de tabel uitbetalingen. Dezelfde regels staan in src/lib/saldo.ts.
+-- Het geld zelf blijft bij Mollie, niet bij Woober (zie PLAN.md, Betalen met Mollie Connect): het saldo is wat nog
+-- niet naar de uitlater is gerouteerd. Deze migratie houdt bij wat er staat, wat gereserveerd is en wat is gevraagd;
+-- het serverproces (supabase/functions/betalingen-verwerken) leest de tabel uitbetalingen. Dezelfde regels staan in
+-- src/lib/saldo.ts.
 
 -- Deel van de prijs dat de eigenaar met zijn saldo als uitlater betaalt; de rest gaat via de betaalmethode
 alter table public.boekingen add column met_saldo integer not null default 0 check (met_saldo >= 0);

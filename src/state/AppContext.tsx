@@ -59,8 +59,6 @@ import type {
 } from '../types';
 
 export const LOPEND: Boeking['status'][] = ['onderweg', 'aangekomen', 'bezig'];
-export const ACTIEF: Boeking['status'][] = ['aangevraagd', ...LOPEND];
-
 interface AppState {
   /** Demo met verzonnen gegevens, of een echt account in Supabase */
   modus: 'demo' | 'echt';

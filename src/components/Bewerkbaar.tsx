@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bewaarTekst, TEKSTEN, zetTekstTerug, type TekstDefinitie, type TekstSleutel } from '../lib/teksten';
 import { useApp } from '../state/AppContext';
 import { useTeksten } from '../state/Teksten';
 import { kleuren, radius, ruimte, schaduw } from '../theme';
+import { OnderBlad } from './blokken';
 import { Badge, Knop, Melding, Veld } from './ui';
 
 /**
@@ -61,26 +62,20 @@ export function Bewerkbaar({
 
 /** Het venster dat opent na een tik op het hamertje */
 function TekstBlad({ sleutels, zichtbaar, sluit }: { sleutels: TekstSleutel[]; zichtbaar: boolean; sluit: () => void }) {
-  const insets = useSafeAreaInsets();
   return (
-    <Modal visible={zichtbaar} transparent animationType="slide" onRequestClose={sluit}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={s.achtergrond} onPress={sluit} accessibilityLabel="Sluiten" />
-        <View style={[s.blad, { paddingBottom: Math.max(insets.bottom, ruimte(4)) }]}>
-          <View style={s.bladKop}>
-            <Ionicons name="hammer" size={18} color={kleuren.primair} />
-            <Text style={s.bladTitel}>{sleutels.length === 1 ? 'Tekst aanpassen' : 'Teksten aanpassen'}</Text>
-            <Knop titel="Klaar" variant="tekst" onPress={sluit} />
-          </View>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: ruimte(2) }}>
-            <Text style={[s.uitleg]}>Wat je opslaat, ziet iedereen de volgende keer dat de app opent, ook op woober.nl.</Text>
-            {sleutels.map((k) => (
-              <TekstVeld key={k} sleutel={k} definitie={TEKSTEN[k]} />
-            ))}
-          </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <OnderBlad zichtbaar={zichtbaar} sluit={sluit} stijl={{ maxHeight: '85%', paddingTop: ruimte(3) }}>
+      <View style={s.bladKop}>
+        <Ionicons name="hammer" size={18} color={kleuren.primair} />
+        <Text style={s.bladTitel}>{sleutels.length === 1 ? 'Tekst aanpassen' : 'Teksten aanpassen'}</Text>
+        <Knop titel="Klaar" variant="tekst" onPress={sluit} />
+      </View>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: ruimte(2) }}>
+        <Text style={[s.uitleg]}>Wat je opslaat, ziet iedereen de volgende keer dat de app opent, ook op woober.nl.</Text>
+        {sleutels.map((k) => (
+          <TekstVeld key={k} sleutel={k} definitie={TEKSTEN[k]} />
+        ))}
+      </ScrollView>
+    </OnderBlad>
   );
 }
 
@@ -191,18 +186,6 @@ const s = StyleSheet.create({
   },
   leeg: { paddingVertical: ruimte(3), paddingHorizontal: ruimte(3), marginBottom: ruimte(2), borderRadius: radius.klein, backgroundColor: kleuren.primairVlak },
   leegTekst: { fontSize: 13, color: kleuren.gedempt, fontStyle: 'italic' },
-  achtergrond: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
-  blad: {
-    maxHeight: '85%',
-    width: '100%',
-    maxWidth: 560,
-    alignSelf: 'center',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: radius.groot,
-    borderTopRightRadius: radius.groot,
-    paddingHorizontal: ruimte(5),
-    paddingTop: ruimte(3),
-  },
   bladKop: { flexDirection: 'row', alignItems: 'center', gap: ruimte(2), marginBottom: ruimte(2) },
   bladTitel: { flex: 1, fontSize: 18, fontWeight: '800', color: kleuren.tekst },
   uitleg: { fontSize: 13, color: kleuren.gedempt, lineHeight: 18, marginBottom: ruimte(3) },

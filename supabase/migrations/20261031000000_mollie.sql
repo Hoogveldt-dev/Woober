@@ -14,8 +14,11 @@
 -- een volledige terugboeking wat al naar uitlaters ging bij hen terug, en Woober vult dat aan. Een medewerker
 -- beoordeelt de eigenaar in Beheer.
 
--- De kolom voor Stripe is niet meer nodig; betalingen staan voortaan in de tabel betalingen
+-- De kolommen voor Stripe zijn niet meer nodig: betalingen staan in de tabel betalingen, de koppeling met de uitlater
+-- in mollie_koppelingen, en Woober Plus gaat later via Mollie
 alter table public.boekingen drop column stripe_payment_intent;
+alter table public.uitlaters_prive drop column stripe_account_id;
+alter table public.abonnementen drop column stripe_subscription;
 -- De eigenaar heeft het deel betaald dat niet met saldo gaat; pas dan kan de uitlater accepteren
 alter table public.boekingen add column betaald boolean not null default false;
 -- Een fooi telt pas als hij via Mollie is betaald (verwerk_betaling); zelf invullen zou Woober laten bijleggen

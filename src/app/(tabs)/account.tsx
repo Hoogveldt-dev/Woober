@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AccountOnderaan, WooberRijen } from '../../components/AccountOnderaan';
 import { HondAvatar, PersoonAvatar } from '../../components/avatars';
-import { Bewerkbaar } from '../../components/Bewerkbaar';
-import { Blok, gedeeldeStijl, MenuRij, Rij, Sectie } from '../../components/blokken';
+import { Blok, gedeeldeStijl, Rij, Sectie } from '../../components/blokken';
 import { RolWissel } from '../../components/RolWissel';
 import { Chip, Knop, Kop, Melding, Veld } from '../../components/ui';
 import { euro } from '../../lib/prijs';
@@ -13,13 +13,10 @@ import { leeftijdTekst } from '../../lib/tijd';
 import { procent } from '../../lib/verdienmodel';
 import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
-import { useTekst } from '../../state/Teksten';
 
 export default function Account() {
   const router = useRouter();
-  const { gebruiker, honden, betaalmethode, zetBetaalmethode, saldo, accountVerwijderen, uitloggen, modus, beheerder, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
-  const [bevestig, setBevestig] = useState(false);
-  const contact = useTekst('contact.email');
+  const { gebruiker, honden, betaalmethode, zetBetaalmethode, saldo, modus, boekingen, verdienmodel, tegoed, plus, zetPlus, verzilverCode } = useApp();
   const [code, setCode] = useState('');
   const [codeUitslag, setCodeUitslag] = useState<{ gelukt: boolean; tekst: string } | null>(null);
   if (!gebruiker) return null;
@@ -132,34 +129,13 @@ export default function Account() {
 
         <Sectie>Woober</Sectie>
         <Blok>
-          <MenuRij icoon="shield-checkmark" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
-          <Bewerkbaar sleutels="contact.email">
-            <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
-          </Bewerkbaar>
-          <MenuRij icoon="document-text" titel="Privacy" sub="Privacy- en cookieverklaring" onPress={() => router.push('/privacy')} />
-          <MenuRij icoon="reader" titel="Voorwaarden" sub="Gebruiksvoorwaarden" onPress={() => router.push('/voorwaarden')} />
-          {beheerder ? <MenuRij icoon="construct" titel="Beheer" sub="Verdienmodel en andere instellingen, alleen voor het team" onPress={() => router.push('/beheer')} /> : null}
+          <WooberRijen />
         </Blok>
 
-        <View style={s.privacy}>
-          <Ionicons name="lock-closed" size={16} color={kleuren.gedempt} />
-          <Text style={s.privacyTekst}>
-            Uitlaters zien je adres pas na een geaccepteerde boeking. Jouw locatie wordt nooit gedeeld; alleen de uitlater deelt zijn locatie, en alleen tijdens de wandeling.
-          </Text>
-        </View>
-
-        <Knop titel={modus === 'echt' ? 'Uitloggen' : 'Demo verlaten'} variant="secundair" icoon="log-out-outline" onPress={uitloggen} stijl={{ marginTop: ruimte(4) }} />
-        {!bevestig ? (
-          <Knop titel="Account verwijderen" variant="gevaar" icoon="trash" onPress={() => setBevestig(true)} stijl={{ marginTop: ruimte(3) }} />
-        ) : (
-          <View style={s.bevestig}>
-            <Text style={s.bevestigTitel}>Weet je het zeker?</Text>
-            <Text style={s.bevestigTekst}>Je account, je honden, boekingen en berichten worden definitief verwijderd. Lopende boekingen worden geannuleerd.</Text>
-            <Knop titel="Ja, alles verwijderen" variant="gevaar" icoon="trash" onPress={accountVerwijderen} />
-            <Knop titel="Annuleren" variant="tekst" stijl={{ marginTop: ruimte(1) }} onPress={() => setBevestig(false)} />
-          </View>
-        )}
-        <Text style={s.versie}>{modus === 'echt' ? `Woober 1.0. Ingelogd als ${gebruiker.email}.` : 'Woober demo. Gegevens worden niet opgeslagen.'}</Text>
+        <AccountOnderaan
+          privacy="Uitlaters zien je adres pas na een geaccepteerde boeking, en niet als je je hond op een ander punt afgeeft. Jouw locatie wordt nooit gedeeld; alleen de uitlater deelt zijn locatie, en alleen tijdens de wandeling."
+          verwijderen="Je account, je honden, boekingen en berichten worden definitief verwijderd. Lopende boekingen worden geannuleerd."
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -171,12 +147,6 @@ const s = StyleSheet.create({
   hond: { flexDirection: 'row', alignItems: 'center', gap: ruimte(3), paddingHorizontal: ruimte(4), paddingVertical: ruimte(3), borderBottomWidth: 1, borderBottomColor: kleuren.vlak },
   hondNaam: { fontSize: 16, fontWeight: '700', color: kleuren.tekst },
   hondSub: { fontSize: 13, color: kleuren.gedempt, marginTop: 1 },
-  privacy: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  privacyTekst: { flex: 1, fontSize: 13, color: kleuren.gedempt, lineHeight: 18 },
-  bevestig: { marginTop: ruimte(4), padding: ruimte(4), borderRadius: radius.midden, backgroundColor: kleuren.foutVlak },
-  bevestigTitel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },
-  bevestigTekst: { fontSize: 14, color: kleuren.tekst, marginVertical: ruimte(3), lineHeight: 20 },
-  versie: { fontSize: 12, color: '#A1A1AA', textAlign: 'center', marginTop: ruimte(6) },
   plus: { padding: ruimte(4), borderRadius: radius.midden, backgroundColor: kleuren.primairVlak, marginBottom: ruimte(5), gap: ruimte(3) },
   plusKop: { flexDirection: 'row', alignItems: 'center', gap: ruimte(2) },
   plusTitel: { fontSize: 17, fontWeight: '800', color: kleuren.tekst },

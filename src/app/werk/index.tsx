@@ -134,7 +134,7 @@ function WerkDemo() {
         <View style={s.verzoekKop}>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             <Badge tekst={kennismaking ? 'KENNISMAKING' : 'NIEUW VERZOEK'} icoon="notifications" kleur={kleuren.primair} />
-            {!kennismaking ? <Badge tekst={oppas ? 'OPPAS AAN HUIS' : 'UITLATEN'} icoon={oppas ? 'home' : 'walk'} kleur={kleuren.tekst} /> : null}
+            {!kennismaking ? <Badge tekst={oppas ? (bijMij ? 'OPPAS BIJ JOU' : 'OPPAS BIJ EIGENAAR') : 'UITLATEN'} icoon={oppas ? 'home' : 'walk'} kleur={kleuren.tekst} /> : null}
           </View>
           <Text style={s.verzoekAfstand}>{formatAfstand(afstand)}</Text>
         </View>

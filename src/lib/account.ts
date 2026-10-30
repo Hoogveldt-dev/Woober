@@ -218,7 +218,6 @@ export async function bewaarUitlaatprofiel(p: Uitlater) {
 }
 
 /** Nieuwe id's in de database zijn uuid's; de demo gebruikt korte namen */
-export const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 export const nieuweUuid = () => Crypto.randomUUID();
 
 async function mijnId() {

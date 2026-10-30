@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { kleuren, radius, ruimte, schaduw } from '../theme';
 
@@ -14,6 +14,19 @@ export function useNu(intervalMs = 300): number {
     return () => clearInterval(t);
   }, [intervalMs]);
   return nu;
+}
+
+/** Blad dat van onderen over het scherm schuift, voor melden, incidenten en teksten aanpassen. Tikken ernaast sluit het. */
+export function OnderBlad({ zichtbaar, sluit, children, stijl }: { zichtbaar: boolean; sluit: () => void; children: ReactNode; stijl?: StyleProp<ViewStyle> }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={zichtbaar} transparent animationType="slide" onRequestClose={sluit}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Pressable style={s.onderAchtergrond} onPress={sluit} accessibilityLabel="Sluiten" />
+        <View style={[s.onderBlad, { paddingBottom: Math.max(insets.bottom, ruimte(5)) }, stijl]}>{children}</View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 }
 
 /** Paneel onderaan over de kaart, zoals in taxi-apps */
@@ -202,6 +215,17 @@ export const gedeeldeStijl = StyleSheet.create({
 });
 
 const s = StyleSheet.create({
+  onderAchtergrond: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
+  onderBlad: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: radius.groot,
+    borderTopRightRadius: radius.groot,
+    paddingHorizontal: ruimte(5),
+    paddingTop: ruimte(5),
+  },
   bladBuiten: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
   blad: {
     width: '100%',

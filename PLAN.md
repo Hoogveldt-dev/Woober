@@ -181,25 +181,15 @@ Migratie `supabase/migrations/20261022010000_verdienmodel.sql`:
 - `abonnementen` (Woober Plus, opzeggen loopt tot het einde van de maand), `tegoed_mutaties` (saldo is de som), `promocodes` (niet op te vragen, alleen te verzilveren) en `uitnodigingen` (beloning na de eerste afgeronde wandeling van de nieuwe gebruiker).
 - `grootboek`: elke afgeronde boeking, annulering met kosten en fooi als regels voor eigenaar, uitlater en Woober (servicekosten, boekingskosten, commissie, drukte, tegoed) die samen op nul uitkomen. Alleen voor Woober; blijft bewaard als een account wordt verwijderd, zonder persoon.
 
-### Betalen met Stripe Connect
+### Betalen met Mollie Connect (gekozen 30 oktober 2026)
 
-- De eigenaar betaalt het totaal aan Woober; na afronden gaat `uitbetaling` naar het Connect-account van de uitlater. Gebruik losse betalingen en overboekingen (separate charges and transfers), geen destination charges: bij tegoed legt Woober bij, en dan is de platformvergoeding negatief.
-- **Saldo (wallet) in plaats van automatisch uitbetalen** (besloten 30 oktober 2026): het Connect-account van de uitlater krijgt een handmatig uitbetalingsschema. Wat hij verdient, blijft op zijn Stripe-saldo staan tot hij in de app op Uitbetalen tikt (vanaf 10 euro, of alles); dan maakt Woober via de Payouts API een uitbetaling. Zo zijn er geen kleine overboekingen per wandeling, en bewaart Woober zelf geen geld van gebruikers: het staat bij Stripe, dat daar een vergunning voor heeft. Eigen saldo houden zou Woober een betaalinstelling of elektronischgeldinstelling maken (vergunning van DNB). Stripe houdt geld bij handmatige uitbetalingen hooguit 90 dagen vast; een serverproces betaalt wat langer staat automatisch uit.
-- **Met saldo betalen als eigenaar**: een uitlater die zelf boekt, betaalt (een deel) met zijn saldo. Bij Stripe gaat dat met een afschrijving van het Connect-account naar Woober (account debits, binnen de SEPA-landen); daarvoor is vooraf toestemming van de uitlater nodig, dus die staat in de voorwaarden. De andere uitlater krijgt evenveel als bij een gewone betaling. Saldo is eigen geld en geen tegoed: tegoed betaalt Woober.
-- Database: `met_saldo` op `boekingen`, tabel `uitbetalingen`, functies `mijn_saldo()`, `vraag_uitbetaling_aan()` en `betaal_met_saldo()` in `20261030000000_saldo.sql`; het saldo volgt uit de rekening uitlater in het grootboek. Account verwijderen kan pas als het saldo is uitbetaald.
-- Kaart en Apple Pay kunnen een bedrag reserveren en pas na de wandeling afschrijven. iDEAL kan dat niet; daar betaalt de eigenaar bij het boeken en volgt bij tijdig annuleren een terugbetaling. De demo laat dat verschil al zien.
-- Woober Plus via Stripe Billing; de webhook maakt de regel in `abonnementen`.
-- Het grootboek is de basis voor de afstemming met Stripe en voor de boekhouding.
-
-### Mollie Connect als alternatief (onderzocht 30 oktober 2026)
-
-Kan, maar nog niet beslissen voordat Mollie de open vragen in ACTIES.md (stap 3) heeft beantwoord.
-
-- **iDEAL | Wero kan bij allebei.** iDEAL heet sinds 29 januari 2026 iDEAL | Wero (logo en naam verplicht sinds 31 maart 2026); vanaf eind 2026 lopen betalingen geleidelijk via Wero, afronding eind 2027. Stripe en Mollie bieden het allebei aan. Voor deze eis is wisselen dus niet nodig. Mollie is wel Principal Member van EPI, het bedrijf achter Wero, en een Nederlandse betaalinstelling onder toezicht van DNB.
-- **Grootste risico: uitlaters zonder KvK.** Elke uitlater wordt een verbonden account bij Mollie, en Mollie controleert die als bedrijf (KYB) met bedrijfsgegevens. Een particulier zonder KvK-inschrijving lijkt daar niet in te passen; Stripe Connect Express kan wel particulieren aansluiten. Dit beslist de open vraag in Open vragen (alleen particulieren of ook KvK) mee.
-- **Saldo met Mollie, voorstel: vertraagde routing.** Eigenaren betalen aan het marktplaatsaccount van Woober; Mollie houdt het geld vast (niet Woober) tot Woober routes maakt. Het saldo van een uitlater is wat nog niet naar hem is gerouteerd. Tikt hij op Uitbetalen, dan routeert Woober dat bedrag naar zijn Mollie-account en betaalt Mollie het volgens zijn uitbetaalschema uit. Routes moeten binnen 90 dagen na de betaling bestaan, net als de 90 dagen bij Stripe, dus het automatisch uitbetalen na 90 dagen blijft. Vertraagde routing moet Mollie aanzetten en werkt met bruto-afrekening: de kosten van Mollie komen als maandfactuur.
-- **Betalen met saldo bij Mollie:** het nog niet gerouteerde geld van de uitlater direct naar de andere uitlater routeren. Anders via Balance Transfers, maar daar geldt standaard een maximum van 1.000 euro per maand per verbonden account en de uitlater moet toestemming geven.
-- **Wat in Woober gelijk blijft:** het saldo, de regels in `src/lib/saldo.ts`, het grootboek en `20261030000000_saldo.sql` zijn niet aan Stripe gebonden. Bij een wissel worden alleen de kolommen `stripe_payment_intent` en `stripe_payout_id` algemeen (bijvoorbeeld `betaling_ref`, `uitbetaling_ref`), komt er een serverkoppeling voor Mollie in plaats van Stripe, en gaat "Stripe" uit de teksten (saldo, voorwaarden). De controle van identiteit en rekening van uitlaters doet Mollie bij het aansluiten; Stripe Identity (stap 5 in ACTIES.md) is dan niet nodig, de verzekering blijft handwerk.
+- De eigenaar betaalt per boeking aan het marktplaatsaccount van Woober bij Mollie (iDEAL | Wero, Apple Pay of kaart). Mollie houdt het geld vast, niet Woober; eigen saldo houden zou Woober een betaalinstelling maken (vergunning van DNB).
+- **Saldo (wallet)**: het saldo van een uitlater is wat nog niet naar zijn eigen Mollie-account is gerouteerd. Tikt hij op Uitbetalen (vanaf 10 euro, of alles), dan routeert Woober het, oudste betalingen eerst, en betaalt Mollie uit volgens het schema dat hij in Mollie kiest. Mollie geeft ongerouteerd geld na 90 dagen aan Woober; daarom gaat geld dat 80 dagen op een saldo staat automatisch, en kun je hooguit 60 dagen vooruit boeken.
+- **Wat Woober bijlegt** (tegoed, korting, terugboekingen) gaat als overboeking van het eigen Mollie-saldo van Woober (Balance Transfers, standaard maximaal 1.000 euro per maand per uitlater). Tegoed betaalt Woober, nooit de uitlater.
+- **Met saldo betalen als eigenaar**: een uitlater die zelf boekt, betaalt (een deel) met zijn saldo; de andere uitlater krijgt evenveel. In de demo en de database; voor echte accounts later.
+- Database: `20261030000000_saldo.sql` (saldo uit het grootboek, uitbetalingen; account verwijderen pas als het saldo is uitbetaald) en `20261031000000_mollie.sql` (betalingen, routes, koppelingen, terugboekingen). Edge Functions in `supabase/functions/`; instellen in README, Betalen met Mollie.
+- Woober Plus later via Mollie; de regel in `abonnementen` blijft. Het grootboek is de basis voor de afstemming met Mollie en de boekhouding.
+- Terugvaloptie als Mollie geen uitlaters zonder KvK aansluit: Stripe Connect met handmatige uitbetalingen (zie de strategie hieronder). Saldo en grootboek zijn niet aan Mollie gebonden; alleen de Edge Functions en de tabellen voor betalingen en routes wisselen dan.
 
 ### Eisen voor betalen en de wallet (Kjell, 30 oktober 2026)
 
@@ -285,10 +275,10 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Andere kant nagespeeld (`simulatie.ts`) | Echte gebruikers; statuswijzigingen via de databasefuncties (`wijzig_status`, `start_wandeling`) |
 | Eigen SVG-kaart (`Kaart.tsx`) | **Klaar voor plekken**: Leaflet met de kaart van PDOK (`EchteKaart.tsx`, `src/lib/kaart.ts`). Voor boekingen komen routes en de uitlater erbij |
 | Positie berekend uit de tijd | `expo-location` met achtergrondtaak, alleen tijdens `bezig`; posities via Supabase Realtime naar de eigenaar |
-| Betaling getoond | Stripe Connect: account per uitlater, losse betalingen en overboekingen, webhooks via een Supabase Edge Function (zie [Betalen met Stripe Connect](#betalen-met-stripe-connect)) |
+| Betaling getoond | **Gebouwd**: Mollie Connect met vertraagde routing, Edge Functions en webhook (zie [Betalen met Mollie Connect](#betalen-met-mollie-connect-gekozen-30-oktober-2026)); de echte boekflow roept het straks aan |
 | Verdienmodel in het geheugen, te wisselen in de demo | Tabel `verdienmodellen` met planning; alleen het team plant een fase in |
 | Drukte nagebootst in `verdienmodel.ts` | Serverproces (Edge Function of `pg_cron`) vult `druktefactoren` |
-| Verificatie afvinken | **Nu**: een medewerker controleert de stukken per e-mail en zet de stappen aan in Beheer. Later Stripe Identity voor ID en de polis uploaden naar een privé-bucket |
+| Verificatie afvinken | **Nu**: een medewerker controleert de stukken per e-mail en zet de stappen aan in Beheer. Mollie controleert identiteit en rekening bij het aansluiten; de polis uploaden naar een privé-bucket |
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
 | Verlengen in de demo telt het extra uur als betaald | Het extra uur gaat pas in als het betaald is (betaling met soort `verlenging`, `verleng_tot()`); of de oppas eerst moet bevestigen, is nog een open vraag |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
@@ -302,7 +292,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - Tegoed, actiecodes, Plus en grootboek veranderen alleen via databasefuncties of door Woober; het grootboek komt per boeking op nul uit.
 - Een dienst boeken kan alleen bij iemand die die dienst aanbiedt; oppas alleen in hele uren.
 - Verlengen kan alleen de eigenaar, alleen bij oppas, en het extra uur gaat pas in als het betaald is.
-- Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
+- Adres, ophaalcode en gegevens van Mollie staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
 - Verificatievelden kan alleen Woober zetten (kolomrechten).
 - Een eerste wandeling kan pas na een afgeronde kennismaking; boeken bij een geblokkeerde gebruiker kan niet.
 - Gebruikers voegen zelf plekken toe, hooguit vijf per dag. Zo'n plek is meteen zichtbaar met de status `nieuw`; alleen een medewerker zet hem op `gecontroleerd` of `verborgen`. De toevoeger kan een nieuwe plek nog verwijderen, niet aanpassen. Iedere gebruiker schrijft één review per plek, past alleen de eigen review aan en ziet geen reviews van gebruikers die geblokkeerd zijn; een gemelde review beoordeelt een medewerker.
@@ -315,7 +305,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
    ✅ Daarbij, om eerst waarde te bieden zonder uitlaters: plekken echt (kaart, reviews, toevoegen, melden), Beheer voor moderatie, verificatie, wachtlijst, teksten en verdienmodel, en gebruiksvoorwaarden. Wat er nog openstaat: [ACTIES.md](ACTIES.md).
 3. Boeken en statusovergangen via de databasefuncties, met Realtime.
 4. Locatie tijdens de wandeling (development build nodig, Expo Go volstaat dan niet meer). De echte kaart is er al (`src/components/EchteKaart.tsx`); routes en de positie van de uitlater komen erbij.
-5. Stripe Connect en iDEAL; eerst in testmodus. Het grootboek afstemmen met de Stripe-uitbetalingen. Fase lancering actief.
+5. ✅ Mollie Connect met iDEAL | Wero gebouwd; nog instellen en eerst in testmodus (ACTIES.md, stap 3). Het grootboek afstemmen met de uitbetalingen van Mollie. Fase lancering actief.
 6. Pushmeldingen.
 7. Foto's, moderatie, account verwijderen inclusief foto's in Storage.
 8. Besloten test met een handvol uitlaters en eigenaren in de pilotstad.

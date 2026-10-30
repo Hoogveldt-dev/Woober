@@ -72,7 +72,7 @@ export default function UitlaterProfiel() {
             {u.professioneel ? <Badge tekst="KVK" icoon="briefcase" kleur={kleuren.info} /> : null}
             {u.online ? <Badge tekst="NU ONLINE" icoon="radio-button-on" /> : null}
             {u.diensten.includes('uitlaten') ? <Badge tekst="UITLATEN" icoon="walk" kleur={kleuren.tekst} /> : null}
-            {u.diensten.includes('oppas') ? <Badge tekst="OPPAS AAN HUIS" icoon="home" kleur={kleuren.tekst} /> : null}
+            {u.diensten.includes('oppas') ? <Badge tekst="OPPAS" icoon="home" kleur={kleuren.tekst} /> : null}
           </View>
         </View>
 

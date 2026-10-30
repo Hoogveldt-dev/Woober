@@ -192,8 +192,6 @@ function ontdubbel(pad: Punt[]): Punt[] {
 
 const PARK_LUS = gladmaken(PARK_PAD, 8);
 
-export const PARK_LUS_GLAD = PARK_LUS;
-
 /** Wandelroute vanaf huis: naar het Stadspark, een of twee rondjes om de vijver, en terug */
 export function wandelroute(thuis: Punt, duur: number): Punt[] {
   const heen = routeTussen(thuis, PARK_INGANG);
