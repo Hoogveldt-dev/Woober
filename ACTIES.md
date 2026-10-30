@@ -117,3 +117,9 @@ Op volgorde, zoals in [PLAN.md](PLAN.md#volgorde-van-bouwen):
 6. **Besloten test** met een handvol uitlaters en eigenaren in Nijmegen.
 
 Los daarvan, zodra jij stap 5 hebt gedaan: de **koppelingen van Woober Fit**. Apple Gezondheid en Health Connect op de telefoon zelf (dan kan ook de stappenteller op Android, die staat nu uit); Strava en Garmin via Supabase Edge Functions.
+
+## 8. Onderhoud en open voorstellen, nog te kiezen
+
+- [ ] **`src/state/AppContext.tsx` opsplitsen** (ongeveer 1460 regels) en de live-schermen `src/app/wandeling/[id].tsx` en `src/app/opdracht/[id].tsx` gedeelde onderdelen geven.
+- [ ] **Echt boeken voor echte accounts** (zie stap 7.1 hierboven), met `startBetaling()` uit `src/lib/betalen.ts`.
+- [ ] **Voorstellen uit PLAN.md, Open vragen bouwen** zodra Kjell ze goedkeurt: de oppas die een verlenging eerst bevestigt (en wat als de eigenaar te laat is), vaste afspraken automatisch betalen via een machtiging, en geen contante betalingen.
