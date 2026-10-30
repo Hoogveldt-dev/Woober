@@ -236,7 +236,7 @@ Kan, maar nog niet beslissen voordat Mollie de open vragen in ACTIES.md (stap 3)
 - **Stripe Connect als terugvaloptie**, als Mollie geen uitlaters zonder KvK kan aansluiten: hetzelfde model met handmatige uitbetalingen; ongeveer 2 euro per actieve uitlater per maand, 0,25% plus een vast bedrag per uitbetaling, iDEAL | Wero ongeveer 0,29 euro (ook niet officieel bevestigd).
 - **Later**: betalen met saldo als eigenaar (bij Mollie een route naar de andere uitlater of een Balance Transfer, standaard maximaal 1.000 euro per maand) en storten door eigenaren. Storten pas als er omzet en vraag is, via een partner met een e-geldvergunning; Mangopay werkt met een offerte en in reviews worden een maandelijks minimum, opstartkosten en kosten per identiteitscontrole genoemd. Voor de lancering te duur en te onzeker.
 - In de app en de database staan het saldo, uitbetalen en betalen met saldo al, los van de betaalpartner (kolom `extern_id` voor het kenmerk bij de partner). In de demo blijft betalen met saldo zichtbaar; voor echte accounts komt het pas in de fase Later.
-- **Gebouwd (30 oktober 2026)**: de koppeling met Mollie in database, Edge Functions en app (README, Betalen met Mollie). Betalen per boeking met terugbetalen bij annuleren of weigeren; accepteren pas na betalen; een fooi telt pas na betalen; uitbetalen via routes uit de oudste betalingen; wat Woober bijlegt (tegoed, korting, verlengde oppas) via een overboeking van het eigen saldo; automatisch uitbetalen na 80 dagen; uitlaters koppelen hun Mollie-account onder Verificatie. Nog niet: de echte boekflow, apart betalen voor verlengen, terugboekingen door de bank, en boekingen meer dan 80 dagen vooruit (dan moet betalen later, dichter bij de wandeling).
+- **Gebouwd (30 oktober 2026)**: de koppeling met Mollie in database, Edge Functions en app (README, Betalen met Mollie). Betalen per boeking met terugbetalen bij annuleren of weigeren; accepteren pas na betalen; een fooi telt pas na betalen; uitbetalen via routes uit de oudste betalingen; wat Woober bijlegt (tegoed, korting, terugboekingen) via een overboeking van het eigen saldo; automatisch uitbetalen na 80 dagen; uitlaters koppelen hun Mollie-account onder Verificatie. Daarna ook: een extra uur oppas gaat pas in als het betaald is; terugboekingen via de bank draagt Woober (Mollie haalt bij een volledige terugboeking het doorgezette geld bij de uitlater terug en Woober vult dat aan) en een medewerker beoordeelt de eigenaar in Beheer; boeken kan hooguit 60 dagen vooruit. Nog niet: de echte boekflow.
 
 ### Een fase wisselen
 
@@ -289,7 +289,7 @@ De demo is zo opgezet dat elk nagespeeld onderdeel één plek heeft die later wo
 | Drukte nagebootst in `verdienmodel.ts` | Serverproces (Edge Function of `pg_cron`) vult `druktefactoren` |
 | Verificatie afvinken | **Nu**: een medewerker controleert de stukken per e-mail en zet de stappen aan in Beheer. Later Stripe Identity voor ID en de polis uploaden naar een privé-bucket |
 | Meldingen bovenin (`merk.tsx`) | Pushmeldingen via `expo-notifications`, aangestuurd door wijzigingen in de database |
-| Verlengen gaat direct (`verleng_oppas()`) | De oppas bevestigt eerst in de app; bij kaart en Apple Pay wordt de reservering opgehoogd, bij iDEAL volgt een tweede betaling |
+| Verlengen in de demo telt het extra uur als betaald | Het extra uur gaat pas in als het betaald is (betaling met soort `verlenging`, `verleng_tot()`); of de oppas eerst moet bevestigen, is nog een open vraag |
 | Foto's als kleurvlakken | Foto's uploaden naar Supabase Storage, alleen zichtbaar voor de deelnemers |
 | Plekken als nepdata (`src/data/plekken.ts`) | **Klaar**: tabel `plekken` met reviews, gevuld door het team (17 onderzochte plekken in Nijmegen, `supabase/plekken/nijmegen.json`) en door gebruikers; een medewerker controleert in Beheer. De demo houdt de nepdata |
 | Melden en blokkeren lokaal | **Klaar voor plekken en reviews**: meldingen komen in Beheer, een medewerker beslist met een besluit. Melden van personen volgt met de echte boekingen |
@@ -300,7 +300,7 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - Een hogere commissie gaat pas 15 dagen na aankondiging in; een ingepland model ligt vast.
 - Tegoed, actiecodes, Plus en grootboek veranderen alleen via databasefuncties of door Woober; het grootboek komt per boeking op nul uit.
 - Een dienst boeken kan alleen bij iemand die die dienst aanbiedt; oppas alleen in hele uren.
-- Verlengen kan alleen de eigenaar, en alleen bij oppas.
+- Verlengen kan alleen de eigenaar, alleen bij oppas, en het extra uur gaat pas in als het betaald is.
 - Adres, ophaalcode en Stripe-gegevens staan in aparte tabellen, omdat RLS rijen afschermt en geen kolommen.
 - Verificatievelden kan alleen Woober zetten (kolomrechten).
 - Een eerste wandeling kan pas na een afgeronde kennismaking; boeken bij een geblokkeerde gebruiker kan niet.

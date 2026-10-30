@@ -124,13 +124,18 @@ Eigenaren betalen per boeking via Mollie (iDEAL | Wero, Apple Pay of kaart). Mol
 **Wat er staat**
 - Database: `supabase/migrations/20261031000000_mollie.sql` met de tabellen `betalingen`, `mollie_koppelingen` en `mollie_routes`, en de functies die uitrekenen wat er terug moet en wat er gerouteerd wordt (oudste betalingen eerst). Getest met `npm run test:db`.
 - Edge Functions in `supabase/functions/` (Deno), gecontroleerd met `npm run check:functions`:
-  - `betaling-starten`: betaalpagina voor een boeking of fooi van de ingelogde eigenaar.
-  - `mollie-webhook`: Mollie meldt een wijziging; de functie haalt de stand zelf op en verwerkt die.
+  - `betaling-starten`: betaalpagina voor een boeking, een extra uur oppas of een fooi van de ingelogde eigenaar. Een extra uur gaat pas in als het betaald is.
+  - `mollie-webhook`: Mollie meldt een wijziging; de functie haalt de stand zelf op en verwerkt die, ook terugbetalingen en terugboekingen.
   - `mollie-aansluiten` en `mollie-oauth`: een uitlater koppelt zijn Mollie-account (OAuth). Klaar bij Mollie maakt zijn rekening geverifieerd.
   - `betalingen-verwerken`: elke paar minuten terugbetalen, automatisch uitbetalen na 80 dagen, routes en overboekingen naar uitlaters, en de stand van het aansluiten.
-- App: `src/lib/betalen.ts`, koppelen onder Verificatie, het Saldo-scherm voor echte accounts, en `/betaald` na de betaalpagina.
+- App: `src/lib/betalen.ts`, koppelen onder Verificatie, het Saldo-scherm voor echte accounts, `/betaald` na de betaalpagina, en Beheer, Terugboekingen.
 
-**Nog niet**: de echte boekflow (die roept `startBetaling()` aan; komt met Echt boeken), een aparte betaling voor een verlengde oppas (tot dan legt Woober het verschil bij via een overboeking), terugboekingen door de bank (chargebacks), en boekingen die meer dan 80 dagen vooruit worden betaald.
+**Regels**
+- Boeken kan hooguit 60 dagen vooruit (de database weigert verder), zodat betaald geld ruim binnen de 90 dagen van Mollie bij de uitlater kan zijn.
+- Routes nemen de oudste betalingen eerst en slaan betalingen ouder dan 88 dagen over. Automatisch uitbetalen gebeurt als geld 80 dagen op een saldo staat, of als het geld van uitlaters niet meer in de betalingen van de laatste 80 dagen past. Het aandeel van Woober (servicekosten, commissie) blijft over en gaat na 90 dagen vanzelf naar Woober.
+- Terugboekingen via de bank (creditcard, Apple Pay; bij iDEAL bestaan ze niet) draagt Woober. Wat nog niet gerouteerd was, legt Woober bij via een overboeking. Bij een volledige terugboeking haalt Mollie wat al naar uitlaters ging bij hen terug; Woober vult dat automatisch aan (een uitbetaling met reden `aanvulling`, niet van het saldo). Een medewerker beoordeelt de eigenaar in Beheer, Terugboekingen.
+
+**Nog niet**: de echte boekflow (die roept `startBetaling()` aan, ook met soort `verlenging` vanaf het oppasscherm; komt met Echt boeken).
 
 **Instellen** (eenmalig; ACTIES.md, stap 3):
 1. Mollie-account op naam van de onderneming; zet Mollie Connect for Marketplaces aan en vraag Mollie om vertraagde routing (bruto-afrekening) en Balance Transfers.
@@ -169,7 +174,7 @@ $$);
 
 7. Testen met de testsleutel van Mollie; daarna `MOLLIE_API_KEY` vervangen door de `live_`-sleutel.
 
-Aanroepen naar Mollie staan op één plek, `supabase/functions/_shared/mollie.ts`. Die met "Controleren" (routes en Balance Transfers) moet je bij het instellen naast de documentatie van Mollie leggen: die was tijdens het bouwen niet bereikbaar.
+Aanroepen naar Mollie staan op één plek, `supabase/functions/_shared/mollie.ts`. Die met "Controleren" (routes achteraf, Balance Transfers en het veld `amountChargedBack`) moet je bij het instellen naast de documentatie van Mollie leggen (Delayed routing, Balance transfers en de Payments API): die was tijdens het bouwen niet bereikbaar. Wat Mollie doet bij terugboekingen is wel nagelezen (Connect for Marketplaces, Processing payments).
 
 ## Builds voor de stores
 

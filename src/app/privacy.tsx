@@ -64,7 +64,7 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
   {
     titel: 'Betalen en uitbetalen',
     alineas: [
-      'Betalingen en uitbetalingen lopen via Mollie B.V. in Amsterdam, een betaalinstelling met een vergunning van De Nederlandsche Bank. Je betaalgegevens geef je op de betaalpagina van Mollie, niet aan Woober. Woober bewaart per betaling alleen het kenmerk, het bedrag, de betaalmethode en of het gelukt is.',
+      'Betalingen en uitbetalingen lopen via Mollie B.V. in Amsterdam, een betaalinstelling met een vergunning van De Nederlandsche Bank. Je betaalgegevens geef je op de betaalpagina van Mollie, niet aan Woober. Woober bewaart per betaling alleen het kenmerk, het bedrag, de betaalmethode en of het gelukt is. Laat je een betaling via je bank terugdraaien, dan bewaren we ook dat, en wat een medewerker daarover besloot.',
       'Als uitlater koppel je een eigen account bij Mollie; Mollie controleert daarbij je identiteit en je rekening. Woober bewaart alleen het kenmerk van je Mollie-account, hoe ver het aansluiten is en een sleutel om dat bij Mollie op te vragen.',
       'Mollie verwerkt deze gegevens ook zelf, volgens zijn eigen privacyverklaring. Grondslag voor Woober: de overeenkomst met jou.',
     ],
