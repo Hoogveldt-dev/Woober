@@ -187,7 +187,7 @@ export async function zoekLigging(vraag: string): Promise<{ lat: number; lng: nu
 
 // Uitlaters ------------------------------------------------------------------------------
 
-export type VerificatieStap = 'identiteit' | 'verzekering' | 'uitbetaling' | 'vog';
+export type VerificatieStap = 'identiteit' | 'uitbetaling';
 
 export interface UitlaterBeheer {
   id: string;
@@ -197,9 +197,9 @@ export interface UitlaterBeheer {
   wijk: string;
   diensten: string[];
   identiteit_ok: boolean;
-  verzekering_ok: boolean;
   uitbetaling_ok: boolean;
-  vog_ok: boolean;
+  /** 14 tot 18 jaar, aangemeld met toestemming van een ouder of voogd */
+  minderjarig: boolean;
   aangemaakt: string;
 }
 

@@ -72,7 +72,7 @@ Een beheerder ziet onder Account het menu **Beheer**. Demo-gebruikers en gewone 
 
 - **Cijfers**: accounts, eigenaren, uitlaters, honden, plekken en de wachtlijst.
 - **Plekken en meldingen**: nieuwe plekken goedkeuren of verbergen, gemelde plekken en reviews afhandelen met een besluit, elke plek aanpassen of op de kaart verschuiven, en de onderzochte plekken in Nijmegen inladen (`supabase/plekken/nijmegen.json`; de coördinaten zoekt de app bij OpenStreetMap).
-- **Uitlaters verifiëren**: per uitlater identiteit, verzekering, rekening en eventueel VOG aanzetten, met het e-mailadres om stukken op te vragen. Pas met de eerste drie is een uitlater zichtbaar.
+- **Uitlaters verifiëren**: per uitlater identiteit en rekening aanzetten, zodra Mollie die heeft goedgekeurd (de uitlater koppelt in de app). Pas met allebei is een uitlater zichtbaar. Onder de 18 staat er een label bij.
 - **Wachtlijst**: wie het wil weten zodra Woober in de buurt start, per postcodegebied.
 - **Terugboekingen**: betalingen die eigenaren via de bank lieten terugdraaien. Woober draagt het verlies; een medewerker neemt contact op met de eigenaar en legt een besluit vast.
 - **Teksten in de app**: de bewerkmodus en een lijst met alle teksten, zie hieronder.

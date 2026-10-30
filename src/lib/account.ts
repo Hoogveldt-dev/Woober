@@ -157,6 +157,11 @@ export async function maakAccount(g: Gebruiker, rol: Rol, voorwaardenVersie: str
     .from('adressen')
     .upsert({ gebruiker_id: id, straat_huisnummer: g.adres, postcode: normaalPostcode(g.postcode), plaats: g.plaats });
   if (adresFout) throw new Error(vertaal(adresFout.message));
+  // Onder de 18: wanneer de toestemming van een ouder of voogd is bevestigd. Alleen de gebruiker zelf en Woober zien dit.
+  if (g.minderjarig) {
+    const { error: toestemmingFout } = await supabase.from('toestemming_ouders').upsert({ gebruiker_id: id }, { ignoreDuplicates: true });
+    if (toestemmingFout) throw new Error(vertaal(toestemmingFout.message));
+  }
 }
 
 export async function bewaarRol(rol: Rol) {
@@ -279,7 +284,7 @@ function naarUitlater(r: Record<string, unknown>, voornaam: string): Uitlater {
     werkgebiedKm: Number(r.werkgebied_km),
     vervoer: r.vervoer as Vervoer,
     beschikbaarheid: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], ...(r.beschikbaarheid as Partial<Beschikbaarheid>) },
-    verificatie: { identiteit: Boolean(r.identiteit_ok), verzekering: Boolean(r.verzekering_ok), uitbetaling: Boolean(r.uitbetaling_ok), vog: Boolean(r.vog_ok) },
+    verificatie: { identiteit: Boolean(r.identiteit_ok), uitbetaling: Boolean(r.uitbetaling_ok) },
     beoordeling: 0,
     aantalBeoordelingen: 0,
     aantalWandelingen: 0,

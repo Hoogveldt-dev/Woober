@@ -29,7 +29,7 @@ const secties = (ORGANISATIE: Organisatie): Sectie[] => [
     titel: 'Welke gegevens we bewaren',
     punten: [
       'Je account: je e-mailadres en, als je inlogt met Apple of Google, de naam die je daar gebruikt. Bij Apple kun je je e-mailadres verbergen; we krijgen dan een doorstuuradres.',
-      'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent.',
+      'Wat je zelf invult: voornaam, adres, postcode en woonplaats, en of je eigenaar of uitlater bent. Ben je jonger dan 18, dan bewaren we wanneer je bevestigde dat je ouder of voogd toestemming geeft; dat ziet alleen Woober, geen andere gebruikers.',
       'Je honden: naam, ras, geboortedatum, karakter, bijzonderheden en dierenarts.',
       'Als uitlater of oppas: je profiel met tarieven, werkgebied, beschikbaarheid en leeftijd, en als je honden thuis ontvangt een beschrijving van je huis (zonder adres). Om je te kunnen verifiëren, ziet een medewerker van Woober je e-mailadres.',
       'Plekken en reviews die je schrijft. Andere gebruikers zien daarbij alleen je voornaam.',

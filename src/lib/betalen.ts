@@ -52,6 +52,12 @@ export async function startBetaling(boekingId: string, soort: 'boeking' | 'verle
   await openBijMollie(url, terug);
 }
 
+/**
+ * Koppelen met Mollie staat met een slotje op het verificatiescherm tot Kjell Mollie Connect heeft ingesteld (ACTIES.md).
+ * Zet dit dan op true; de code eronder is klaar.
+ */
+export const MOLLIE_KOPPELEN_KLAAR = false;
+
 /** Uitlater: eigen Mollie-account koppelen, zodat zijn saldo naar hem kan */
 export async function koppelMollie() {
   const terug = appAdres('verificatie');

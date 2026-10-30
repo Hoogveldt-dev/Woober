@@ -73,7 +73,7 @@ export const TEKSTEN = {
   'verificatie.echt': {
     groep: 'Uitlaters',
     label: 'Uitleg bij verificatie',
-    standaard: 'Je profiel is opgeslagen. Woober neemt per e-mail contact met je op om je identiteit, verzekering en rekening te controleren. Daarna kun je online.',
+    standaard: 'Je profiel is opgeslagen. Je identiteit en rekening koppel je straks hier in de app via onze betaalpartner Mollie. Zodra dat klaar is, kun je online.',
     lang: true,
   },
   'veiligheid.nood': {

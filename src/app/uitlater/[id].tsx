@@ -88,10 +88,8 @@ export default function UitlaterProfiel() {
 
         <Sectie>Gecontroleerd door Woober</Sectie>
         <View style={{ gap: 8, marginBottom: ruimte(5) }}>
-          <Check aan tekst="18 jaar of ouder" />
+          <Check aan tekst={u.leeftijd >= 18 ? '18 jaar of ouder' : 'Jonger dan 18, met toestemming van ouder of voogd'} />
           <Check aan={u.verificatie.identiteit} tekst="Identiteit gecontroleerd" />
-          <Check aan={u.verificatie.verzekering} tekst="Aansprakelijkheidsverzekering" />
-          <Check aan={u.verificatie.vog} tekst={u.verificatie.vog ? 'Verklaring Omtrent het Gedrag' : 'Nog geen VOG'} />
         </View>
 
         <Sectie>Eigen tarief</Sectie>

@@ -33,6 +33,7 @@ Zie @AGENTS.md voor de Expo-regels (Expo SDK 58, Expo Router, routes in `src/app
 ## Afspraken
 - Marktplaats, geen centrale (Wet platformwerk): de uitlater kiest zelf tarief, werkgebied en tijden; de eigenaar kiest de uitlater; weigeren en afzeggen hebben geen gevolgen en worden niet geteld. Voeg geen automatische toewijzing, vaste prijzen, acceptatiegraad of automatische schorsing toe zonder dat Kjell erom vraagt.
 - Meldingen en schorsingen beoordeelt altijd een mens.
+- Laagdrempelig voor uitlaters en oppassen: een account kan vanaf 14 jaar (onder de 18 met toestemming van een ouder of voogd, bewaard in `toestemming_ouders`, alleen zichtbaar voor de gebruiker zelf en beheer). Verificatie is alleen identiteit en rekening, allebei in de app via Mollie. Vraag geen verzekering en geen VOG, en laat niets via e-mail lopen wat in de app kan.
 - Toon andere gebruikers nooit e-mail of adres. Het adres van een eigenaar ziet een uitlater pas na een geaccepteerde boeking, en nooit als de hond op een ander punt wordt afgegeven of bij de oppas thuis is; dan ziet de eigenaar na accepteren het adres van de oppas. Afspraken over het huis (camera's, voorzieningen, wat privé is) ziet de oppas al bij het verzoek.
 - Locatie van de uitlater alleen tijdens een wandeling, alleen voor de eigenaar van die wandeling, en niet gebruiken om uitlaters te beoordelen.
 - Reviews alleen na een betaalde wandeling.

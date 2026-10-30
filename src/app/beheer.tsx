@@ -101,7 +101,7 @@ export default function Beheer() {
           sub={cijfers ? `Te bekijken: ${cijfers.plekken_nieuw} ${cijfers.plekken_nieuw === 1 ? 'plek' : 'plekken'}, ${cijfers.meldingen_open} ${cijfers.meldingen_open === 1 ? 'melding' : 'meldingen'}` : 'Nieuwe plekken, meldingen, inladen'}
           onPress={() => router.push('/beheer-plekken')}
         />
-        <MenuRij icoon="shield-checkmark" titel="Uitlaters verifiëren" sub="Identiteit, verzekering en rekening" onPress={() => router.push('/beheer-uitlaters')} />
+        <MenuRij icoon="shield-checkmark" titel="Uitlaters verifiëren" sub="Identiteit en rekening" onPress={() => router.push('/beheer-uitlaters')} />
         <MenuRij icoon="people" titel="Wachtlijst" sub="Wie het wil weten zodra Woober in de buurt start" onPress={() => router.push('/beheer-wachtlijst')} />
         <MenuRij icoon="return-down-back" titel="Terugboekingen" sub="Betalingen die eigenaren via de bank lieten terugdraaien" onPress={() => router.push('/beheer-terugboekingen')} />
       </Blok>

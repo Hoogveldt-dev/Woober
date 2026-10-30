@@ -54,12 +54,10 @@ export interface Review {
   datum: number;
 }
 
+/** Wat Woober controleert voordat een uitlater online kan. Geen verzekering en geen VOG: die vragen we niet. */
 export interface Verificatie {
   identiteit: boolean;
-  verzekering: boolean;
   uitbetaling: boolean;
-  /** Verklaring Omtrent het Gedrag: open punt of dit gevraagd mag worden */
-  vog: boolean;
 }
 
 /** Waar een oppas oppast: bij de eigenaar thuis of bij de oppas thuis */
@@ -319,6 +317,8 @@ export interface Gebruiker {
   adres: string;
   /** Alleen in de demo: vaste plek op de kaart */
   thuis: Punt;
+  /** 14 tot 18 jaar: aangemeld met toestemming van een ouder of voogd */
+  minderjarig?: boolean;
 }
 
 export interface AppMelding {

@@ -244,11 +244,7 @@ export default function Bevestigen() {
               : `Je betaalt nu met ${METHODE_NAAM[methode]}. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur meteen in de app.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}
         </Melding>
         <Melding type="goed">
-          {bijOppas
-            ? `${u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering.`
-            : oppas
-            ? `${u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die ook schade in huis dekt.`
-            : `${u.voornaam} heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering die schade tijdens het uitlaten dekt.`}
+          {u.voornaam} heeft een gecontroleerde identiteit.
         </Melding>
         <Text style={s.voorwaarden}>
           Gratis annuleren tot {GRATIS_ANNULEREN_UUR} uur van tevoren, of zolang {u.voornaam} nog niet onderweg is. Daarna krijgt {u.voornaam} {Math.round(ANNULERINGSDEEL * 100)}% van het tarief.

@@ -101,7 +101,7 @@ function WerkDemo() {
     inhoud = (
       <>
         <Text style={s.titel}>Nog even en je kunt aan de slag</Text>
-        <Melding type="waarschuwing">Rond eerst je verificatie af: identiteit, verzekering en uitbetaalrekening.</Melding>
+        <Melding type="waarschuwing">Rond eerst je verificatie af: identiteit en uitbetaalrekening.</Melding>
         <Knop titel="Verificatie afronden" icoon="shield-checkmark" onPress={() => router.push('/verificatie')} />
       </>
     );

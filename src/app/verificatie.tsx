@@ -4,41 +4,27 @@ import { useCallback, useState, type ComponentProps } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Bewerkbaar } from '../components/Bewerkbaar';
 import { gedeeldeStijl } from '../components/blokken';
-import { Badge, Knop, Melding } from '../components/ui';
-import { koppelMollie, mijnKoppeling, type Koppelstatus } from '../lib/betalen';
+import { KnopOpSlot } from '../components/Slotje';
+import { Knop, Melding } from '../components/ui';
+import { koppelMollie, mijnKoppeling, MOLLIE_KOPPELEN_KLAAR, type Koppelstatus } from '../lib/betalen';
 import { klaarVoorWerk, useApp } from '../state/AppContext';
 import { kleuren, radius, ruimte } from '../theme';
 import type { Verificatie } from '../types';
 import { useTekst } from '../state/Teksten';
 
-const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: ComponentProps<typeof Ionicons>['name']; verplicht: boolean }[] = [
+// Geen verzekering en geen VOG: de eigenaar blijft aansprakelijk voor de hond, en een VOG kost geld en tijd
+const STAPPEN: { id: keyof Verificatie; titel: string; tekst: string; icoon: ComponentProps<typeof Ionicons>['name'] }[] = [
   {
     id: 'identiteit',
     titel: 'Identiteit',
-    tekst: 'Foto van je paspoort of ID-kaart en een selfie. Gecontroleerd door onze betaalpartner; Woober bewaart zelf geen kopie.',
+    tekst: 'Foto van je paspoort of ID-kaart en een selfie, in de app. Gecontroleerd door onze betaalpartner; Woober bewaart zelf geen kopie.',
     icoon: 'id-card',
-    verplicht: true,
-  },
-  {
-    id: 'verzekering',
-    titel: 'Aansprakelijkheidsverzekering',
-    tekst: 'Een polis die schade dekt die een hond onder jouw toezicht veroorzaakt. Een gewone AVP dekt dit vaak niet bij betaald uitlaten.',
-    icoon: 'umbrella',
-    verplicht: true,
   },
   {
     id: 'uitbetaling',
     titel: 'Rekening voor uitbetaling',
     tekst: 'Een eigen account bij onze betaalpartner Mollie, met je IBAN. Daar komt je saldo op als je uitbetaalt; Mollie controleert je gegevens.',
     icoon: 'card',
-    verplicht: true,
-  },
-  {
-    id: 'vog',
-    titel: 'Verklaring Omtrent het Gedrag',
-    tekst: 'Optioneel. Eigenaren zien een VOG als extra vertrouwen op je profiel.',
-    icoon: 'document-text',
-    verplicht: false,
   },
 ];
 
@@ -59,8 +45,8 @@ export default function VerificatieScherm() {
           <Ionicons name="person" size={20} color={kleuren.like} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.titel}>18 jaar of ouder</Text>
-          <Text style={s.tekst}>Bevestigd bij het aanmelden.</Text>
+          <Text style={s.titel}>14 jaar of ouder</Text>
+          <Text style={s.tekst}>Bevestigd bij het aanmelden. Ben je jonger dan 18, dan met toestemming van je ouder of voogd.</Text>
         </View>
         <Ionicons name="checkmark-circle" size={24} color={kleuren.like} />
       </View>
@@ -73,13 +59,18 @@ export default function VerificatieScherm() {
               <Ionicons name={stap.icoon} size={20} color={gedaan ? kleuren.like : kleuren.gedempt} />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <Text style={s.titel}>{stap.titel}</Text>
-                {!stap.verplicht ? <Badge tekst="OPTIONEEL" kleur={kleuren.gedempt} /> : null}
-              </View>
+              <Text style={s.titel}>{stap.titel}</Text>
               <Text style={s.tekst}>{stap.tekst}</Text>
               {!gedaan && modus === 'demo' ? <Knop titel="Controleren (demo)" variant="secundair" onPress={() => verifieer(stap.id)} stijl={{ marginTop: ruimte(2), alignSelf: 'flex-start', height: 42 }} /> : null}
-              {!gedaan && modus === 'echt' && stap.id === 'uitbetaling' ? <MollieKoppeling /> : null}
+              {!gedaan && modus === 'echt' && stap.id === 'uitbetaling' ? (
+                MOLLIE_KOPPELEN_KLAAR ? (
+                  <MollieKoppeling />
+                ) : (
+                  <View style={{ marginTop: ruimte(2) }}>
+                    <KnopOpSlot titel="Koppelen via Mollie" icoon="card" />
+                  </View>
+                )
+              ) : null}
             </View>
             {gedaan ? <Ionicons name="checkmark-circle" size={24} color={kleuren.like} /> : null}
           </View>
@@ -96,7 +87,7 @@ export default function VerificatieScherm() {
           <Melding type="info">
             {modus === 'echt'
               ? uitlegEcht
-              : 'In de echte app regelt onze betaalpartner de controle van je identiteit en je rekening. In deze demo vink je de stappen zelf af.'}
+              : 'In de echte app regelt onze betaalpartner de controle van je identiteit en je rekening, in de app. In deze demo vink je de stappen zelf af.'}
           </Melding>
         </Bewerkbaar>
       )}
