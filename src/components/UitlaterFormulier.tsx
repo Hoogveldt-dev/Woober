@@ -139,7 +139,7 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
             <Label>Jouw tarief per wandeling</Label>
             <View style={s.tarieven}>
               {DUREN.map((d) => (
-                <View key={d} style={s.tarief}>
+                <View key={d} style={[s.tariefKader, s.tarief]}>
                   <Text style={s.tariefDuur}>{d} min</Text>
                   <View style={s.tariefInvoer}>
                     <Text style={s.euroTeken}>€</Text>
@@ -162,7 +162,7 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
           <>
             <View style={{ height: ruimte(5) }} />
             <Label>Jouw uurtarief voor oppas</Label>
-            <View style={[s.tarief, { flex: 0, width: 140 }]}>
+            <View style={[s.tariefKader, s.uurtarief]}>
               <Text style={s.tariefDuur}>per uur</Text>
               <View style={s.tariefInvoer}>
                 <Text style={s.euroTeken}>€</Text>
@@ -257,7 +257,9 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
 
 const s = StyleSheet.create({
   tarieven: { flexDirection: 'row', gap: ruimte(2) },
-  tarief: { flex: 1, borderWidth: 1.5, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },
+  tariefKader: { borderWidth: 1.5, borderColor: kleuren.rand, borderRadius: radius.midden, padding: ruimte(3) },
+  tarief: { flex: 1 },
+  uurtarief: { alignSelf: 'flex-start', width: 160 },
   tariefDuur: { fontSize: 13, fontWeight: '700', color: kleuren.gedempt },
   tariefInvoer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   euroTeken: { fontSize: 20, fontWeight: '800', color: kleuren.tekst, marginRight: 2 },

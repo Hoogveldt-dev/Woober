@@ -161,7 +161,7 @@ export default function Bevestigen() {
 
         <Melding type="info">
           {wekelijks
-            ? `${u.voornaam} bevestigt de vaste ${keer}. Je betaalt telkens pas na afloop.`
+            ? `${u.voornaam} bevestigt de vaste ${keer}. Je betaalt elke keer vooraf; het geld gaat pas naar ${u.voornaam} als de ${keer} is geweest.`
             : rest === 0
               ? `Je betaalt met je saldo. Annuleer je op tijd, dan komt alles terug op je saldo. Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`
               : `Je betaalt nu met ${METHODE_NAAM[methode]}. Annuleer je op tijd, dan krijg je alles terug.${oppas ? ' Verleng je, dan betaal je het extra uur meteen in de app.' : ''} Een fooi kan achteraf en gaat volledig naar ${u.voornaam}.`}

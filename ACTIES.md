@@ -28,7 +28,8 @@ Zonder deze stappen werkt aanmelden met een echt account niet zodra de PR op woo
 
 ## 2. Direct daarna, in de app onder Beheer
 
-- [ ] **Teksten**: vul bij Privacyverklaring de naam van de onderneming, KvK-nummer, vestigingsadres en het e-mailadres voor privacyvragen in, en bij Contact het e-mailadres voor hulp. Nu staan daar nog `[KvK-nummer]` en dergelijke, ook in de gebruiksvoorwaarden.
+- [ ] **Teksten**: vul bij Privacyverklaring het e-mailadres voor privacyvragen in, en bij Contact het e-mailadres voor hulp (in de app onder Beheer, Teksten). Naam, KvK-nummer (71670912) en adres staan erin.
+- [ ] **Handelsnaam Woober inschrijven bij de KvK**: in het Handelsregister staat alleen Woofer Inc. Een naam die je gebruikt, moet ingeschreven zijn; een extra handelsnaam toevoegen kan online bij de KvK. Vraag daarbij ook na of "Inc." mag voor jouw rechtsvorm: een handelsnaam mag geen verkeerde indruk van de rechtsvorm geven.
 - [ ] **Plekken, Inladen**: laad de 17 onderzochte plekken in Nijmegen in (bronnen in `supabase/plekken/nijmegen.json`). Je telefoon of browser zoekt de coördinaten op bij OpenStreetMap.
 - [ ] **Plekken, Alle plekken**: open elke plek en schuif hem zo nodig op de juiste plek. Parken komen soms in het midden van een wijk uit. Controleer extra: Goffertpark, Stadspark Meijhorst, Strandje Spiegelwaal en Pimpelmees; daarvoor vond ik maar één bron, of een oude.
 - [ ] **Mailboxen** aanmaken voor de adressen die je invult, zoals hulp@ en privacy@woober.nl.

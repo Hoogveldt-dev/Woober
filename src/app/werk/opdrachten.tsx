@@ -58,7 +58,7 @@ export default function Opdrachten() {
             {eerder.map(rij)}
           </>
         ) : null}
-        <Text style={[gedeeldeStijl.klein, { marginTop: ruimte(4) }]}>Geplande opdrachten kun je altijd afzeggen, zonder gevolgen voor je account.</Text>
+        <Text style={[gedeeldeStijl.klein, { marginTop: ruimte(4) }]}>Een opdracht afzeggen kan altijd en wordt niet bijgehouden. Zeg wel zo vroeg mogelijk af: zeg je minder dan 2 uur van tevoren af, dan kan de eigenaar dat melden en kijkt een medewerker van Woober ernaar.</Text>
       </ScrollView>
     </SafeAreaView>
   );

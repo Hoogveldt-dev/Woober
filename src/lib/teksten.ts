@@ -89,9 +89,9 @@ export const TEKSTEN = {
     standaard: 'Concept. Deze voorwaarden zijn nog niet definitief en nog niet juridisch gecontroleerd.',
     hulp: 'Leeg laten zodra de voorwaarden definitief zijn.',
   },
-  'privacy.organisatie': { groep: 'Privacyverklaring', label: 'Naam onderneming', standaard: '[Naam onderneming] (handelsnaam Woober)' },
-  'privacy.kvk': { groep: 'Privacyverklaring', label: 'KvK-nummer', standaard: '[KvK-nummer]' },
-  'privacy.adres': { groep: 'Privacyverklaring', label: 'Vestigingsadres', standaard: '[Vestigingsadres]' },
+  'privacy.organisatie': { groep: 'Privacyverklaring', label: 'Naam onderneming', standaard: 'Woofer Inc. (handelsnaam Woober)' },
+  'privacy.kvk': { groep: 'Privacyverklaring', label: 'KvK-nummer', standaard: '71670912' },
+  'privacy.adres': { groep: 'Privacyverklaring', label: 'Vestigingsadres', standaard: 'Kwekerijweg 81, 6525 RZ Nijmegen' },
   'privacy.email': { groep: 'Privacyverklaring', label: 'E-mailadres voor privacyvragen', standaard: '[privacy@woober.nl]' },
   'privacy.versie': { groep: 'Privacyverklaring', label: 'Datum van deze versie', standaard: '30 oktober 2026' },
   'privacy.concept': {

@@ -98,7 +98,7 @@ export default function Opdracht() {
             <Knop titel="Nu vertrekken (demo)" icoon="bicycle" variant="secundair" onPress={() => startNu(b.id)} />
           )}
           <Knop titel="Afzeggen" variant="tekst" onPress={() => { annuleer(b.id); terug(); }} />
-          <Text style={s.klein}>Afzeggen heeft geen gevolgen voor je account. Laat het {k.voornaam} wel zo snel mogelijk weten.</Text>
+          <Text style={s.klein}>Afzeggen wordt niet bijgehouden. Zeg je minder dan 2 uur van tevoren af, dan kan {k.voornaam} dat melden en kijkt een medewerker van Woober ernaar.</Text>
         </>
       );
       break;
