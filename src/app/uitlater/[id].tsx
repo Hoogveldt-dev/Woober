@@ -14,8 +14,6 @@ import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 import type { Dag } from '../../types';
 
-const VERVOER = { lopend: 'Lopend', fiets: 'Fiets', auto: 'Auto of bus' } as const;
-
 function Check({ aan, tekst }: { aan: boolean; tekst: string }) {
   return (
     <View style={s.check}>
@@ -110,7 +108,6 @@ export default function UitlaterProfiel() {
 
         <Sectie>Praktisch</Sectie>
         <Blok>
-          <Rij label="Komt naar je toe" waarde={VERVOER[u.vervoer]} />
           <Rij label="Maximaal" waarde={`${u.maxHonden} ${u.maxHonden === 1 ? 'hond' : 'honden'} tegelijk`} />
           <Rij label="Werkgebied" waarde={`${String(u.werkgebiedKm).replace('.', ',')} km`} />
         </Blok>

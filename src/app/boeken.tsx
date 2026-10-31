@@ -19,7 +19,6 @@ import type { Dag, Dienst, Moment, OppasPlek } from '../types';
 const TIJDEN = ['07:30', '09:00', '10:30', '12:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'];
 /** Oppas vooral 's avonds, maar ook overdag als je een dag weg bent */
 const OPPAS_TIJDEN = ['09:00', '13:00', '17:00', '18:00', '19:00', '19:30', '20:00', '21:00'];
-const VERVOER_TEKST = { lopend: 'lopend', fiets: 'op de fiets', auto: 'met de auto' } as const;
 
 function dagLabel(i: number, nu: number) {
   if (i === 0) return 'Vandaag';
@@ -46,7 +45,7 @@ function OptieRij({ o, gekozen, onKies, onInfo, dienst }: { o: UitlaterOptie; ge
         </View>
         <Sterren waarde={o.u.beoordeling} aantal={o.u.aantalBeoordelingen} grootte={13} />
         <Text style={s.optieSub} numberOfLines={1}>
-          {o.beschikbaar ? `${o.etaMin} min, ${formatAfstand(o.afstandM)}, ${VERVOER_TEKST[o.u.vervoer]}` : o.reden}
+          {o.beschikbaar ? `${o.etaMin} min, ${formatAfstand(o.afstandM)}` : o.reden}
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
@@ -131,7 +130,6 @@ export default function Boeken() {
         punt: o.u.positie,
         naam: o.u.voornaam,
         kleur: o.u.kleur,
-        vervoer: o.u.vervoer,
         actief: o.u.id === gekozen,
         bubbel: o.u.id === gekozen ? euro(o.prijs.totaal) : undefined,
         onPress: () => setGekozen(o.u.id),

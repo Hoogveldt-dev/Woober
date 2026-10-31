@@ -76,7 +76,7 @@ Zelfde stappen als uitlaten, met deze verschillen:
 
 ### Uitlater of oppas
 
-1. Aanmelden en profiel invullen: welke diensten (uitlaten, oppas of allebei), over jou, ervaring, particulier of bedrijf met KvK, vervoer, **eigen tarief** per wandelduur en **eigen uurtarief** voor oppas, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
+1. Aanmelden en profiel invullen: welke diensten (uitlaten, oppas of allebei), over jou, ervaring, particulier of bedrijf met KvK, **eigen tarief** per wandelduur en **eigen uurtarief** voor oppas, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
 2. Verificatie in de app: identiteit en uitbetaalrekening, allebei via Mollie. Geen verzekering (de eigenaar is aansprakelijk voor de hond) en geen VOG (kost geld en tijd; Woober moet laagdrempelig zijn). Vanaf 14 jaar, onder de 18 met toestemming van een ouder of voogd: uitlaten en oppassen past bij jongeren. Pas daarna online.
 3. Online gaan met de grote knop op de kaart. Verzoeken uit de buurt verschijnen als kaart onderin, met hond, afstand, moment, duur en wat je ontvangt.
 4. Accepteren of weigeren. Weigeren heeft geen gevolgen en wordt niet geteld.
