@@ -632,6 +632,9 @@ check('ongeldige rol kan niet', !!(await als(E, `update public.profielen set rol
 check('rol van een ander niet aan te passen', (await als(X, `update public.profielen set rol = 'uitlater' where id = '${E}' returning id`)).rows?.length === 0);
 check('adres zonder coördinaten', !(await als(X, `insert into public.adressen (gebruiker_id, straat_huisnummer, postcode, plaats) values ('${X}', 'Rijnkade 1', '6811 AA', 'Arnhem')`)).fout);
 check('leeftijd op uitlaatprofiel', !(await als(U, `update public.uitlaters set leeftijd = 31 where id = '${U}'`)).fout);
+// De app bewaart het profiel met update en dan insert: PostgREST-upsert zet ook id = excluded.id, en op id is er geen UPDATE-recht
+check('upsert met id in de SET-lijst wordt geweigerd', !!(await als(U, `insert into public.uitlaters (id, tarief_30, tarief_45, tarief_60) values ('${U}', 1200, 1600, 1900) on conflict (id) do update set id = excluded.id, tarief_30 = excluded.tarief_30`)).fout);
+check('profiel bijwerken zonder id lukt', (await als(U, `update public.uitlaters set wijk = 'Centrum' where id = '${U}' returning id`)).rows?.length === 1);
 check('uitlaten kan vanaf 14 jaar', !(await als(U, `update public.uitlaters set leeftijd = 14 where id = '${U}'`)).fout);
 check('niet jonger dan 14', !!(await als(U, `update public.uitlaters set leeftijd = 13 where id = '${U}'`)).fout);
 await als(U, `update public.uitlaters set leeftijd = 31 where id = '${U}'`);

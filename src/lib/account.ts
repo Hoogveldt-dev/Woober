@@ -194,11 +194,14 @@ export async function verwijderHond(id: string) {
   if (error) throw new Error(vertaal(error.message));
 }
 
-/** Het eigen uitlaatprofiel. Verificatie zet alleen Woober, na controle. */
+/**
+ * Het eigen uitlaatprofiel. Verificatie zet alleen Woober, na controle.
+ * Bewust geen upsert: die zet ook `id = excluded.id`, en op de kolom id heeft een gebruiker geen UPDATE-recht, dus de
+ * database weigerde elke keer (permission denied). Eerst bijwerken, en bestaat de rij nog niet, aanmaken.
+ */
 export async function bewaarUitlaatprofiel(p: Uitlater) {
   const id = await mijnId();
-  const { error } = await supabase.from('uitlaters').upsert({
-    id,
+  const velden = {
     leeftijd: p.leeftijd,
     wijk: p.wijk,
     bio: p.bio,
@@ -218,7 +221,11 @@ export async function bewaarUitlaatprofiel(p: Uitlater) {
     werkgebied_km: p.werkgebiedKm,
     vervoer: p.vervoer,
     beschikbaarheid: p.beschikbaarheid,
-  });
+  };
+  const bijgewerkt = await supabase.from('uitlaters').update(velden).eq('id', id).select('id');
+  if (bijgewerkt.error) throw new Error(vertaal(bijgewerkt.error.message));
+  if (bijgewerkt.data.length > 0) return;
+  const { error } = await supabase.from('uitlaters').insert({ id, ...velden });
   if (error) throw new Error(vertaal(error.message));
 }
 
