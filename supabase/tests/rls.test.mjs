@@ -57,7 +57,7 @@ const r2 = await als(U, `update public.uitlaters set identiteit_ok = true where 
 check('uitlater kan zichzelf niet verifiëren', !!r2.fout, JSON.stringify(r2));
 const r3 = await als(E, `select * from public.uitlaters`);
 check('ongeverifieerde uitlater onzichtbaar', r3.rows?.length === 0, JSON.stringify(r3));
-await db.exec(`update public.uitlaters set identiteit_ok = true, verzekering_ok = true, uitbetaling_ok = true where id = '${U}'`);
+await db.exec(`update public.uitlaters set identiteit_ok = true, uitbetaling_ok = true where id = '${U}'`);
 const r4 = await als(E, `select voornaam from public.profielen p join public.uitlaters u on u.id = p.id`);
 check('geverifieerde uitlater zichtbaar', r4.rows?.length === 1, JSON.stringify(r4));
 const r5 = await als(E, `select public.vraag_boeking_aan('uitlaten', '${U}', array['44444444-4444-4444-4444-444444444444']::uuid[], 30::smallint, null, 'thuis', '', 'ideal')`);
@@ -424,11 +424,15 @@ check('beheerder verwijdert review', (await als(U, `delete from public.plek_revi
 const bu = await als(U, `select voornaam, email, identiteit_ok from public.beheer_uitlaters()`);
 check('beheerder ziet uitlaters met e-mail', bu.rows?.some((r) => r.email === 'sanne@test.nl'), JSON.stringify(bu));
 check('gewone gebruiker ziet uitlaters voor beheer niet', !!(await als(E, `select * from public.beheer_uitlaters()`)).fout);
-check('beheerder zet verificatie', !(await als(U, `select public.beheer_zet_verificatie('${U}', 'vog', true)`)).fout);
-check('verificatie staat', (await db.query(`select vog_ok from public.uitlaters where id = '${U}'`)).rows[0]?.vog_ok === true);
+check('beheerder zet verificatie', !(await als(U, `select public.beheer_zet_verificatie('${U}', 'identiteit', false)`)).fout);
+check('verificatie staat', (await db.query(`select identiteit_ok from public.uitlaters where id = '${U}'`)).rows[0]?.identiteit_ok === false);
+check('zonder identiteit niet zichtbaar', (await als(E, `select id from public.uitlaters where id = '${U}'`)).rows?.length === 0);
+await als(U, `select public.beheer_zet_verificatie('${U}', 'identiteit', true)`);
+check('verzekering en VOG zijn geen stap meer', /Onbekende stap/.test((await als(U, `select public.beheer_zet_verificatie('${U}', 'vog', true)`)).fout ?? ''));
+check('geen kolommen voor verzekering en VOG', (await db.query(`select count(*)::int as n from information_schema.columns where table_name = 'uitlaters' and column_name in ('verzekering_ok', 'vog_ok')`)).rows[0].n === 0);
 check('onbekende verificatiestap kan niet', /Onbekende stap/.test((await als(U, `select public.beheer_zet_verificatie('${U}', 'id_ok; drop table x', true)`)).fout ?? ''));
-check('onbekende uitlater', /Onbekende uitlater/.test((await als(U, `select public.beheer_zet_verificatie('${X}', 'vog', true)`)).fout ?? ''));
-check('gewone gebruiker verifieert niet', !!(await als(E, `select public.beheer_zet_verificatie('${U}', 'vog', false)`)).fout);
+check('onbekende uitlater', /Onbekende uitlater/.test((await als(U, `select public.beheer_zet_verificatie('${X}', 'identiteit', true)`)).fout ?? ''));
+check('gewone gebruiker verifieert niet', !!(await als(E, `select public.beheer_zet_verificatie('${U}', 'identiteit', false)`)).fout);
 const cf = await als(U, `select * from public.beheer_cijfers()`);
 check('cijfers voor beheer', cf.rows?.[0]?.wachtlijst === 1 && cf.rows?.[0]?.accounts >= 2, JSON.stringify(cf));
 check('gewone gebruiker ziet geen cijfers', !!(await als(E, `select * from public.beheer_cijfers()`)).fout);
@@ -610,7 +614,7 @@ const alsAnon = async (q) => {
   await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
   try { return { rows: (await db.query(q)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
 };
-for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`, `public.mijn_saldo()`, `public.vraag_uitbetaling_aan(1000)`, `public.mijn_mollie_koppeling()`, `public.beheer_terugboekingen()`]) {
+for (const f of [`public.kent_elkaar('${E}', '${U}')`, `public.is_geblokkeerd('${E}', '${X}')`, `public.plekken_afgelopen_dag('${U}')`, `public.verzilver_code('X')`, `public.actief_verdienmodel()`, `public.mijn_saldo()`, `public.vraag_uitbetaling_aan(1000)`, `public.mijn_mollie_koppeling()`, `public.beheer_terugboekingen()`, `public.beheer_uitlaters()`]) {
   check(`zonder account geen ${f.split('(')[0]}`, /permission denied/.test((await alsAnon(`select ${f}`)).fout ?? ''));
 }
 check('zonder account wel teksten lezen', !(await alsAnon(`select * from public.teksten`)).fout);
@@ -628,6 +632,18 @@ check('ongeldige rol kan niet', !!(await als(E, `update public.profielen set rol
 check('rol van een ander niet aan te passen', (await als(X, `update public.profielen set rol = 'uitlater' where id = '${E}' returning id`)).rows?.length === 0);
 check('adres zonder coördinaten', !(await als(X, `insert into public.adressen (gebruiker_id, straat_huisnummer, postcode, plaats) values ('${X}', 'Rijnkade 1', '6811 AA', 'Arnhem')`)).fout);
 check('leeftijd op uitlaatprofiel', !(await als(U, `update public.uitlaters set leeftijd = 31 where id = '${U}'`)).fout);
+// De app bewaart het profiel met update en dan insert: PostgREST-upsert zet ook id = excluded.id, en op id is er geen UPDATE-recht
+check('upsert met id in de SET-lijst wordt geweigerd', !!(await als(U, `insert into public.uitlaters (id, tarief_30, tarief_45, tarief_60) values ('${U}', 1200, 1600, 1900) on conflict (id) do update set id = excluded.id, tarief_30 = excluded.tarief_30`)).fout);
+check('profiel bijwerken zonder id lukt', (await als(U, `update public.uitlaters set wijk = 'Centrum' where id = '${U}' returning id`)).rows?.length === 1);
+check('uitlaten kan vanaf 14 jaar', !(await als(U, `update public.uitlaters set leeftijd = 14 where id = '${U}'`)).fout);
+check('niet jonger dan 14', !!(await als(U, `update public.uitlaters set leeftijd = 13 where id = '${U}'`)).fout);
+await als(U, `update public.uitlaters set leeftijd = 31 where id = '${U}'`);
+// Toestemming van een ouder of voogd: alleen de gebruiker zelf en Woober
+check('toestemming ouders bewaren', !(await als(E, `insert into public.toestemming_ouders (gebruiker_id) values ('${E}')`)).fout);
+check('geen toestemming voor een ander', !!(await als(E, `insert into public.toestemming_ouders (gebruiker_id) values ('${X}')`)).fout);
+check('eigen toestemming lezen', (await als(E, `select gebruiker_id from public.toestemming_ouders`)).rows?.length === 1);
+check('toestemming van een ander niet te lezen', (await als(X, `select gebruiker_id from public.toestemming_ouders`)).rows?.length === 0);
+check('toestemming niet terug te draaien', (await als(E, `delete from public.toestemming_ouders returning gebruiker_id`)).rows?.length !== 1);
 check('niet ingelogd geen account verwijderen', !!(await als('', `select public.verwijder_mijn_account()`)).fout);
 check('eigen account verwijderen', !(await als(X, `select public.verwijder_mijn_account()`)).fout);
 const weg = await db.query(`select (select count(*) from auth.users where id = '${X}')::int as u, (select count(*) from public.profielen where id = '${X}')::int as p, (select count(*) from public.adressen where gebruiker_id = '${X}')::int as a`);

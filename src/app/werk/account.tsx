@@ -52,7 +52,7 @@ export default function UitlaterAccount() {
           <MenuRij
             icoon="shield-checkmark"
             titel="Verificatie en uitbetaling"
-            sub={klaar ? 'Identiteit, verzekering en rekening in orde' : 'Nog niet compleet'}
+            sub={klaar ? 'Identiteit en rekening in orde' : 'Nog niet compleet'}
             onPress={() => router.push('/verificatie')}
           />
           <WooberRijen />

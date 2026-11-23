@@ -53,7 +53,8 @@ export default function Veiligheid() {
           <Sectie>Zo beschermen we je hond</Sectie>
           <Punt icoon="hand-left" titel="Eerst kennismaken" tekst="Je eerste wandeling met een nieuwe uitlater boek je pas na een kennismaking." />
           <Punt icoon="keypad" titel="Ophaalcode" tekst="Je hond gaat alleen mee met iemand die jouw code van 4 cijfers krijgt." />
-          <Punt icoon="id-card" titel="Gecontroleerde uitlaters" tekst="Iedere uitlater is 18 jaar of ouder, heeft een gecontroleerde identiteit en een aansprakelijkheidsverzekering." />
+          <Punt icoon="id-card" titel="Gecontroleerde uitlaters" tekst="Iedere uitlater heeft een gecontroleerde identiteit en is 14 jaar of ouder; onder de 18 met toestemming van een ouder of voogd." />
+          <Punt icoon="paw" titel="Jouw hond, jouw verantwoordelijkheid" tekst="Als eigenaar blijf je aansprakelijk voor schade die je hond veroorzaakt, ook als iemand anders uitlaat of oppast. Een aansprakelijkheidsverzekering met honden erin is verstandig." />
           <Punt icoon="navigate" titel="Live meekijken" tekst="Tijdens de wandeling zie je de route, foto's en plas- en poepmomenten." />
           <Punt icoon="star" titel="Echte reviews" tekst="Alleen wie een betaalde wandeling heeft gehad, kan een review schrijven." />
           <Punt icoon="key" titel="Sleutels" tekst="Deel sleutelcodes pas na een bevestigde boeking, en alleen via de chat in de app." />
@@ -73,7 +74,7 @@ export default function Veiligheid() {
           <Punt icoon="people" titel="Altijd een mens" tekst="Een melding over jou wordt altijd door een medewerker bekeken. Je krijgt uitleg en kunt reageren voordat er iets gebeurt." />
           <Sectie>Onderweg</Sectie>
           <Punt icoon="keypad" titel="Ophaalcode" tekst="Vraag bij de deur altijd om de code. Zo weet de eigenaar dat de juiste persoon de hond meeneemt." />
-          <Punt icoon="umbrella" titel="Verzekerd" tekst="Je aansprakelijkheidsverzekering dekt schade die een hond onder jouw toezicht veroorzaakt, en bij oppas ook schade in het huis." />
+          <Punt icoon="paw" titel="Schade door een hond" tekst="Voor schade die een hond veroorzaakt, is in beginsel de eigenaar aansprakelijk, ook als jij uitlaat. Ga zorgvuldig om met de hond en met het huis." />
           <Punt icoon="home" titel="Oppas bij de eigenaar" tekst="Je bent te gast. Bij het verzoek zie je waar camera's hangen, wat je mag gebruiken en wat privé is. Spreek de rest af in de chat, en meld iets vreemds via de app." />
           <Punt icoon="bed" titel="Honden bij jou thuis" tekst="Zorg dat je huis veilig is voor honden: dichte tuin, geen giftige planten, eten en medicijnen buiten bereik. Je adres ziet een eigenaar pas na accepteren." />
         </>

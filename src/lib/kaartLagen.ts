@@ -7,6 +7,7 @@ import { huidigePositie, opPlasronde, PLASRONDE, plasrondeVoortgang, resterendeR
 interface Wie {
   voornaam: string;
   kleur: [string, string];
+  /** Alleen voor het tempo van de gesimuleerde rit; niet zichtbaar */
   vervoer: Vervoer;
 }
 
@@ -25,7 +26,7 @@ export function boekingOpKaart(
   const persoon = (punt: Punt, bubbel?: string): KaartMarker =>
     opties.uitlaterAlsIk
       ? { id: 'ik', soort: 'ik', punt }
-      : { id: 'uitlater', soort: 'uitlater', punt, naam: wie.voornaam, kleur: wie.kleur, vervoer: wie.vervoer, bubbel, actief: true };
+      : { id: 'uitlater', soort: 'uitlater', punt, naam: wie.voornaam, kleur: wie.kleur, bubbel, actief: true };
 
   const gebeurtenissen: KaartMarker[] = b.gebeurtenissen
     .filter((g) => g.soort !== 'start' && g.soort !== 'einde')

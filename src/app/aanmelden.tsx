@@ -3,7 +3,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { gedeeldeStijl, Vinkje } from '../components/blokken';
+import { gedeeldeStijl, Segment, Vinkje } from '../components/blokken';
 import { Bewerkbaar } from '../components/Bewerkbaar';
 import { KnopOpSlot } from '../components/Slotje';
 import { Knop, Label, Melding, Veld } from '../components/ui';
@@ -174,7 +174,9 @@ function Gegevens() {
   const [postcode, setPostcode] = useState('');
   const [plaats, setPlaats] = useState('');
   const [akkoord, setAkkoord] = useState(false);
-  const [volwassen, setVolwassen] = useState(false);
+  // Vanaf 14 jaar; onder de 18 met toestemming van een ouder of voogd
+  const [leeftijd, setLeeftijd] = useState<'volwassen' | 'jong' | ''>('');
+  const [toestemming, setToestemming] = useState(false);
   const [geprobeerd, setGeprobeerd] = useState(false);
   const [bezig, setBezig] = useState(false);
   const [opslagFout, setOpslagFout] = useState<string | null>(null);
@@ -194,8 +196,13 @@ function Gegevens() {
     adres: /\d/.test(adres) && adres.trim().length >= 4 ? null : 'Vul je straat en huisnummer in.',
     postcode: /^[1-9]\d{3}\s?[A-Za-z]{2}$/.test(postcode.trim()) ? null : 'Vul een Nederlandse postcode in, bijv. 6511 AB.',
     plaats: plaats.trim().length < 2 ? 'Vul je woonplaats in.' : null,
+    leeftijd: !leeftijd
+      ? 'Kies je leeftijd.'
+      : leeftijd === 'jong' && !toestemming
+        ? 'Vink aan dat je ouder of voogd toestemming geeft.'
+        : null,
   };
-  const geldig = Object.values(fouten).every((f) => f === null) && akkoord && volwassen;
+  const geldig = Object.values(fouten).every((f) => f === null) && akkoord;
   const toon = (f: string | null) => (geprobeerd ? f : null);
 
   const verstuur = async () => {
@@ -212,6 +219,7 @@ function Gegevens() {
           postcode: postcode.trim().toUpperCase(),
           plaats: plaats.trim(),
           thuis: DEMO_THUIS,
+          minderjarig: leeftijd === 'jong',
         },
         rol,
         voorwaardenVersie,
@@ -259,14 +267,29 @@ function Gegevens() {
         </View>
 
         {rol === 'uitlater' ? (
-          <Melding type="info">
-            Voordat je online kunt, laat je je identiteit controleren en koppel je een aansprakelijkheidsverzekering en een rekening voor uitbetaling.
-          </Melding>
+          <Melding type="info">Voordat je online kunt, laat je in de app je identiteit controleren en koppel je een rekening voor uitbetaling.</Melding>
         ) : null}
 
-        <Vinkje aan={volwassen} onPress={() => setVolwassen((v) => !v)}>
-          Ik ben 18 jaar of ouder.
-        </Vinkje>
+        <Label>Leeftijd</Label>
+        <Segment<'volwassen' | 'jong' | ''>
+          waarde={leeftijd}
+          onChange={(w) => {
+            setLeeftijd(w);
+            if (w === 'volwassen') setToestemming(false);
+          }}
+          opties={[
+            { waarde: 'volwassen', label: '18 jaar of ouder' },
+            { waarde: 'jong', label: '14 tot 18 jaar' },
+          ]}
+        />
+        <Text style={[gedeeldeStijl.hulp, { marginTop: ruimte(2) }]}>Een account kan vanaf 14 jaar. Ben je jonger dan 18, dan vraag je eerst je ouder of voogd.</Text>
+        {leeftijd === 'jong' ? (
+          <Vinkje aan={toestemming} onPress={() => setToestemming((v) => !v)}>
+            Mijn ouder of voogd weet dat ik een account maak en geeft toestemming.
+          </Vinkje>
+        ) : null}
+        {toon(fouten.leeftijd) ? <Text style={s.fout}>{fouten.leeftijd}</Text> : null}
+        <View style={{ height: ruimte(2) }} />
         <Vinkje aan={akkoord} onPress={() => setAkkoord((v) => !v)}>
           Ik ga akkoord met de{' '}
           <Text style={s.link} onPress={() => router.push('/voorwaarden')}>
@@ -279,7 +302,7 @@ function Gegevens() {
           van Woober.
         </Vinkje>
 
-        {geprobeerd && (!akkoord || !volwassen) ? <Melding type="fout">Vink beide vakjes aan om verder te gaan.</Melding> : null}
+        {geprobeerd && !akkoord ? <Melding type="fout">Ga akkoord met de voorwaarden om verder te gaan.</Melding> : null}
         {opslagFout ? <Melding type="fout">{opslagFout}</Melding> : null}
 
         <Knop titel={bezig ? 'Bezig met opslaan' : 'Verder'} uitgeschakeld={bezig} onPress={verstuur} stijl={{ marginTop: ruimte(4) }} />

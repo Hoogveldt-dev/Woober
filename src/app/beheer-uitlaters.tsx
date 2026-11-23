@@ -5,19 +5,17 @@ import { Badge, Chip, Melding } from '../components/ui';
 import { laadUitlaters, zetVerificatie, type UitlaterBeheer, type VerificatieStap } from '../lib/beheer';
 import { kleuren, radius, ruimte } from '../theme';
 
-const STAPPEN: { id: VerificatieStap; label: string; verplicht: boolean }[] = [
-  { id: 'identiteit', label: 'Identiteit', verplicht: true },
-  { id: 'verzekering', label: 'Verzekering', verplicht: true },
-  { id: 'uitbetaling', label: 'Rekening', verplicht: true },
-  { id: 'vog', label: 'VOG', verplicht: false },
+const STAPPEN: { id: VerificatieStap; label: string }[] = [
+  { id: 'identiteit', label: 'Identiteit' },
+  { id: 'uitbetaling', label: 'Rekening' },
 ];
 
 const veld = (u: UitlaterBeheer, stap: VerificatieStap) => u[`${stap}_ok` as const];
-const klaar = (u: UitlaterBeheer) => STAPPEN.every((s) => !s.verplicht || veld(u, s.id));
+const klaar = (u: UitlaterBeheer) => STAPPEN.every((s) => veld(u, s.id));
 
 /**
- * Uitlaters verifiëren. Controleer eerst zelf (identiteitsbewijs, polis, rekening op naam) en zet dan de stap aan.
- * Pas als identiteit, verzekering en rekening in orde zijn, is de uitlater zichtbaar voor eigenaren.
+ * Uitlaters verifiëren. Mollie controleert identiteit en rekening bij het koppelen; zet een stap pas aan als Mollie hem
+ * heeft goedgekeurd. Pas als beide in orde zijn, is de uitlater zichtbaar voor eigenaren. Geen verzekering en geen VOG.
  */
 export default function BeheerUitlaters() {
   const [lijst, setLijst] = useState<UitlaterBeheer[] | null>(null);
@@ -44,8 +42,8 @@ export default function BeheerUitlaters() {
   return (
     <ScrollView style={gedeeldeStijl.scherm} contentContainerStyle={gedeeldeStijl.inhoud}>
       <Text style={[gedeeldeStijl.sub, { marginBottom: ruimte(4) }]}>
-        Controleer zelf het identiteitsbewijs, de aansprakelijkheidsverzekering (ook voor schade in huis bij oppas) en de rekening op naam. Mail de uitlater voor de
-        stukken. Pas als de eerste drie in orde zijn, zien eigenaren deze uitlater.
+        Mollie controleert de identiteit en de rekening op naam als de uitlater koppelt, in de app. Zet een stap pas aan als Mollie hem heeft goedgekeurd. Pas
+        als beide in orde zijn, zien eigenaren deze uitlater. Onder de 18 is de uitlater aangemeld met toestemming van een ouder of voogd.
       </Text>
       <Segment<'open' | 'alle'>
         waarde={filter}
@@ -64,6 +62,7 @@ export default function BeheerUitlaters() {
           <View style={s.rij}>
             <Text style={s.naam}>{u.voornaam}</Text>
             {klaar(u) ? <Badge tekst="ZICHTBAAR" icoon="checkmark" /> : <Badge tekst="WACHT" kleur={kleuren.waarschuwing} />}
+            {u.minderjarig ? <Badge tekst="ONDER DE 18" kleur={kleuren.gedempt} /> : null}
           </View>
           <Text style={s.sub}>
             {[u.wijk, u.plaats].filter(Boolean).join(', ')} · {u.diensten.join(' en ')} · aangemeld {new Date(u.aangemaakt).toLocaleDateString('nl-NL')}
@@ -75,7 +74,7 @@ export default function BeheerUitlaters() {
             {STAPPEN.map((stap) => (
               <Chip
                 key={stap.id}
-                label={stap.verplicht ? stap.label : `${stap.label} (optioneel)`}
+                label={stap.label}
                 icoon={veld(u, stap.id) ? 'checkmark' : undefined}
                 actief={veld(u, stap.id)}
                 onPress={() => wissel(u, stap.id)}

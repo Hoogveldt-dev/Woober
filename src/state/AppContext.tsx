@@ -260,7 +260,7 @@ export function standaardProfiel(voornaam: string): Uitlater {
     werkgebiedKm: 3,
     vervoer: 'fiets',
     beschikbaarheid: { 0: ['middag'], 1: ['middag'], 2: ['middag'], 3: ['middag'], 4: ['middag'], 5: [], 6: [] },
-    verificatie: { identiteit: false, verzekering: false, uitbetaling: false, vog: false },
+    verificatie: { identiteit: false, uitbetaling: false },
     beoordeling: 0,
     aantalBeoordelingen: 0,
     aantalWandelingen: 0,
@@ -532,7 +532,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       bio: 'Thuiswerker met een flexibel rooster. Ik fiets naar je toe en neem altijd water mee.',
       ervaring: 'Zelf twee honden gehad, drie jaar uitlaatwerk.',
       diensten: ['uitlaten', 'oppas'],
-      verificatie: { identiteit: true, verzekering: true, uitbetaling: true, vog: false },
+      verificatie: { identiteit: true, uitbetaling: true },
       beoordeling: 4.9,
       aantalBeoordelingen: 23,
       aantalWandelingen: 41,
@@ -1278,7 +1278,7 @@ function verwerkTik(s: AppState, nu: number, wachtSinds: number): AppState {
 }
 
 export function klaarVoorWerk(p: Uitlater): boolean {
-  return p.verificatie.identiteit && p.verificatie.verzekering && p.verificatie.uitbetaling;
+  return p.verificatie.identiteit && p.verificatie.uitbetaling;
 }
 
 function maakVerzoek(s: AppState, volgnummer: number): Boeking {

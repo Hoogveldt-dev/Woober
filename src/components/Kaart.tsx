@@ -18,11 +18,11 @@ import {
 import { PLEK_SOORTEN } from '../lib/plekken';
 import { gladmaken, omvatting } from '../lib/route';
 import { kaartKleuren, kleuren, schaduw } from '../theme';
-import type { GebeurtenisSoort, PlekSoort, Punt, Vervoer } from '../types';
+import type { GebeurtenisSoort, PlekSoort, Punt } from '../types';
 
 export type KaartMarker =
   | { id: string; soort: 'thuis' | 'klant'; punt: Punt; label?: string }
-  | { id: string; soort: 'uitlater'; punt: Punt; naam: string; kleur: [string, string]; vervoer: Vervoer; bubbel?: string; actief?: boolean; onPress?: () => void }
+  | { id: string; soort: 'uitlater'; punt: Punt; naam: string; kleur: [string, string]; bubbel?: string; actief?: boolean; onPress?: () => void }
   | { id: string; soort: 'hond'; punt: Punt; kleur: [string, string] }
   | { id: string; soort: 'ik'; punt: Punt }
   | { id: string; soort: 'gebeurtenis'; punt: Punt; gebeurtenis: GebeurtenisSoort }
@@ -198,7 +198,6 @@ const Ondergrond = memo(function Ondergrond({ t }: { t: number }) {
   );
 });
 
-type IonNaam = ComponentProps<typeof Ionicons>['name'];
 type MciNaam = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 const GEBEURTENIS_ICOON: Record<GebeurtenisSoort, { naam: MciNaam; kleur: string }> = {
@@ -218,8 +217,6 @@ const GEBEURTENIS_ICOON: Record<GebeurtenisSoort, { naam: MciNaam; kleur: string
 export function gebeurtenisIcoon(soort: GebeurtenisSoort) {
   return GEBEURTENIS_ICOON[soort];
 }
-
-const VERVOER_ICOON: Record<Vervoer, IonNaam> = { lopend: 'walk', fiets: 'bicycle', auto: 'car' };
 
 function Puls({ kleur, grootte }: { kleur: string; grootte: number }) {
   const [waarde] = useState(() => new Animated.Value(0));
@@ -280,9 +277,6 @@ function MarkerInhoud({ m }: { m: KaartMarker }) {
             <LinearGradient colors={m.kleur} style={s.uitlater}>
               <Text style={s.uitlaterLetter}>{m.naam.slice(0, 1)}</Text>
             </LinearGradient>
-            <View style={s.vervoer}>
-              <Ionicons name={VERVOER_ICOON[m.vervoer]} size={11} color={kleuren.tekst} />
-            </View>
           </View>
         </View>
       );
@@ -507,19 +501,6 @@ const s = StyleSheet.create({
   uitlaterRand: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, borderColor: '#fff', backgroundColor: '#fff' },
   uitlater: { flex: 1, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   uitlaterLetter: { color: '#fff', fontWeight: '900', fontSize: 15 },
-  vervoer: {
-    position: 'absolute',
-    right: -6,
-    bottom: -5,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: kleuren.rand,
-  },
   hondRand: { width: 44, height: 44, borderRadius: 22, borderWidth: 3, borderColor: '#fff', backgroundColor: '#fff' },
   hond: { flex: 1, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   ik: { width: 18, height: 18, borderRadius: 9, backgroundColor: kleuren.locatie, borderWidth: 3, borderColor: '#fff' },

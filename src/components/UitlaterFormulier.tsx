@@ -7,7 +7,7 @@ import { procent } from '../lib/verdienmodel';
 import { useApp } from '../state/AppContext';
 import { DAGDELEN, DAGEN_KORT } from '../lib/tijd';
 import { kleuren, radius, ruimte } from '../theme';
-import type { Beschikbaarheid, Dag, Dagdeel, Dienst, HuisKenmerk, OppasPlek, Uitlater, Vervoer, WandelDuur } from '../types';
+import type { Beschikbaarheid, Dag, Dagdeel, Dienst, HuisKenmerk, OppasPlek, Uitlater, WandelDuur } from '../types';
 import { gedeeldeStijl } from './blokken';
 import { Chip, Knop, Label, Melding, Veld } from './ui';
 
@@ -28,7 +28,6 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
   const [ervaring, setErvaring] = useState(begin.ervaring);
   const [professioneel, setProfessioneel] = useState(begin.professioneel);
   const [bedrijfsnaam, setBedrijfsnaam] = useState(begin.bedrijfsnaam ?? '');
-  const [vervoer, setVervoer] = useState<Vervoer>(begin.vervoer);
   const [tarieven, setTarieven] = useState<Record<WandelDuur, string>>({
     30: naarInvoer(begin.tarieven[30]),
     45: naarInvoer(begin.tarieven[45]),
@@ -93,7 +92,8 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
       ervaring: ervaring.trim(),
       professioneel,
       bedrijfsnaam: professioneel ? bedrijfsnaam.trim() : undefined,
-      vervoer,
+      // Het vervoer vraagt de app niet meer; de demo rekent er intern nog mee
+      vervoer: begin.vervoer,
       // Tarieven voor uitlaten blijven bewaard, ook als de dienst even uit staat
       tarieven: { 30: centen[30] ?? begin.tarieven[30], 45: centen[45] ?? begin.tarieven[45], 60: centen[60] ?? begin.tarieven[60] },
       toeslagExtraHond: toeslagCenten,
@@ -162,13 +162,6 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
           </View>
         ) : null}
 
-        <View style={{ height: ruimte(4) }} />
-        <Label>Vervoer naar de eigenaar</Label>
-        <View style={gedeeldeStijl.rij}>
-          <Chip label="Lopend" icoon="walk" actief={vervoer === 'lopend'} onPress={() => setVervoer('lopend')} />
-          <Chip label="Fiets" icoon="bicycle" actief={vervoer === 'fiets'} onPress={() => setVervoer('fiets')} />
-          <Chip label="Auto of bus" icoon="car" actief={vervoer === 'auto'} onPress={() => setVervoer('auto')} />
-        </View>
 
         {uitlaten ? (
           <>
@@ -219,9 +212,7 @@ export function UitlaterFormulier({ begin, knopTitel, onBewaar }: { begin: Uitla
         {voorbeeld && uitlaten ? (
           <Text style={[gedeeldeStijl.hulp, { marginTop: -ruimte(2), marginBottom: ruimte(4) }]}>
             Bij 30 minuten betaalt de eigenaar {euro(voorbeeld.totaal)} en ontvang jij {euro(voorbeeld.uitbetaling)}.
-            {verdienmodel.commissiePercentage === 0
-              ? ` Tijdens de ${verdienmodel.naam.toLowerCase()} houdt Woober niets in.`
-              : ` Woober houdt ${procent(verdienmodel.commissiePercentage)} commissie in.`}
+            {verdienmodel.commissiePercentage > 0 ? ` Woober houdt ${procent(verdienmodel.commissiePercentage)} commissie in.` : ''}
           </Text>
         ) : null}
 

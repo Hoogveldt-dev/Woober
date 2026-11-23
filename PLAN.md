@@ -53,7 +53,7 @@ Eén account kan beide rollen hebben, zoals iemand die zelf een hond heeft en oo
 
 ### Eigenaar
 
-1. Aanmelden: voornaam, e-mail, ophaaladres, 18 jaar of ouder, akkoord met voorwaarden.
+1. Aanmelden: voornaam, e-mail, ophaaladres, 14 jaar of ouder (onder de 18 met toestemming van een ouder of voogd), akkoord met voorwaarden.
 2. Hondenprofiel: naam, ras of kruising, geboortedatum, grootte, energie, aanlijnen, omgang met andere honden, karakter, bijzonderheden, dierenarts. Meer honden mogelijk.
 3. Startscherm: kaart met uitlaters in de buurt en de vraag "Wie laat je hond uit?".
 4. Uitlater kiezen: welke honden, wanneer (nu, later, elke week), hoe lang (30, 45 of 60 minuten), sorteren op afstand, beoordeling of prijs.
@@ -76,8 +76,8 @@ Zelfde stappen als uitlaten, met deze verschillen:
 
 ### Uitlater of oppas
 
-1. Aanmelden en profiel invullen: welke diensten (uitlaten, oppas of allebei), over jou, ervaring, particulier of bedrijf met KvK, vervoer, **eigen tarief** per wandelduur en **eigen uurtarief** voor oppas, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
-2. Verificatie: identiteit, aansprakelijkheidsverzekering en uitbetaalrekening verplicht; VOG optioneel. Pas daarna online.
+1. Aanmelden en profiel invullen: welke diensten (uitlaten, oppas of allebei), over jou, ervaring, particulier of bedrijf met KvK, **eigen tarief** per wandelduur en **eigen uurtarief** voor oppas, toeslag extra hond, maximaal aantal honden (nooit meer dan 8), werkgebied en weekrooster.
+2. Verificatie in de app: identiteit en uitbetaalrekening, allebei via Mollie. Geen verzekering (de eigenaar is aansprakelijk voor de hond) en geen VOG (kost geld en tijd; Woober moet laagdrempelig zijn). Vanaf 14 jaar, onder de 18 met toestemming van een ouder of voogd: uitlaten en oppassen past bij jongeren. Pas daarna online.
 3. Online gaan met de grote knop op de kaart. Verzoeken uit de buurt verschijnen als kaart onderin, met hond, afstand, moment, duur en wat je ontvangt.
 4. Accepteren of weigeren. Weigeren heeft geen gevolgen en wordt niet geteld.
 5. Onderweg naar de eigenaar, "Ik ben er", ophaalcode invullen, wandeling starten.
@@ -263,7 +263,7 @@ Twee punten blijven voor een arbeidsrechtspecialist: of de "Nu"-knop met snelle 
 - **Iemand in je huis**: daarom altijd eerst een kennismaking en de code bij de deur. Bij het boeken geeft de eigenaar aan wat de oppas mag gebruiken (wifi, koffie en thee, tv, iets uit de koelkast) en wat privé is; de rest spreken ze af in de chat, zodat het voor allebei terug te lezen is. De app wijst daar na het accepteren op.
 - **Camera's**: de eigenaar meldt vooraf of er camera's hangen, waar, en of ze geluid opnemen. Iemand filmen zonder dat die het weet mag niet; de oppas ziet het al bij het verzoek.
 - **Bij de oppas thuis**: wie niemand in huis wil, kiest een oppas die honden thuis ontvangt. Die beschrijft het huis in het profiel (minstens 40 tekens, met tuin, eigen huisdieren, kinderen, rookvrij) zonder adres; de eigenaar ziet het adres na accepteren, en de oppas het adres van de eigenaar niet.
-- **Verzekering**: de aansprakelijkheidsverzekering van de oppas moet ook schade in het huis dekken, niet alleen schade door de hond. Navragen bij verzekeraars; mogelijk een collectieve polis via Woober.
+- **Aansprakelijkheid**: voor schade door de hond is in beginsel de eigenaar aansprakelijk (artikel 6:179 BW), ook als iemand anders uitlaat of oppast. Woober vraagt uitlaters en oppassen niet naar hun verzekering (besloten 30 oktober 2026).
 - **Locatie**: alleen tijdens het plasrondje om het blok; binnen is de positie gewoon het adres.
 
 ## Van demo naar MVP
@@ -340,12 +340,10 @@ Het schema in `supabase/migrations/` is getest in een lokale Postgres (`npm run 
 - [ ] Oppas: minimaal 2 uur? Nachtoppas (blijven slapen) toevoegen, en zo ja met een vast nachttarief?
 - [ ] Verlengen: mag de oppas weigeren, en wat als de eigenaar dan niet op tijd thuis is? Voorstel: de eigenaar vraagt het extra uur aan en betaalt meteen; de oppas bevestigt met één tik. Weigert de oppas of komt er geen antwoord voor de oude eindtijd, dan gaat het geld vanzelf terug en ziet de eigenaar dat direct. Vraag het zo vroeg mogelijk (de app herinnert er een half uur voor het einde aan). Te laat zonder bevestigd uur: bij de eigenaar thuis mag de oppas op de afgesproken tijd gaan (de hond is thuis); bij de oppas thuis blijft de hond daar en betaalt de eigenaar de extra tijd achteraf tegen het eigen uurtarief van de oppas, per begonnen half uur.
 - [ ] Vaste afspraken betalen: elke keer vooraf, het geld gaat pas na afloop naar de uitlater (zo werkt vertraagd routeren al). Voorstel: de eerste keer met iDEAL | Wero, waarmee Mollie een machtiging aanmaakt; de volgende keren schrijft Mollie automatisch af (SEPA-incasso), een paar dagen voor de wandeling. Een incasso kan de eigenaar 8 weken lang laten terugboeken; dat draagt Woober, zoals andere terugboekingen. Navragen bij Mollie of dit samengaat met Connect for Marketplaces.
-- [ ] Contant betalen in de eerste fase? Advies: niet doen. Zonder betaling via de app geen review (alleen na een betaalde wandeling), geen terugbetaling bij een no-show, geen bewijs voor de verzekering en geen overzicht voor de belasting. Tijdens de lancering houdt Woober niets in, dus er is geen reden om buiten de app te betalen.
+- [ ] Contant betalen in de eerste fase? Advies: niet doen. Zonder betaling via de app geen review (alleen na een betaalde wandeling), geen terugbetaling bij een no-show en geen overzicht voor de belasting. Tijdens de lancering houdt Woober niets in, dus er is geen reden om buiten de app te betalen.
 - [ ] "Nu"-verzoeken: blijft de eigenaar één uitlater tegelijk kiezen, of mag een verzoek naar de drie dichtstbijzijnde tegelijk (eerste die accepteert)? Laten toetsen.
-- [ ] Verzekering per uitlater of collectief via Woober?
 - [ ] Alleen particuliere uitlaters, of ook bedrijven met KvK? De demo laat beide zien.
 - [ ] Plekken: willen we horeca later laten betalen voor een uitgelichte plek, of blijft de kaart neutraal? En mag de eigenaar van een zaak zijn plek claimen en aanpassen?
-- [ ] Mag Woober een VOG vragen? In de demo optioneel.
 - [ ] Pilotstad: Nijmegen?
 - [ ] **Reviews zoals italki?** Besloten op 30 oktober 2026: wel melden van een no-show of late afzegging bij de boeking, beoordeeld door een medewerker, met geld terug als de eigenaar gelijk krijgt (gebouwd in de demo); geen percentages. De toets door de arbeidsrechtspecialist staat in ACTIES.md. Het idee: per uitlater kenmerken die eigenaren bij een review aantikken (zoals "Geduldig · 2", "Stuurt foto's · 7") en laten zien of iemand vaak niet komt opdagen of last minute afzegt. Advies: de kenmerken zijn een goed idee en passen bij de huidige regels (alleen na een betaalde wandeling). Percentages voor aanwezigheid of reageren niet: dat is een acceptatiegraad die we volgens de afspraak over de Wet platformwerk niet bijhouden, en de EU-richtlijn voor platformwerk (omzetten uiterlijk 2 december 2026) maakt toezicht en sturing op het werk van zelfstandigen extra gevoelig. Wel mogelijk: een eigenaar meldt een no-show of late afzegging, een medewerker beoordeelt dat, de eigenaar krijgt zijn geld terug, en bij herhaling beslist een mens. Laten toetsen bij de arbeidsrechtspecialist voordat er iets zichtbaar wordt.
 - [ ] Woober Fit later ook voor eigenaren die zelf met hun hond lopen? En een dagdoel dat je zelf kiest, of uitdagingen met de buurt?

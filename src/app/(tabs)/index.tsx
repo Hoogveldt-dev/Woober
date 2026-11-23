@@ -87,7 +87,6 @@ function UitlatenDemo() {
           punt: u.positie,
           naam: u.voornaam,
           kleur: u.kleur,
-          vervoer: u.vervoer,
           bubbel: `${eta.get(u.id)} min`,
           onPress: () => router.push({ pathname: '/uitlater/[id]', params: { id: u.id } }),
         }),

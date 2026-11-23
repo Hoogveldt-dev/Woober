@@ -16,7 +16,7 @@ export function WooberRijen() {
   const contact = useTekst('contact.email');
   return (
     <>
-      <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers, verzekering, regels" onPress={() => router.push('/veiligheid')} />
+      <MenuRij icoon="help-buoy" titel="Veiligheid en hulp" sub="Noodnummers en regels" onPress={() => router.push('/veiligheid')} />
       <Bewerkbaar sleutels="contact.email">
         <MenuRij icoon="mail" titel="Hulp en contact" sub={contact} onPress={() => Linking.openURL(`mailto:${contact}`)} />
       </Bewerkbaar>

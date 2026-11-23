@@ -14,8 +14,6 @@ import { useApp } from '../../state/AppContext';
 import { kleuren, radius, ruimte } from '../../theme';
 import type { Dag } from '../../types';
 
-const VERVOER = { lopend: 'Lopend', fiets: 'Fiets', auto: 'Auto of bus' } as const;
-
 function Check({ aan, tekst }: { aan: boolean; tekst: string }) {
   return (
     <View style={s.check}>
@@ -88,10 +86,8 @@ export default function UitlaterProfiel() {
 
         <Sectie>Gecontroleerd door Woober</Sectie>
         <View style={{ gap: 8, marginBottom: ruimte(5) }}>
-          <Check aan tekst="18 jaar of ouder" />
+          <Check aan tekst={u.leeftijd >= 18 ? '18 jaar of ouder' : 'Jonger dan 18, met toestemming van ouder of voogd'} />
           <Check aan={u.verificatie.identiteit} tekst="Identiteit gecontroleerd" />
-          <Check aan={u.verificatie.verzekering} tekst="Aansprakelijkheidsverzekering" />
-          <Check aan={u.verificatie.vog} tekst={u.verificatie.vog ? 'Verklaring Omtrent het Gedrag' : 'Nog geen VOG'} />
         </View>
 
         <Sectie>Eigen tarief</Sectie>
@@ -112,7 +108,6 @@ export default function UitlaterProfiel() {
 
         <Sectie>Praktisch</Sectie>
         <Blok>
-          <Rij label="Komt naar je toe" waarde={VERVOER[u.vervoer]} />
           <Rij label="Maximaal" waarde={`${u.maxHonden} ${u.maxHonden === 1 ? 'hond' : 'honden'} tegelijk`} />
           <Rij label="Werkgebied" waarde={`${String(u.werkgebiedKm).replace('.', ',')} km`} />
         </Blok>
