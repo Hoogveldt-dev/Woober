@@ -192,7 +192,7 @@ Migratie `supabase/migrations/20261022010000_verdienmodel.sql`:
 - Woober Plus later via Mollie; de regel in `abonnementen` blijft. Het grootboek is de basis voor de afstemming met Mollie en de boekhouding.
 - Terugvaloptie als Mollie geen uitlaters zonder KvK aansluit: Stripe Connect met handmatige uitbetalingen (zie de strategie hieronder). Saldo en grootboek zijn niet aan Mollie gebonden; alleen de Edge Functions en de tabellen voor betalingen en routes wisselen dan.
 
-### Eisen voor betalen en de wallet (Kjell, 30 oktober 2026)
+### Eisen voor betalen en de wallet (beheerder, 30 oktober 2026)
 
 1. Uitlaters zonder KvK moeten mee kunnen doen. Dat moet de betaalpartner dus ondersteunen; bij Stripe kan het, bij Mollie is het nog niet bevestigd.
 2. Een Woober Wallet waarop je geld stort en waarmee je betaalt, eventueel als credits zoals bij italki (1 euro wordt 1 credit, 1:1 terug te krijgen).

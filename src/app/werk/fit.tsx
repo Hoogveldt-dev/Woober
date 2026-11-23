@@ -15,7 +15,7 @@ import { useApp } from '../../state/AppContext';
 import { useTekst } from '../../state/Teksten';
 import { kleuren, radius, ruimte } from '../../theme';
 
-/** Nog niet gekoppeld: wat Kjell eerst moet regelen staat in ACTIES.md */
+/** Nog niet gekoppeld: wat de beheerder eerst moet regelen staat in ACTIES.md */
 const KOPPELINGEN: { naam: string; sub: string; icoon: ComponentProps<typeof Ionicons>['name'] }[] = [
   { naam: 'Apple Fitness', sub: 'Via Apple Gezondheid', icoon: 'logo-apple' },
   { naam: 'Google Fit', sub: 'Via Health Connect', icoon: 'logo-google' },

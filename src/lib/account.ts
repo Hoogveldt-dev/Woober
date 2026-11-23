@@ -18,7 +18,7 @@ export function terugAdres() {
 }
 
 /**
- * Inloggen met Apple staat met een slotje op het inlogscherm tot Kjell Apple heeft ingesteld (ACTIES.md, stap 1).
+ * Inloggen met Apple staat met een slotje op het inlogscherm tot de beheerder Apple heeft ingesteld (ACTIES.md, stap 1).
  * Zet dit dan op true; de code eronder is klaar.
  */
 export const APPLE_INLOGGEN_KLAAR = false;
